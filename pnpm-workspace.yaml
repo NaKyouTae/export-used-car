@@ -2,6 +2,8 @@ packages:
   - server
   - app
   - admin
+ignoredBuiltDependencies:
+  - '@swc/core'
 onlyBuiltDependencies:
   - '@nestjs/core'
   - '@prisma/engines'

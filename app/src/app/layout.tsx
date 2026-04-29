@@ -2,8 +2,8 @@ import type { Metadata } from "next";
 import "./globals.css";
 
 export const metadata: Metadata = {
-  title: "중고차 수출",
-  description: "중고차 수출 서비스",
+  title: "Used Car Export Platform",
+  description: "Premium Korean used cars for international buyers",
 };
 
 export default function RootLayout({
@@ -12,8 +12,8 @@ export default function RootLayout({
   children: React.ReactNode;
 }>) {
   return (
-    <html lang="ko">
-      <body>{children}</body>
+    <html lang="en">
+      <body className="bg-white text-gray-900 antialiased">{children}</body>
     </html>
   );
 }

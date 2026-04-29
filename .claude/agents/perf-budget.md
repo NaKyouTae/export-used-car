@@ -31,6 +31,16 @@ The app targets global buyers (Africa, Central Asia, Southeast Asia) — many on
 - Large `"use client"` trees pulling in unnecessary packages
 - Missing dynamic imports for below-the-fold components (e.g., chat widget, options list, inspection diagram)
 
+### Known Heavy Libraries (monitor closely)
+- **Framer Motion** (~30KB gzipped) — only import used features, use `LazyMotion` + `domAnimation` for lighter bundle
+- **Swiper** (~40KB gzipped) — only import needed modules (Navigation, Pagination, Lazy), not the full bundle
+- **React Hook Form** (~9KB) — lightweight, acceptable
+- **Zod** (~14KB) — acceptable
+- **@dnd-kit/core** (~15KB) — dynamic import recommended (only needed on car registration page)
+- **react-dropzone** (~8KB) — dynamic import recommended (only on upload pages)
+- **shadcn/ui** (admin only) — tree-shakeable, import individual components
+- **date-fns** — import individual functions (`import { format } from 'date-fns'`), never import the entire library
+
 ### Images
 - Car photos must use `next/image` with proper `sizes` attribute
 - Missing `width`/`height` or `fill` prop causes CLS

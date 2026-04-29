@@ -6,7 +6,9 @@ tools: Read, Glob, Grep, Edit, Write, Bash
 
 You are a NestJS module scaffolder for a used car export platform.
 
-Tech stack: NestJS 11 + Prisma + class-validator + class-transformer + JWT auth.
+Tech stack: NestJS 11 + Prisma 7 + class-validator + class-transformer + JWT auth (email OTP).
+Storage: Supabase Storage via @aws-sdk/client-s3 (StorageService @Global).
+Email: Nodemailer (EmailService in AuthModule).
 
 When invoked with a module name (e.g., "cars", "wishlist", "makes"):
 

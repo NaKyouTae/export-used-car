@@ -1107,3 +1107,31 @@ server/src/
 | 페이지네이션 | 커서 기반 | 대량 데이터 성능, 무한스크롤 |
 | 가격 단위 | USD | 국제 수출 표준 |
 | 언어 | 영어 기본 | 해외 바이어 대상 서비스 |
+
+---
+
+## 11. 프론트엔드 라이브러리
+
+### App (바이어/셀러용) — 커스텀 UI
+
+| 라이브러리 | 용도 |
+|-----------|------|
+| Tailwind CSS v4 | 스타일링 (설치됨) |
+| Framer Motion | 애니메이션, 제스처 (스와이프, 바텀시트, 페이지 전환) |
+| Swiper | 이미지 갤러리 슬라이더 (차량 상세 사진) |
+| React Hook Form + Zod | 폼 관리/검증 (차량 등록, 회원가입) |
+| nuqs | URL 쿼리 상태 관리 (필터/정렬 URL 동기화) |
+| react-dropzone | 이미지 다중 업로드 (드래그앤드롭) |
+| @dnd-kit/core | 이미지 순서 드래그 정렬 |
+| date-fns | 날짜 포맷 (개별 함수 import) |
+| clsx + tailwind-merge | 조건부 클래스 조합 |
+
+### Admin (관리자용) — shadcn/ui
+
+| 라이브러리 | 용도 |
+|-----------|------|
+| Tailwind CSS v4 | 스타일링 (설치됨) |
+| shadcn/ui | UI 컴포넌트 (Table, Form, Dialog, Select, Sheet 등) |
+| React Hook Form + Zod | 폼 관리/검증 |
+| date-fns | 날짜 포맷 |
+| clsx + tailwind-merge | 조건부 클래스 조합 |
