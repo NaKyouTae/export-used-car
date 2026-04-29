@@ -1,0 +1,19 @@
+export NVM_DIR="$HOME/.nvm"
+. "$NVM_DIR/nvm.sh"
+nvm use
+
+# pnpm 경로 추가
+export PATH="$HOME/Library/pnpm:$PATH"
+
+# TypeScript 타입 체크
+echo "Type checking: app"
+pnpm --filter app exec tsc --noEmit || exit 1
+echo "Type checking: admin"
+pnpm --filter admin exec tsc --noEmit || exit 1
+echo "Type checking: server"
+pnpm --filter server exec tsc --noEmit || exit 1
+
+# ESLint
+pnpm --filter app lint || exit 1
+pnpm --filter admin lint || exit 1
+pnpm --filter server lint || exit 1
