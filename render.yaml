@@ -1,0 +1,26 @@
+services:
+  # ── 중고차 수출 NestJS Backend ──
+  - type: web
+    name: export-used-car-server
+    env: docker
+    region: singapore
+    plan: starter
+    branch: main
+    autoDeploy: true
+    dockerfilePath: ./Dockerfile.render
+    buildFilter:
+      paths:
+        - server/**
+        - Dockerfile.render
+        - render.yaml
+        - pnpm-lock.yaml
+        - pnpm-workspace.yaml
+        - package.json
+    envVars:
+      - key: PORT
+        value: "18090"
+      - key: NODE_ENV
+        value: production
+      # Supabase PostgreSQL 연결 (Dashboard에서 직접 입력)
+      - key: DATABASE_URL
+        sync: false
