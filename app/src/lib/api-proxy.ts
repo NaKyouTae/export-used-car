@@ -33,48 +33,59 @@ export async function proxyToApi(
   );
   const body = isBodyMethod ? await request.arrayBuffer() : undefined;
 
-  let response = await fetch(targetUrl, {
-    method: request.method,
-    headers,
-    body: body ? Buffer.from(body) : undefined,
-  });
+  try {
+    let response = await fetch(targetUrl, {
+      method: request.method,
+      headers,
+      body: body ? Buffer.from(body) : undefined,
+    });
 
-  // Auto-refresh: if 401 and we have a refresh token, try refreshing
-  if (response.status === 401 && options?.auth) {
-    const refreshed = await tryRefreshTokens();
-    if (refreshed) {
-      // Retry with new access token
-      headers.set("authorization", `Bearer ${refreshed.accessToken}`);
-      response = await fetch(targetUrl, {
-        method: request.method,
-        headers,
-        body: body ? Buffer.from(body) : undefined,
-      });
+    // Auto-refresh: if 401 and we have a refresh token, try refreshing
+    if (response.status === 401 && options?.auth) {
+      const refreshed = await tryRefreshTokens();
+      if (refreshed) {
+        // Retry with new access token
+        headers.set("authorization", `Bearer ${refreshed.accessToken}`);
+        response = await fetch(targetUrl, {
+          method: request.method,
+          headers,
+          body: body ? Buffer.from(body) : undefined,
+        });
 
-      // Return response with updated cookies
-      const responseData = await response.arrayBuffer();
-      const res = new Response(responseData, {
-        status: response.status,
-        statusText: response.statusText,
-        headers: {
-          "content-type":
-            response.headers.get("content-type") || "application/json",
-        },
-      });
-      return setAuthCookies(res, refreshed.accessToken, refreshed.refreshToken);
+        // Return response with updated cookies
+        const responseData = await response.arrayBuffer();
+        const res = new Response(responseData, {
+          status: response.status,
+          statusText: response.statusText,
+          headers: {
+            "content-type":
+              response.headers.get("content-type") || "application/json",
+          },
+        });
+        return setAuthCookies(
+          res,
+          refreshed.accessToken,
+          refreshed.refreshToken
+        );
+      }
     }
+
+    const responseData = await response.arrayBuffer();
+
+    return new Response(responseData, {
+      status: response.status,
+      statusText: response.statusText,
+      headers: {
+        "content-type":
+          response.headers.get("content-type") || "application/json",
+      },
+    });
+  } catch {
+    return Response.json(
+      { error: "API server is unavailable" },
+      { status: 502 }
+    );
   }
-
-  const responseData = await response.arrayBuffer();
-
-  return new Response(responseData, {
-    status: response.status,
-    statusText: response.statusText,
-    headers: {
-      "content-type":
-        response.headers.get("content-type") || "application/json",
-    },
-  });
 }
 
 export async function proxyMultipartToApi(
@@ -100,22 +111,29 @@ export async function proxyMultipartToApi(
 
   const body = await request.arrayBuffer();
 
-  const response = await fetch(targetUrl, {
-    method: "POST",
-    headers,
-    body: Buffer.from(body),
-  });
+  try {
+    const response = await fetch(targetUrl, {
+      method: "POST",
+      headers,
+      body: Buffer.from(body),
+    });
 
-  const responseData = await response.text();
+    const responseData = await response.text();
 
-  return new Response(responseData, {
-    status: response.status,
-    statusText: response.statusText,
-    headers: {
-      "content-type":
-        response.headers.get("content-type") || "application/json",
-    },
-  });
+    return new Response(responseData, {
+      status: response.status,
+      statusText: response.statusText,
+      headers: {
+        "content-type":
+          response.headers.get("content-type") || "application/json",
+      },
+    });
+  } catch {
+    return Response.json(
+      { error: "API server is unavailable" },
+      { status: 502 }
+    );
+  }
 }
 
 async function tryRefreshTokens(): Promise<{

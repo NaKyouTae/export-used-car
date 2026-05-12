@@ -15,6 +15,7 @@ import { UpdateSellerStatusDto } from "./dto/update-seller-status.dto";
 import { UpdateCarStatusDto } from "./dto/update-car-status.dto";
 import { AdminSellersQueryDto } from "./dto/admin-sellers-query.dto";
 import { AdminCarsQueryDto } from "./dto/admin-cars-query.dto";
+import { CreateSellerDto } from "./dto/create-seller.dto";
 
 @Controller("admin")
 export class AdminController {
@@ -37,10 +38,10 @@ export class AdminController {
     return this.adminService.findSellers(query);
   }
 
-  @Patch("sellers/:id/verify")
+  @Post("sellers")
   @UseGuards(AdminGuard)
-  verifySeller(@Param("id") id: string) {
-    return this.adminService.verifySeller(id);
+  createSeller(@Body() dto: CreateSellerDto) {
+    return this.adminService.createSeller(dto);
   }
 
   @Patch("sellers/:id/status")

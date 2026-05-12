@@ -247,7 +247,17 @@ export const COUNTRIES = [
 
 export function formatPrice(price: number | string): string {
   const num = typeof price === "string" ? parseFloat(price) : price;
-  return `$${num.toLocaleString("en-US", { minimumFractionDigits: 0, maximumFractionDigits: 0 })}`;
+  return `₩${num.toLocaleString("ko-KR")}`;
+}
+
+export function formatPriceRange(
+  priceMin: number | string,
+  priceMax: number | string
+): string {
+  const min = typeof priceMin === "string" ? parseFloat(priceMin) : priceMin;
+  const max = typeof priceMax === "string" ? parseFloat(priceMax) : priceMax;
+  if (min === max) return formatPrice(min);
+  return `${formatPrice(min)} ~ ${formatPrice(max)}`;
 }
 
 export function formatMileage(km: number): string {

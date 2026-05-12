@@ -9,7 +9,7 @@ import PageHeader from "@/components/PageHeader";
 import {
   CAR_STATUS_LABELS,
   CAR_STATUS_COLORS,
-  formatPrice,
+  formatPriceRange,
   timeAgo,
 } from "@/lib/constants";
 
@@ -17,7 +17,8 @@ interface Car {
   id: string;
   title: string;
   status: string;
-  price: number | string;
+  priceMin: number | string;
+  priceMax: number | string;
   viewCount: number;
   wishlistCount: number;
   chatCount: number;
@@ -38,7 +39,6 @@ export default function SellerDashboardPage() {
   const { isAuthenticated, isLoading, user } = useAuth();
   const [cars, setCars] = useState<Car[]>([]);
   const [loading, setLoading] = useState(true);
-
   useEffect(() => {
     if (!isLoading && !isAuthenticated) {
       router.push("/seller/login");
@@ -75,7 +75,7 @@ export default function SellerDashboardPage() {
   if (isLoading) {
     return (
       <div className="min-h-screen bg-white flex items-center justify-center">
-        <div className="w-8 h-8 border-2 border-orange-500 border-t-transparent rounded-full animate-spin" />
+        <div className="w-8 h-8 border-2 border-main-500 border-t-transparent rounded-full animate-spin" />
       </div>
     );
   }
@@ -87,25 +87,9 @@ export default function SellerDashboardPage() {
       <PageHeader
         title="Dashboard"
         showBack={false}
-        rightAction={
-          <div className="flex items-center gap-3">
-            <Link
-              href="/"
-              className="text-sm text-gray-500 hover:text-gray-700"
-            >
-              Customer Page
-            </Link>
-            <Link
-              href="/seller/cars/new"
-              className="text-sm text-orange-600 font-medium"
-            >
-              + New Car
-            </Link>
-          </div>
-        }
       />
 
-      <div className="max-w-screen-lg mx-auto px-4 py-4">
+      <div className=" px-4 py-4">
         {/* Welcome */}
         <div className="bg-white rounded-xl p-4 mb-4">
           <p className="text-sm text-gray-500">Welcome back,</p>
@@ -143,13 +127,19 @@ export default function SellerDashboardPage() {
 
         {/* My Cars */}
         <div className="bg-white rounded-xl overflow-hidden">
-          <div className="px-4 py-3 border-b border-gray-100">
+          <div className="px-4 py-3 border-b border-gray-100 flex items-center justify-between">
             <h3 className="font-semibold text-gray-900">My Cars</h3>
+            <Link
+              href="/seller/cars/new"
+              className="text-sm text-main-600 font-medium hover:text-main-700"
+            >
+              + New
+            </Link>
           </div>
 
           {loading ? (
             <div className="flex justify-center py-8">
-              <div className="w-6 h-6 border-2 border-orange-500 border-t-transparent rounded-full animate-spin" />
+              <div className="w-6 h-6 border-2 border-main-500 border-t-transparent rounded-full animate-spin" />
             </div>
           ) : cars.length > 0 ? (
             <div className="divide-y divide-gray-50">
@@ -179,7 +169,7 @@ export default function SellerDashboardPage() {
                       {car.title}
                     </p>
                     <p className="text-sm text-gray-900 font-semibold mt-0.5">
-                      {formatPrice(car.price)}
+                      {formatPriceRange(car.priceMin, car.priceMax)}
                     </p>
                     <div className="flex items-center gap-2 mt-1 text-xs text-gray-400">
                       {car.viewCount > 0 && <span>Views {car.viewCount}</span>}
@@ -216,7 +206,7 @@ export default function SellerDashboardPage() {
               <p className="text-sm">No cars registered yet</p>
               <Link
                 href="/seller/cars/new"
-                className="text-sm text-orange-600 font-medium mt-2 inline-block"
+                className="text-sm text-main-600 font-medium mt-2 inline-block"
               >
                 Register your first car
               </Link>

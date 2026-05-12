@@ -14,6 +14,25 @@ interface UploadedImage {
   isNew?: boolean;
 }
 
+interface Tag {
+  id: string;
+  name: string;
+  nameKo?: string;
+}
+
+interface OptionCategory {
+  id: string;
+  name: string;
+  slug: string;
+  items: OptionItem[];
+}
+
+interface OptionItem {
+  id: string;
+  name: string;
+  nameKo?: string;
+}
+
 export default function EditCarPage({
   params,
 }: {
@@ -28,6 +47,10 @@ export default function EditCarPage({
   const [error, setError] = useState("");
   const [images, setImages] = useState<UploadedImage[]>([]);
   const [originalImageIds, setOriginalImageIds] = useState<string[]>([]);
+  const [tags, setTags] = useState<Tag[]>([]);
+  const [optionCategories, setOptionCategories] = useState<OptionCategory[]>([]);
+  const [selectedTagIds, setSelectedTagIds] = useState<string[]>([]);
+  const [selectedOptionItemIds, setSelectedOptionItemIds] = useState<string[]>([]);
 
   const [form, setForm] = useState({
     title: "",
@@ -44,7 +67,8 @@ export default function EditCarPage({
     drivetrain: "FWD",
     displacement: "",
     color: "",
-    price: "",
+    priceMin: "",
+    priceMax: "",
     description: "",
     status: "ACTIVE",
   });
@@ -55,17 +79,31 @@ export default function EditCarPage({
     }
   }, [isAuthenticated, authLoading, router]);
 
-  // Fetch car data + images
+  // Fetch car data + images + tags + options
   useEffect(() => {
     if (!isAuthenticated) return;
     async function fetchCar() {
       try {
-        const res = await fetch(`/api/cars/${id}`);
-        if (!res.ok) {
+        const [carRes, tagsRes, optionsRes] = await Promise.all([
+          fetch(`/api/cars/${id}`),
+          fetch("/api/tags"),
+          fetch("/api/option-categories"),
+        ]);
+
+        if (tagsRes.ok) {
+          const data = await tagsRes.json();
+          if (Array.isArray(data)) setTags(data);
+        }
+        if (optionsRes.ok) {
+          const data = await optionsRes.json();
+          if (Array.isArray(data)) setOptionCategories(data);
+        }
+
+        if (!carRes.ok) {
           router.push("/seller/dashboard");
           return;
         }
-        const car = await res.json();
+        const car = await carRes.json();
         setForm({
           title: car.title || "",
           categoryId: car.categoryId || "",
@@ -81,10 +119,21 @@ export default function EditCarPage({
           drivetrain: car.drivetrain || "FWD",
           displacement: car.displacement?.toString() || "",
           color: car.color || "",
-          price: car.price?.toString() || "",
+          priceMin: car.priceMin ? Number(car.priceMin).toLocaleString("ko-KR") : "",
+          priceMax: car.priceMax ? Number(car.priceMax).toLocaleString("ko-KR") : "",
           description: car.description || "",
           status: car.status || "ACTIVE",
         });
+
+        // Pre-select existing tags & options
+        if (car.tags) {
+          setSelectedTagIds(car.tags.map((t: { tag: Tag }) => t.tag.id));
+        }
+        if (car.options) {
+          setSelectedOptionItemIds(
+            car.options.map((o: { optionItem: OptionItem }) => o.optionItem.id)
+          );
+        }
 
         // Load existing images
         const existingImages: UploadedImage[] = (car.images || []).map(
@@ -127,7 +176,8 @@ export default function EditCarPage({
           displacement: form.displacement
             ? Number(form.displacement)
             : undefined,
-          price: Number(form.price),
+          priceMin: Number(form.priceMin.replace(/,/g, "")),
+          priceMax: Number(form.priceMax.replace(/,/g, "")),
         }),
       });
 
@@ -166,6 +216,22 @@ export default function EditCarPage({
         });
       }
 
+      // 4. Set tags & options
+      await Promise.all([
+        fetch(`/api/cars/${id}/tags`, {
+          method: "PUT",
+          headers: { "content-type": "application/json" },
+          credentials: "include",
+          body: JSON.stringify({ tagIds: selectedTagIds }),
+        }),
+        fetch(`/api/cars/${id}/options`, {
+          method: "PUT",
+          headers: { "content-type": "application/json" },
+          credentials: "include",
+          body: JSON.stringify({ optionItemIds: selectedOptionItemIds }),
+        }),
+      ]);
+
       router.push("/seller/dashboard");
     } catch {
       setError("Network error. Please try again.");
@@ -177,7 +243,7 @@ export default function EditCarPage({
   if (authLoading || loading) {
     return (
       <div className="min-h-screen bg-white flex items-center justify-center">
-        <div className="w-8 h-8 border-2 border-orange-500 border-t-transparent rounded-full animate-spin" />
+        <div className="w-8 h-8 border-2 border-main-500 border-t-transparent rounded-full animate-spin" />
       </div>
     );
   }
@@ -185,7 +251,7 @@ export default function EditCarPage({
   if (!isAuthenticated) return null;
 
   const inputClass =
-    "w-full px-4 py-3 border border-gray-200 rounded-xl text-sm focus:outline-none focus:ring-2 focus:ring-orange-500 focus:border-transparent bg-white";
+    "w-full px-4 py-3 border border-gray-200 rounded-xl text-sm focus:outline-none focus:ring-2 focus:ring-main-500 focus:border-transparent bg-white";
   const labelClass = "block text-sm font-medium text-gray-700 mb-1";
 
   return (
@@ -194,7 +260,7 @@ export default function EditCarPage({
 
       <form
         onSubmit={handleSubmit}
-        className="max-w-screen-md mx-auto py-6 space-y-6"
+        className=" py-6 space-y-6"
       >
         {/* Photos */}
         <section className="bg-white rounded-xl overflow-hidden mx-4">
@@ -352,22 +418,108 @@ export default function EditCarPage({
           </div>
         </section>
 
+        {/* Tags */}
+        {tags.length > 0 && (
+          <section className="bg-white rounded-xl p-4 space-y-3 mx-4">
+            <h2 className="font-semibold text-gray-900">Tags</h2>
+            <div className="flex flex-wrap gap-2">
+              {tags.map((tag) => {
+                const selected = selectedTagIds.includes(tag.id);
+                return (
+                  <button
+                    key={tag.id}
+                    type="button"
+                    onClick={() =>
+                      setSelectedTagIds((prev) =>
+                        selected
+                          ? prev.filter((tid) => tid !== tag.id)
+                          : [...prev, tag.id]
+                      )
+                    }
+                    className={`px-3 py-1.5 rounded-full text-sm font-medium border transition-colors ${
+                      selected
+                        ? "bg-main-500 text-white border-main-500"
+                        : "bg-white text-gray-600 border-gray-200 hover:border-main-300"
+                    }`}
+                  >
+                    {tag.nameKo || tag.name}
+                  </button>
+                );
+              })}
+            </div>
+          </section>
+        )}
+
+        {/* Options */}
+        {optionCategories.length > 0 && (
+          <section className="bg-white rounded-xl p-4 space-y-4 mx-4">
+            <h2 className="font-semibold text-gray-900">Options</h2>
+            {optionCategories.map((category) => (
+              <div key={category.id} className="space-y-2">
+                <h3 className="text-sm font-medium text-gray-500">
+                  {category.name}
+                </h3>
+                <div className="flex flex-wrap gap-2">
+                  {category.items.map((item) => {
+                    const selected = selectedOptionItemIds.includes(item.id);
+                    return (
+                      <button
+                        key={item.id}
+                        type="button"
+                        onClick={() =>
+                          setSelectedOptionItemIds((prev) =>
+                            selected
+                              ? prev.filter((oid) => oid !== item.id)
+                              : [...prev, item.id]
+                          )
+                        }
+                        className={`px-3 py-1.5 rounded-full text-sm font-medium border transition-colors ${
+                          selected
+                            ? "bg-main-500 text-white border-main-500"
+                            : "bg-white text-gray-600 border-gray-200 hover:border-main-300"
+                        }`}
+                      >
+                        {item.nameKo || item.name}
+                      </button>
+                    );
+                  })}
+                </div>
+              </div>
+            ))}
+          </section>
+        )}
+
         {/* Price & Description */}
         <section className="bg-white rounded-xl p-4 space-y-4 mx-4">
           <h2 className="font-semibold text-gray-900">Price & Description</h2>
 
-          <div>
-            <label className={labelClass}>Price (USD) *</label>
-            <div className="relative">
-              <span className="absolute left-4 top-1/2 -translate-y-1/2 text-gray-400 text-sm">
-                $
-              </span>
+          <div className="grid grid-cols-2 gap-3">
+            <div>
+              <label className={labelClass}>Min Price (KRW) *</label>
               <input
-                type="number"
-                value={form.price}
-                onChange={(e) => updateForm("price", e.target.value)}
+                type="text"
+                inputMode="numeric"
+                value={form.priceMin}
+                onChange={(e) => {
+                  const raw = e.target.value.replace(/[^0-9]/g, "");
+                  updateForm("priceMin", raw ? Number(raw).toLocaleString("ko-KR") : "");
+                }}
                 required
-                className={`${inputClass} pl-8`}
+                className={inputClass}
+              />
+            </div>
+            <div>
+              <label className={labelClass}>Max Price (KRW) *</label>
+              <input
+                type="text"
+                inputMode="numeric"
+                value={form.priceMax}
+                onChange={(e) => {
+                  const raw = e.target.value.replace(/[^0-9]/g, "");
+                  updateForm("priceMax", raw ? Number(raw).toLocaleString("ko-KR") : "");
+                }}
+                required
+                className={inputClass}
               />
             </div>
           </div>
@@ -392,8 +544,8 @@ export default function EditCarPage({
         <div className="mx-4">
           <button
             type="submit"
-            disabled={saving || !form.title || !form.price}
-            className="w-full py-3 bg-orange-500 text-white font-semibold rounded-xl hover:bg-orange-600 disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
+            disabled={saving || !form.title || !form.priceMin || !form.priceMax}
+            className="w-full py-3 bg-main-500 text-white font-semibold rounded-xl hover:bg-main-600 disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
           >
             {saving ? "Saving..." : "Save Changes"}
           </button>

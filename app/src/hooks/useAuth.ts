@@ -8,6 +8,11 @@ interface User {
   userType: "SELLER" | "BUYER";
   name?: string;
   companyName?: string;
+  phone?: string;
+  country?: string;
+  businessNumber?: string;
+  address?: string;
+  contactName?: string;
 }
 
 interface AuthState {

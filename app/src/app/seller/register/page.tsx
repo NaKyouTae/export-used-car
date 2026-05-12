@@ -81,7 +81,7 @@ function SellerRegisterForm() {
             onChange={(e) => setCompanyName(e.target.value)}
             placeholder="Your Company Ltd."
             required
-            className="w-full px-4 py-3 border border-gray-200 rounded-xl text-sm focus:outline-none focus:ring-2 focus:ring-orange-500 focus:border-transparent"
+            className="w-full px-4 py-3 border border-gray-200 rounded-xl text-sm focus:outline-none focus:ring-2 focus:ring-main-500 focus:border-transparent"
           />
         </div>
 
@@ -96,7 +96,7 @@ function SellerRegisterForm() {
             onChange={(e) => setContactName(e.target.value)}
             placeholder="John Kim"
             required
-            className="w-full px-4 py-3 border border-gray-200 rounded-xl text-sm focus:outline-none focus:ring-2 focus:ring-orange-500 focus:border-transparent"
+            className="w-full px-4 py-3 border border-gray-200 rounded-xl text-sm focus:outline-none focus:ring-2 focus:ring-main-500 focus:border-transparent"
           />
         </div>
 
@@ -111,7 +111,7 @@ function SellerRegisterForm() {
             onChange={(e) => setPhone(e.target.value)}
             placeholder="+82 10-1234-5678"
             required
-            className="w-full px-4 py-3 border border-gray-200 rounded-xl text-sm focus:outline-none focus:ring-2 focus:ring-orange-500 focus:border-transparent"
+            className="w-full px-4 py-3 border border-gray-200 rounded-xl text-sm focus:outline-none focus:ring-2 focus:ring-main-500 focus:border-transparent"
           />
         </div>
 
@@ -125,7 +125,7 @@ function SellerRegisterForm() {
             value={businessNumber}
             onChange={(e) => setBusinessNumber(e.target.value)}
             placeholder="123-45-67890"
-            className="w-full px-4 py-3 border border-gray-200 rounded-xl text-sm focus:outline-none focus:ring-2 focus:ring-orange-500 focus:border-transparent"
+            className="w-full px-4 py-3 border border-gray-200 rounded-xl text-sm focus:outline-none focus:ring-2 focus:ring-main-500 focus:border-transparent"
           />
         </div>
 
@@ -139,7 +139,7 @@ function SellerRegisterForm() {
             value={address}
             onChange={(e) => setAddress(e.target.value)}
             placeholder="Seoul, South Korea"
-            className="w-full px-4 py-3 border border-gray-200 rounded-xl text-sm focus:outline-none focus:ring-2 focus:ring-orange-500 focus:border-transparent"
+            className="w-full px-4 py-3 border border-gray-200 rounded-xl text-sm focus:outline-none focus:ring-2 focus:ring-main-500 focus:border-transparent"
           />
         </div>
 
@@ -148,7 +148,7 @@ function SellerRegisterForm() {
         <button
           type="submit"
           disabled={loading || !companyName || !contactName || !phone}
-          className="w-full py-3 bg-orange-500 text-white font-semibold rounded-xl hover:bg-orange-600 disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
+          className="w-full py-3 bg-main-500 text-white font-semibold rounded-xl hover:bg-main-600 disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
         >
           {loading ? "Registering..." : "Register as Seller"}
         </button>
@@ -161,7 +161,7 @@ export default function SellerRegisterPage() {
   return (
     <div className="min-h-screen bg-white">
       <PageHeader title="Register" />
-      <Suspense fallback={<div className="flex justify-center pt-20"><div className="w-6 h-6 border-2 border-orange-500 border-t-transparent rounded-full animate-spin" /></div>}>
+      <Suspense fallback={<div className="flex justify-center pt-20"><div className="w-6 h-6 border-2 border-main-500 border-t-transparent rounded-full animate-spin" /></div>}>
         <SellerRegisterForm />
       </Suspense>
     </div>

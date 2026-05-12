@@ -121,7 +121,7 @@ export default function CarImageUploader({
                 </button>
                 {/* Cover badge */}
                 {index === 0 && (
-                  <span className="absolute bottom-3 left-3 bg-orange-500 text-white text-xs px-2 py-0.5 rounded font-medium">
+                  <span className="absolute bottom-3 left-3 bg-main-500 text-white text-xs px-2 py-0.5 rounded font-medium">
                     Cover
                   </span>
                 )}
@@ -159,10 +159,10 @@ export default function CarImageUploader({
         type="button"
         onClick={handleCapture}
         disabled={!canAdd || uploading}
-        className="mt-3 w-full py-3 border-2 border-dashed border-gray-300 rounded-xl flex items-center justify-center gap-2 text-gray-500 hover:border-orange-400 hover:text-orange-500 disabled:opacity-40 transition-colors bg-white"
+        className="mt-3 w-full py-3 border-2 border-dashed border-gray-300 rounded-xl flex items-center justify-center gap-2 text-gray-500 hover:border-main-400 hover:text-main-500 disabled:opacity-40 transition-colors bg-white"
       >
         {uploading ? (
-          <div className="w-5 h-5 border-2 border-orange-500 border-t-transparent rounded-full animate-spin" />
+          <div className="w-5 h-5 border-2 border-main-500 border-t-transparent rounded-full animate-spin" />
         ) : (
           <>
             <svg

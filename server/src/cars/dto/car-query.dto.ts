@@ -8,6 +8,8 @@ export enum CarSort {
   YEAR_DESC = "year_desc",
   MILEAGE_ASC = "mileage_asc",
   NEWEST = "newest",
+  POPULAR = "popular",
+  WISHLIST = "wishlist",
 }
 
 export class CarQueryDto {

@@ -84,7 +84,7 @@ function RegisterForm() {
             onChange={(e) => setName(e.target.value)}
             placeholder="John Doe"
             required
-            className="w-full px-4 py-3 border border-gray-200 rounded-xl text-sm focus:outline-none focus:ring-2 focus:ring-orange-500 focus:border-transparent"
+            className="w-full px-4 py-3 border border-gray-200 rounded-xl text-sm focus:outline-none focus:ring-2 focus:ring-main-500 focus:border-transparent"
           />
         </div>
 
@@ -100,7 +100,7 @@ function RegisterForm() {
             value={country}
             onChange={(e) => setCountry(e.target.value)}
             required
-            className="w-full px-4 py-3 border border-gray-200 rounded-xl text-sm focus:outline-none focus:ring-2 focus:ring-orange-500 focus:border-transparent bg-white"
+            className="w-full px-4 py-3 border border-gray-200 rounded-xl text-sm focus:outline-none focus:ring-2 focus:ring-main-500 focus:border-transparent bg-white"
           >
             <option value="">Select your country</option>
             {COUNTRIES.map((c) => (
@@ -124,7 +124,7 @@ function RegisterForm() {
             value={company}
             onChange={(e) => setCompany(e.target.value)}
             placeholder="Your company name"
-            className="w-full px-4 py-3 border border-gray-200 rounded-xl text-sm focus:outline-none focus:ring-2 focus:ring-orange-500 focus:border-transparent"
+            className="w-full px-4 py-3 border border-gray-200 rounded-xl text-sm focus:outline-none focus:ring-2 focus:ring-main-500 focus:border-transparent"
           />
         </div>
 
@@ -141,7 +141,7 @@ function RegisterForm() {
             value={phone}
             onChange={(e) => setPhone(e.target.value)}
             placeholder="+234 800 000 0000"
-            className="w-full px-4 py-3 border border-gray-200 rounded-xl text-sm focus:outline-none focus:ring-2 focus:ring-orange-500 focus:border-transparent"
+            className="w-full px-4 py-3 border border-gray-200 rounded-xl text-sm focus:outline-none focus:ring-2 focus:ring-main-500 focus:border-transparent"
           />
         </div>
 
@@ -150,7 +150,7 @@ function RegisterForm() {
         <button
           type="submit"
           disabled={loading || !name || !country}
-          className="w-full py-3 bg-orange-500 text-white font-semibold rounded-xl hover:bg-orange-600 disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
+          className="w-full py-3 bg-main-500 text-white font-semibold rounded-xl hover:bg-main-600 disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
         >
           {loading ? "Creating Account..." : "Create Account"}
         </button>
@@ -166,7 +166,7 @@ export default function RegisterPage() {
       <Suspense
         fallback={
           <div className="flex justify-center pt-20">
-            <div className="w-6 h-6 border-2 border-orange-500 border-t-transparent rounded-full animate-spin" />
+            <div className="w-6 h-6 border-2 border-main-500 border-t-transparent rounded-full animate-spin" />
           </div>
         }
       >

@@ -16,7 +16,8 @@ interface CarDetail {
   drivetrain?: string;
   displacement?: number;
   color?: string;
-  price: number | string;
+  priceMin: number | string;
+  priceMax: number | string;
   description?: string;
   status: string;
   viewCount: number;
@@ -60,7 +61,7 @@ export async function generateMetadata({
   if (!car) return { title: "Car Not Found" };
   return {
     title: `${car.title} - AutoExport`,
-    description: `${car.year} ${car.make?.name || ""} ${car.carModel?.name || ""} - $${Number(car.price).toLocaleString()}`,
+    description: `${car.year} ${car.make?.name || ""} ${car.carModel?.name || ""} - ${Number(car.priceMin).toLocaleString()}원`,
   };
 }
 

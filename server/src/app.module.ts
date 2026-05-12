@@ -14,6 +14,8 @@ import { CarsModule } from "./cars/cars.module";
 import { CarInspectionModule } from "./car-inspection/car-inspection.module";
 import { SellersModule } from "./sellers/sellers.module";
 import { AdminModule } from "./admin/admin.module";
+import { WishlistModule } from "./wishlist/wishlist.module";
+import { ChatModule } from "./chat/chat.module";
 
 @Module({
   imports: [
@@ -30,6 +32,8 @@ import { AdminModule } from "./admin/admin.module";
     CarInspectionModule,
     SellersModule,
     AdminModule,
+    WishlistModule,
+    ChatModule,
   ],
   controllers: [AppController],
   providers: [AppService],

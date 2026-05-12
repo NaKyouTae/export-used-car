@@ -6,7 +6,7 @@ import Link from "next/link";
 import Image from "next/image";
 import { useAuth } from "@/hooks/useAuth";
 import PageHeader from "@/components/PageHeader";
-import { CAR_STATUS_LABELS, CAR_STATUS_COLORS, formatPrice, formatMileage, FUEL_TYPE_LABELS } from "@/lib/constants";
+import { CAR_STATUS_LABELS, CAR_STATUS_COLORS, formatPriceRange, formatMileage, FUEL_TYPE_LABELS } from "@/lib/constants";
 
 interface Car {
   id: string;
@@ -14,7 +14,8 @@ interface Car {
   year: number;
   mileage: number;
   fuelType: string;
-  price: number | string;
+  priceMin: number | string;
+  priceMax: number | string;
   status: string;
   viewCount: number;
   wishlistCount: number;
@@ -59,7 +60,7 @@ export default function SellerCarsPage() {
   if (isLoading) {
     return (
       <div className="min-h-screen bg-white flex items-center justify-center">
-        <div className="w-8 h-8 border-2 border-orange-500 border-t-transparent rounded-full animate-spin" />
+        <div className="w-8 h-8 border-2 border-main-500 border-t-transparent rounded-full animate-spin" />
       </div>
     );
   }
@@ -73,13 +74,13 @@ export default function SellerCarsPage() {
       <PageHeader
         title="My Cars"
         rightAction={
-          <Link href="/seller/cars/new" className="text-sm text-orange-600 font-medium">
+          <Link href="/seller/cars/new" className="text-sm text-main-600 font-medium">
             + New
           </Link>
         }
       />
 
-      <div className="max-w-screen-lg mx-auto">
+      <div className="">
         {/* Status Filter */}
         <div className="px-4 py-3 flex gap-2 overflow-x-auto scrollbar-hide">
           {statuses.map((status) => (
@@ -101,7 +102,7 @@ export default function SellerCarsPage() {
         <div className="px-4">
           {loading ? (
             <div className="flex justify-center py-12">
-              <div className="w-6 h-6 border-2 border-orange-500 border-t-transparent rounded-full animate-spin" />
+              <div className="w-6 h-6 border-2 border-main-500 border-t-transparent rounded-full animate-spin" />
             </div>
           ) : cars.length > 0 ? (
             <div className="space-y-3">
@@ -134,7 +135,7 @@ export default function SellerCarsPage() {
                       <p className="text-xs text-gray-500 mt-0.5">
                         {car.year} · {formatMileage(car.mileage)} · {FUEL_TYPE_LABELS[car.fuelType] || car.fuelType}
                       </p>
-                      <p className="text-sm font-bold text-gray-900 mt-1">{formatPrice(car.price)}</p>
+                      <p className="text-sm font-bold text-gray-900 mt-1">{formatPriceRange(car.priceMin, car.priceMax)}</p>
                       <p className="text-xs text-gray-400 mt-1">
                         Views {car.viewCount} · Likes {car.wishlistCount} · Chat {car.chatCount}
                       </p>
@@ -146,7 +147,7 @@ export default function SellerCarsPage() {
           ) : (
             <div className="text-center py-16 text-gray-400">
               <p className="text-sm">No cars found</p>
-              <Link href="/seller/cars/new" className="text-sm text-orange-600 font-medium mt-2 inline-block">
+              <Link href="/seller/cars/new" className="text-sm text-main-600 font-medium mt-2 inline-block">
                 Register your first car
               </Link>
             </div>

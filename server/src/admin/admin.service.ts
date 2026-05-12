@@ -44,7 +44,8 @@ export class AdminService {
           id: true,
           title: true,
           status: true,
-          price: true,
+          priceMin: true,
+          priceMax: true,
           createdAt: true,
           seller: { select: { companyName: true } },
         },
@@ -157,10 +158,25 @@ export class AdminService {
     return { data, nextCursor };
   }
 
-  async verifySeller(id: string) {
-    return this.prisma.seller.update({
-      where: { id },
-      data: { isVerified: true, status: SellerStatus.ACTIVE },
+  async createSeller(data: {
+    email: string;
+    companyName: string;
+    contactName: string;
+    phone: string;
+    businessNumber?: string;
+    address?: string;
+  }) {
+    return this.prisma.seller.create({
+      data: {
+        email: data.email,
+        companyName: data.companyName,
+        contactName: data.contactName,
+        phone: data.phone,
+        businessNumber: data.businessNumber,
+        address: data.address,
+        isVerified: true,
+        status: SellerStatus.ACTIVE,
+      },
     });
   }
 
@@ -206,7 +222,8 @@ export class AdminService {
         mileage: true,
         fuelType: true,
         transmission: true,
-        price: true,
+        priceMin: true,
+        priceMax: true,
         status: true,
         viewCount: true,
         createdAt: true,

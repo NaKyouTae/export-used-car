@@ -13,7 +13,7 @@ export default function PageHeader({ title, showBack = true, rightAction }: Page
 
   return (
     <header className="sticky top-0 z-40 bg-white border-b border-gray-100">
-      <div className="flex items-center h-12 px-4 max-w-screen-lg mx-auto">
+      <div className="flex items-center h-12 px-4 ">
         {showBack && (
           <button
             onClick={() => router.back()}

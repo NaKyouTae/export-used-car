@@ -29,6 +29,8 @@ export class AuthService {
       data: { email, code, userType, expiresAt },
     });
 
+    console.log(`[AUTH] Verification code for ${email}: ${code}`);
+
     await this.emailService.sendVerificationCode(email, code);
 
     return { message: "Verification code sent" };
@@ -64,7 +66,14 @@ export class AuthService {
       return { ...tokens, isNewUser: false };
     }
 
-    // New user — return temp token for registration
+    // Sellers cannot self-register — must be added by admin
+    if (userType === UserType.SELLER) {
+      throw new BadRequestException(
+        "You are not a registered seller. Please contact the administrator.",
+      );
+    }
+
+    // New buyer — return temp token for registration
     const tempToken = this.jwt.sign(
       { email, userType, purpose: "registration" },
       { expiresIn: "10m" as any },

@@ -2,7 +2,6 @@ import {
   IsEnum,
   IsInt,
   IsNotEmpty,
-  IsNumber,
   IsOptional,
   IsString,
   Min,
@@ -72,9 +71,14 @@ export class CreateCarDto {
   plateNumber?: string;
 
   @Type(() => Number)
-  @IsNumber()
+  @IsInt()
   @Min(0)
-  price: number;
+  priceMin: number;
+
+  @Type(() => Number)
+  @IsInt()
+  @Min(0)
+  priceMax: number;
 
   @IsString()
   @IsOptional()

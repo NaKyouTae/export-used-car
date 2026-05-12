@@ -34,7 +34,11 @@ pnpm 모노레포:
 
 ## 컨벤션
 
-- 모바일 퍼스트 반응형 (당근마켓 오마주)
+- **모바일 전용 레이아웃 (max-width 390px 고정)** — 반응형 X, md:/lg: 브레이크포인트 사용 금지
+  - 루트 layout.tsx에서 `max-w-[390px]`로 전체 감싸므로 내부 페이지에서 max-w-screen-lg 등 추가하지 않을 것
+  - 새 페이지/컴포넌트 생성 시 모바일 뷰포트 기준으로만 작성
+- **통화는 KRW(원화)** — formatPrice() / formatPriceRange() 사용, $ 사용 금지
+- **가격은 범위(priceMin/priceMax)** — 단일 price 필드 사용 금지
 - BFF 프록시 패턴: 프론트 API Routes → NestJS (httpOnly 쿠키 JWT)
 - 커서 기반 페이지네이션 (offset 사용 금지)
 - Admin 인증: ADMIN_TOKEN 정적 토큰 (MVP)

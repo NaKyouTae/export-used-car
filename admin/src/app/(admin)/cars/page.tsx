@@ -5,7 +5,8 @@ import { useEffect, useState } from "react";
 interface Car {
   id: string;
   title: string;
-  price?: number | string;
+  priceMin?: number | string;
+  priceMax?: number | string;
   status: string;
   createdAt: string;
   viewCount: number;
@@ -38,7 +39,21 @@ function formatDate(s: string) {
 function formatPrice(n?: number | string) {
   if (n == null) return "-";
   const num = typeof n === "string" ? parseFloat(n) : n;
-  return `$${num.toLocaleString()}`;
+  if (num >= 10000) {
+    const man = Math.floor(num / 10000);
+    const remainder = num % 10000;
+    if (remainder === 0) return `${man.toLocaleString("ko-KR")}만원`;
+    return `${man.toLocaleString("ko-KR")}만 ${remainder.toLocaleString("ko-KR")}원`;
+  }
+  return `${num.toLocaleString("ko-KR")}원`;
+}
+
+function formatPriceRange(min?: number | string, max?: number | string) {
+  if (min == null && max == null) return "-";
+  const minStr = formatPrice(min);
+  const maxStr = formatPrice(max);
+  if (minStr === maxStr) return minStr;
+  return `${minStr} ~ ${maxStr}`;
 }
 
 export default function CarsPage() {
@@ -143,7 +158,7 @@ export default function CarsPage() {
                       {c.make?.name || "-"} {c.carModel?.name || ""}
                     </td>
                     <td>{c.seller?.companyName || "-"}</td>
-                    <td>{formatPrice(c.price)}</td>
+                    <td>{formatPriceRange(c.priceMin, c.priceMax)}</td>
                     <td>{c.viewCount}</td>
                     <td>
                       <StatusBadge status={c.status} />

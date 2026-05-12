@@ -1,5 +1,20 @@
 @import "tailwindcss";
 
+@theme {
+  /* Main color palette - hue 값만 변경하면 전체 팔레트 색조 변경 */
+  --color-main-50: oklch(0.97 0.02 250);
+  --color-main-100: oklch(0.93 0.04 250);
+  --color-main-200: oklch(0.86 0.08 250);
+  --color-main-300: oklch(0.76 0.12 250);
+  --color-main-400: oklch(0.66 0.16 250);
+  --color-main-500: oklch(0.55 0.19 250);
+  --color-main-600: oklch(0.47 0.19 250);
+  --color-main-700: oklch(0.40 0.17 250);
+  --color-main-800: oklch(0.34 0.14 250);
+  --color-main-900: oklch(0.27 0.10 250);
+  --color-main-950: oklch(0.20 0.07 250);
+}
+
 :root {
   --safe-area-inset-top: env(safe-area-inset-top, 0px);
   --safe-area-inset-bottom: env(safe-area-inset-bottom, 0px);

@@ -1,15 +1,18 @@
 "use client";
 
+import { useState, useEffect, useCallback } from "react";
+import { useRouter } from "next/navigation";
 import Image from "next/image";
 import {
-  formatPrice,
+  formatPriceRange,
   formatMileage,
-  timeAgo,
   FUEL_TYPE_LABELS,
   TRANSMISSION_LABELS,
   DRIVETRAIN_LABELS,
 } from "@/lib/constants";
 import PageHeader from "@/components/PageHeader";
+import { useAuth } from "@/hooks/useAuth";
+import { addRecentlyViewed } from "@/hooks/useRecentlyViewed";
 
 interface CarDetail {
   id: string;
@@ -24,7 +27,8 @@ interface CarDetail {
   drivetrain?: string;
   displacement?: number;
   color?: string;
-  price: number | string;
+  priceMin: number | string;
+  priceMax: number | string;
   description?: string;
   status: string;
   viewCount: number;
@@ -47,6 +51,103 @@ interface CarDetail {
 }
 
 export default function CarDetailClient({ car }: { car: CarDetail }) {
+  const { user, isAuthenticated, isLoading: authLoading } = useAuth();
+  const router = useRouter();
+  const [wishlisted, setWishlisted] = useState(false);
+  const [wishlistCount, setWishlistCount] = useState(car.wishlistCount);
+  const [togglingWishlist, setTogglingWishlist] = useState(false);
+  const [startingChat, setStartingChat] = useState(false);
+
+  useEffect(() => {
+    const thumbnail =
+      car.images?.find((img) => img.isThumbnail)?.url ||
+      car.images?.[0]?.url ||
+      null;
+    addRecentlyViewed({
+      id: car.id,
+      title: car.title,
+      year: car.year,
+      mileage: car.mileage,
+      fuelType: car.fuelType,
+      priceMin: car.priceMin,
+      priceMax: car.priceMax,
+      viewCount: car.viewCount,
+      wishlistCount: car.wishlistCount,
+      chatCount: car.chatCount,
+      createdAt: car.createdAt,
+      thumbnail,
+    });
+  }, [car]);
+
+  useEffect(() => {
+    if (authLoading || !isAuthenticated) return;
+    fetch(`/api/cars/${car.id}/wishlist`, { credentials: "include" })
+      .then((res) => (res.ok ? res.json() : null))
+      .then((data) => {
+        if (data) setWishlisted(data.wishlisted);
+      })
+      .catch(() => {});
+  }, [car.id, isAuthenticated, authLoading]);
+
+  const toggleWishlist = useCallback(async () => {
+    if (!isAuthenticated) {
+      router.push("/login");
+      return;
+    }
+    if (togglingWishlist) return;
+    setTogglingWishlist(true);
+    try {
+      const res = await fetch(`/api/cars/${car.id}/wishlist`, {
+        method: "POST",
+        credentials: "include",
+      });
+      if (res.ok) {
+        const data = await res.json();
+        setWishlisted(data.wishlisted);
+        setWishlistCount((prev) => prev + (data.wishlisted ? 1 : -1));
+      }
+    } catch {
+      // ignore
+    } finally {
+      setTogglingWishlist(false);
+    }
+  }, [car.id, togglingWishlist, isAuthenticated, router]);
+
+  const isSeller = user?.userType === "SELLER";
+
+  const handleChatAction = useCallback(async () => {
+    if (!isAuthenticated) {
+      router.push("/login");
+      return;
+    }
+    if (startingChat) return;
+
+    // Seller: go to chat list filtered by this car
+    if (isSeller) {
+      router.push(`/chat?carId=${car.id}`);
+      return;
+    }
+
+    // Buyer: create or get chat room, then navigate to it
+    setStartingChat(true);
+    try {
+      const res = await fetch("/api/chat/rooms", {
+        method: "POST",
+        credentials: "include",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ carId: car.id }),
+      });
+      if (res.ok) {
+        const room = await res.json();
+        router.push(`/chat/${room.id}`);
+      }
+    } catch {
+      // ignore
+    } finally {
+      setStartingChat(false);
+    }
+  }, [car.id, isAuthenticated, isSeller, router, startingChat]);
+
   const sortedImages = [...(car.images || [])].sort((a, b) => a.order - b.order);
   const imageCount = sortedImages.length;
 
@@ -79,8 +180,8 @@ export default function CarDetailClient({ car }: { car: CarDetail }) {
   ].filter((row) => row.value);
 
   return (
-    <div className="min-h-screen bg-white pb-20">
-      <PageHeader title="" />
+    <div className="min-h-screen bg-white pb-[72px]">
+      <PageHeader title="Car Details" />
 
       {/* Image Gallery Placeholder */}
       <div className="relative bg-gray-100 aspect-[4/3] max-h-[400px] w-full overflow-hidden">
@@ -106,22 +207,7 @@ export default function CarDetailClient({ car }: { car: CarDetail }) {
         )}
       </div>
 
-      <div className="max-w-screen-lg mx-auto px-4">
-        {/* Seller Info */}
-        {car.seller && (
-          <div className="flex items-center gap-3 py-3 border-b border-gray-100">
-            <div className="w-10 h-10 bg-gray-200 rounded-full flex items-center justify-center text-gray-500 text-sm font-bold">
-              {car.seller.companyName.charAt(0)}
-            </div>
-            <div>
-              <p className="font-medium text-sm text-gray-900">
-                {car.seller.companyName}
-              </p>
-              <p className="text-xs text-gray-500">Dealer</p>
-            </div>
-          </div>
-        )}
-
+      <div className=" px-4">
         {/* Title + Specs Summary */}
         <div className="py-4">
           <h1 className="text-xl font-bold text-gray-900 leading-snug">
@@ -134,10 +220,33 @@ export default function CarDetailClient({ car }: { car: CarDetail }) {
         </div>
 
         {/* Price */}
-        <div className="pb-4">
+        <div className="pb-2">
           <p className="text-2xl font-bold text-gray-900">
-            {formatPrice(car.price)}
+            {formatPriceRange(car.priceMin, car.priceMax)}
           </p>
+        </div>
+
+        {/* Stats */}
+        <div className="flex items-center gap-4 pb-4 text-xs text-gray-400">
+          <span className="flex items-center gap-1">
+            <svg className="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 12a3 3 0 11-6 0 3 3 0 016 0z" />
+              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M2.458 12C3.732 7.943 7.523 5 12 5c4.478 0 8.268 2.943 9.542 7-1.274 4.057-5.064 7-9.542 7-4.477 0-8.268-2.943-9.542-7z" />
+            </svg>
+            {car.viewCount}
+          </span>
+          <span className="flex items-center gap-1">
+            <svg className="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4.318 6.318a4.5 4.5 0 000 6.364L12 20.364l7.682-7.682a4.5 4.5 0 00-6.364-6.364L12 7.636l-1.318-1.318a4.5 4.5 0 00-6.364 0z" />
+            </svg>
+            {wishlistCount}
+          </span>
+          <span className="flex items-center gap-1">
+            <svg className="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M8 12h.01M12 12h.01M16 12h.01M21 12c0 4.418-4.03 8-9 8a9.863 9.863 0 01-4.255-.949L3 20l1.395-3.72C3.512 15.042 3 13.574 3 12c0-4.418 4.03-8 9-8s9 3.582 9 8z" />
+            </svg>
+            {car.chatCount}
+          </span>
         </div>
 
         {/* Description */}
@@ -200,25 +309,36 @@ export default function CarDetailClient({ car }: { car: CarDetail }) {
           </div>
         )}
 
-        {/* Stats */}
-        <div className="py-4 border-t border-gray-100">
-          <p className="text-xs text-gray-400 text-center">
-            {timeAgo(car.createdAt)} · Chat {car.chatCount} · Likes{" "}
-            {car.wishlistCount} · Views {car.viewCount}
-          </p>
-        </div>
       </div>
 
       {/* Sticky Bottom Bar */}
-      <div className="fixed bottom-0 left-0 right-0 bg-white border-t border-gray-200 px-4 py-3 pb-safe z-50">
-        <div className="max-w-screen-lg mx-auto flex items-center gap-3">
-          <button className="flex items-center justify-center w-12 h-12 border border-gray-200 rounded-xl hover:bg-gray-50 transition-colors">
-            <svg className="w-6 h-6 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4.318 6.318a4.5 4.5 0 000 6.364L12 20.364l7.682-7.682a4.5 4.5 0 00-6.364-6.364L12 7.636l-1.318-1.318a4.5 4.5 0 00-6.364 0z" />
-            </svg>
+      <div className="fixed bottom-0 left-0 right-0 max-w-[390px] mx-auto bg-white border-t border-gray-200 px-4 py-3 pb-safe z-50">
+        <div className="flex items-center gap-3">
+          <button
+            onClick={toggleWishlist}
+            disabled={togglingWishlist}
+            className="flex items-center justify-center w-12 h-12 border border-gray-200 rounded-xl hover:bg-gray-50 transition-colors"
+          >
+            {wishlisted ? (
+              <svg className="w-6 h-6 text-red-500" fill="currentColor" viewBox="0 0 24 24">
+                <path d="M4.318 6.318a4.5 4.5 0 000 6.364L12 20.364l7.682-7.682a4.5 4.5 0 00-6.364-6.364L12 7.636l-1.318-1.318a4.5 4.5 0 00-6.364 0z" />
+              </svg>
+            ) : (
+              <svg className="w-6 h-6 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4.318 6.318a4.5 4.5 0 000 6.364L12 20.364l7.682-7.682a4.5 4.5 0 00-6.364-6.364L12 7.636l-1.318-1.318a4.5 4.5 0 00-6.364 0z" />
+              </svg>
+            )}
           </button>
-          <button className="flex-1 py-3 bg-orange-500 text-white font-semibold rounded-xl hover:bg-orange-600 transition-colors">
-            Chat with Seller
+          <button
+            onClick={handleChatAction}
+            disabled={startingChat}
+            className="flex-1 py-3 bg-main-500 text-white font-semibold rounded-xl hover:bg-main-600 transition-colors disabled:opacity-60"
+          >
+            {startingChat
+              ? "Opening Chat..."
+              : isSeller
+                ? `View Chats (${car.chatCount})`
+                : "Chat with Seller"}
           </button>
         </div>
       </div>

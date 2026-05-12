@@ -51,10 +51,11 @@ export class CarsService {
       if (yearMax) where.year.lte = yearMax;
     }
 
-    if (priceMin || priceMax) {
-      where.price = {};
-      if (priceMin) where.price.gte = priceMin;
-      if (priceMax) where.price.lte = priceMax;
+    if (priceMin != null) {
+      where.priceMin = { gte: priceMin };
+    }
+    if (priceMax != null) {
+      where.priceMax = { lte: priceMax };
     }
 
     if (mileageMax) {
@@ -87,7 +88,8 @@ export class CarsService {
         mileage: true,
         fuelType: true,
         transmission: true,
-        price: true,
+        priceMin: true,
+        priceMax: true,
         status: true,
         viewCount: true,
         wishlistCount: true,
@@ -285,7 +287,8 @@ export class CarsService {
         mileage: true,
         fuelType: true,
         transmission: true,
-        price: true,
+        priceMin: true,
+        priceMax: true,
         status: true,
         viewCount: true,
         wishlistCount: true,
@@ -353,8 +356,8 @@ export class CarsService {
         return [
           {
             OR: [
-              { price: { gt: decoded.price } },
-              { price: decoded.price, id: { lt: decoded.id } },
+              { priceMin: { gt: decoded.priceMin } },
+              { priceMin: decoded.priceMin, id: { lt: decoded.id } },
             ],
           },
         ];
@@ -362,8 +365,8 @@ export class CarsService {
         return [
           {
             OR: [
-              { price: { lt: decoded.price } },
-              { price: decoded.price, id: { lt: decoded.id } },
+              { priceMin: { lt: decoded.priceMin } },
+              { priceMin: decoded.priceMin, id: { lt: decoded.id } },
             ],
           },
         ];
@@ -382,6 +385,24 @@ export class CarsService {
             OR: [
               { mileage: { gt: decoded.mileage } },
               { mileage: decoded.mileage, id: { lt: decoded.id } },
+            ],
+          },
+        ];
+      case CarSort.POPULAR:
+        return [
+          {
+            OR: [
+              { viewCount: { lt: decoded.viewCount } },
+              { viewCount: decoded.viewCount, id: { lt: decoded.id } },
+            ],
+          },
+        ];
+      case CarSort.WISHLIST:
+        return [
+          {
+            OR: [
+              { wishlistCount: { lt: decoded.wishlistCount } },
+              { wishlistCount: decoded.wishlistCount, id: { lt: decoded.id } },
             ],
           },
         ];
@@ -404,13 +425,17 @@ export class CarsService {
   private buildOrderBy(sort: CarSort): Prisma.CarOrderByWithRelationInput[] {
     switch (sort) {
       case CarSort.PRICE_ASC:
-        return [{ price: "asc" }, { id: "desc" }];
+        return [{ priceMin: "asc" }, { id: "desc" }];
       case CarSort.PRICE_DESC:
-        return [{ price: "desc" }, { id: "desc" }];
+        return [{ priceMin: "desc" }, { id: "desc" }];
       case CarSort.YEAR_DESC:
         return [{ year: "desc" }, { id: "desc" }];
       case CarSort.MILEAGE_ASC:
         return [{ mileage: "asc" }, { id: "desc" }];
+      case CarSort.POPULAR:
+        return [{ viewCount: "desc" }, { id: "desc" }];
+      case CarSort.WISHLIST:
+        return [{ wishlistCount: "desc" }, { id: "desc" }];
       case CarSort.NEWEST:
       default:
         return [{ createdAt: "desc" }, { id: "desc" }];
@@ -422,13 +447,19 @@ export class CarsService {
     switch (sort) {
       case CarSort.PRICE_ASC:
       case CarSort.PRICE_DESC:
-        payload = { price: last.price, id: last.id };
+        payload = { priceMin: last.priceMin, id: last.id };
         break;
       case CarSort.YEAR_DESC:
         payload = { year: last.year, id: last.id };
         break;
       case CarSort.MILEAGE_ASC:
         payload = { mileage: last.mileage, id: last.id };
+        break;
+      case CarSort.POPULAR:
+        payload = { viewCount: last.viewCount, id: last.id };
+        break;
+      case CarSort.WISHLIST:
+        payload = { wishlistCount: last.wishlistCount, id: last.id };
         break;
       case CarSort.NEWEST:
       default:

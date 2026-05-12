@@ -1,11 +1,4 @@
-import {
-  IsEnum,
-  IsInt,
-  IsNumber,
-  IsOptional,
-  IsString,
-  Min,
-} from "class-validator";
+import { IsEnum, IsInt, IsOptional, IsString, Min } from "class-validator";
 import { Type } from "class-transformer";
 import { FuelType, Transmission, Drivetrain, CarStatus } from "@prisma/client";
 
@@ -75,10 +68,16 @@ export class UpdateCarDto {
   plateNumber?: string;
 
   @Type(() => Number)
-  @IsNumber()
+  @IsInt()
   @Min(0)
   @IsOptional()
-  price?: number;
+  priceMin?: number;
+
+  @Type(() => Number)
+  @IsInt()
+  @Min(0)
+  @IsOptional()
+  priceMax?: number;
 
   @IsString()
   @IsOptional()
