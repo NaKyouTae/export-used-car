@@ -3,6 +3,7 @@
 import { useState, useEffect, useRef } from "react";
 import Link from "next/link";
 import { usePathname } from "next/navigation";
+import { useAuth } from "@/hooks/useAuth";
 
 const NAV_ITEMS = [
   { label: "Home", href: "/", icon: HomeIcon },
@@ -12,19 +13,44 @@ const NAV_ITEMS = [
   { label: "My", href: "/mypage", icon: MyPageIcon },
 ] as const;
 
+const AUTH_PATHS = ["/login", "/register"];
+
 export default function BottomNav() {
   const pathname = usePathname();
+  const { isAuthenticated, isLoading: isAuthLoading } = useAuth();
   const [unreadCount, setUnreadCount] = useState(0);
   const pollingRef = useRef<ReturnType<typeof setInterval>>(undefined);
 
   useEffect(() => {
-    const fetchUnread = () => {
-      fetch("/api/chat/unread-count", { credentials: "include" })
-        .then((res) => (res.ok ? res.json() : null))
-        .then((data) => {
-          if (data) setUnreadCount(data.unreadCount);
-        })
-        .catch(() => {});
+    // Only poll for authenticated users — avoids silent 401s on login/auth pages
+    if (!isAuthenticated) return;
+
+    let active = true;
+
+    const fetchUnread = async () => {
+      try {
+        const res = await fetch("/api/chat/unread-count", {
+          credentials: "include",
+        });
+        if (!active) return;
+        if (res.status === 401) {
+          // Auth expired — stop polling until next auth change
+          if (pollingRef.current) clearInterval(pollingRef.current);
+          setUnreadCount(0);
+          return;
+        }
+        if (!res.ok) {
+          console.warn(
+            `[BottomNav] unread-count failed: ${res.status} ${res.statusText}`
+          );
+          return;
+        }
+        const data = await res.json();
+        if (!active) return;
+        setUnreadCount(data.unreadCount ?? 0);
+      } catch (err) {
+        console.warn("[BottomNav] unread-count network error:", err);
+      }
     };
 
     fetchUnread();
@@ -33,15 +59,22 @@ export default function BottomNav() {
     // Instant refresh when chat is read or new message arrives
     window.addEventListener("chat:unread-update", fetchUnread);
     return () => {
+      active = false;
       clearInterval(pollingRef.current);
       window.removeEventListener("chat:unread-update", fetchUnread);
     };
-  }, []);
+  }, [isAuthenticated]);
 
-  // Hide on sub-pages that don't need bottom nav
+  // When logged out, force display to 0 without setState in effect
+  const displayedUnread = isAuthenticated ? unreadCount : 0;
+
+  // Hide on sub-pages and auth pages that don't need bottom nav
+  if (AUTH_PATHS.some((p) => pathname === p || pathname.startsWith(`${p}/`)))
+    return null;
   if (/^\/cars\/[^/]+$/.test(pathname)) return null;
   if (pathname.startsWith("/chat/")) return null;
   if (pathname.startsWith("/mypage/profile")) return null;
+  if (isAuthLoading) return null;
 
   return (
     <div className="fixed bottom-0 left-1/2 -translate-x-1/2 w-full max-w-[390px] z-50 pointer-events-none">
@@ -52,7 +85,8 @@ export default function BottomNav() {
               item.href === "/"
                 ? pathname === "/"
                 : pathname.startsWith(item.href);
-            const showBadge = "badge" in item && item.badge && unreadCount > 0 && !isActive;
+            const showBadge =
+              "badge" in item && item.badge && displayedUnread > 0 && !isActive;
 
             return (
               <Link
@@ -64,7 +98,7 @@ export default function BottomNav() {
                   <item.icon active={isActive} />
                   {showBadge && (
                     <span className="absolute -top-1.5 -right-2.5 bg-red-500 text-white text-[9px] font-bold rounded-full min-w-[16px] h-[16px] flex items-center justify-center px-1 leading-none">
-                      {unreadCount >= 99 ? "99+" : unreadCount}
+                      {displayedUnread >= 99 ? "99+" : displayedUnread}
                     </span>
                   )}
                 </div>

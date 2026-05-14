@@ -26,7 +26,7 @@ function RegisterForm() {
     setError("");
 
     try {
-      const res = await fetch("/api/auth/register/buyer", {
+      const res = await fetch("/api/auth/register", {
         method: "POST",
         headers: { "content-type": "application/json" },
         credentials: "include",

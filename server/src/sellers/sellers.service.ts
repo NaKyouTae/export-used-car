@@ -6,25 +6,25 @@ import { UpdateSellerDto } from "./dto/update-seller.dto";
 export class SellersService {
   constructor(private readonly prisma: PrismaService) {}
 
-  async findMe(sellerId: string) {
-    const seller = await this.prisma.seller.findUnique({
-      where: { id: sellerId },
+  async findMe(userId: string) {
+    const user = await this.prisma.user.findUnique({
+      where: { id: userId },
     });
-    if (!seller) {
+    if (!user || user.role !== "SELLER") {
       throw new NotFoundException("Seller not found");
     }
-    return seller;
+    return user;
   }
 
-  async updateMe(sellerId: string, dto: UpdateSellerDto) {
-    const seller = await this.prisma.seller.findUnique({
-      where: { id: sellerId },
+  async updateMe(userId: string, dto: UpdateSellerDto) {
+    const user = await this.prisma.user.findUnique({
+      where: { id: userId },
     });
-    if (!seller) {
+    if (!user || user.role !== "SELLER") {
       throw new NotFoundException("Seller not found");
     }
-    return this.prisma.seller.update({
-      where: { id: sellerId },
+    return this.prisma.user.update({
+      where: { id: userId },
       data: dto,
     });
   }

@@ -28,6 +28,12 @@ interface Message {
   createdAt: string;
 }
 
+interface QuickPhrase {
+  id: string;
+  category: string;
+  content: string;
+}
+
 export default function ChatRoomClient({ roomId }: { roomId: string }) {
   const { user, isAuthenticated, isLoading: authLoading } = useAuth();
   const router = useRouter();
@@ -39,8 +45,10 @@ export default function ChatRoomClient({ roomId }: { roomId: string }) {
   const [input, setInput] = useState("");
   const [sending, setSending] = useState(false);
   const [loading, setLoading] = useState(true);
+  const [quickPhrases, setQuickPhrases] = useState<QuickPhrase[]>([]);
   const messagesEndRef = useRef<HTMLDivElement>(null);
   const scrollContainerRef = useRef<HTMLDivElement>(null);
+  const inputRef = useRef<HTMLTextAreaElement>(null);
   const pollingRef = useRef<ReturnType<typeof setInterval>>(undefined);
 
   // Poll: fetch only new messages (after the last one we have)
@@ -129,6 +137,27 @@ export default function ChatRoomClient({ roomId }: { roomId: string }) {
     return () => clearInterval(pollingRef.current);
   }, [room, pollNewMessages]);
 
+  // Load quick phrases
+  useEffect(() => {
+    if (!isAuthenticated) return;
+    fetch("/api/quick-phrases", { credentials: "include" })
+      .then((res) => (res.ok ? res.json() : []))
+      .then((data) => {
+        if (Array.isArray(data)) setQuickPhrases(data);
+      })
+      .catch(() => {
+        // ignore
+      });
+  }, [isAuthenticated]);
+
+  const handleQuickPhrase = (text: string) => {
+    setInput((prev) => {
+      const next = prev.trim().length === 0 ? text : `${prev} ${text}`;
+      return next;
+    });
+    requestAnimationFrame(() => inputRef.current?.focus());
+  };
+
   // Scroll up to load older messages
   const handleScroll = useCallback(() => {
     const container = scrollContainerRef.current;
@@ -191,7 +220,7 @@ export default function ChatRoomClient({ roomId }: { roomId: string }) {
   if (!room) return null;
 
   const otherName =
-    user?.userType === "BUYER"
+    user?.role === "BUYER"
       ? room.seller.companyName
       : room.buyer.name || room.buyer.email;
 
@@ -221,7 +250,7 @@ export default function ChatRoomClient({ roomId }: { roomId: string }) {
   const getDateKey = (dateStr: string) => new Date(dateStr).toDateString();
 
   return (
-    <div className="flex flex-col h-screen bg-gray-50">
+    <div className="flex flex-col h-screen bg-white">
       {/* Header */}
       <PageHeader
         title={otherName}
@@ -267,8 +296,8 @@ export default function ChatRoomClient({ roomId }: { roomId: string }) {
           const showDate = dateKey !== prevDateKey;
 
           const isMe =
-            (user?.userType === "BUYER" && msg.senderType === "BUYER") ||
-            (user?.userType === "SELLER" && msg.senderType === "SELLER");
+            (user?.role === "BUYER" && msg.senderType === "BUYER") ||
+            (user?.role === "SELLER" && msg.senderType === "SELLER");
 
           return (
             <div key={msg.id}>
@@ -307,10 +336,19 @@ export default function ChatRoomClient({ roomId }: { roomId: string }) {
         <div ref={messagesEndRef} />
       </div>
 
+      {/* Quick phrases */}
+      {quickPhrases.length > 0 && (
+        <QuickPhraseBar
+          phrases={quickPhrases}
+          onPick={handleQuickPhrase}
+        />
+      )}
+
       {/* Input */}
       <div className="bg-white border-t border-gray-200 px-4 pt-3 pb-2">
         <div className="flex items-end gap-2">
           <textarea
+            ref={inputRef}
             value={input}
             onChange={(e) => setInput(e.target.value)}
             onKeyDown={handleKeyDown}
@@ -338,6 +376,55 @@ export default function ChatRoomClient({ roomId }: { roomId: string }) {
               />
             </svg>
           </button>
+        </div>
+      </div>
+    </div>
+  );
+}
+
+function QuickPhraseBar({
+  phrases,
+  onPick,
+}: {
+  phrases: QuickPhrase[];
+  onPick: (text: string) => void;
+}) {
+  const groups: { category: string; items: QuickPhrase[] }[] = [];
+  for (const p of phrases) {
+    const cat = p.category || "General";
+    const last = groups[groups.length - 1];
+    if (last && last.category === cat) {
+      last.items.push(p);
+    } else {
+      groups.push({ category: cat, items: [p] });
+    }
+  }
+
+  return (
+    <div className="bg-white border-t border-gray-100">
+      <div className="overflow-x-auto scrollbar-hide">
+        <div className="flex items-center gap-3 px-4 py-2 whitespace-nowrap">
+          {groups.map((group, idx) => (
+            <div key={`${group.category}-${idx}`} className="flex items-center gap-1.5">
+              <span className="text-[10px] font-semibold text-gray-400 uppercase tracking-wide">
+                {group.category}
+              </span>
+              {group.items.map((p) => (
+                <button
+                  key={p.id}
+                  onClick={() => onPick(p.content)}
+                  className="flex-shrink-0 px-3 py-1.5 bg-main-50 text-main-700 text-xs font-medium rounded-full active:bg-main-100"
+                >
+                  {p.content.length > 20
+                    ? `${p.content.slice(0, 20)}…`
+                    : p.content}
+                </button>
+              ))}
+              {idx < groups.length - 1 && (
+                <span className="ml-1.5 h-4 w-px bg-gray-200" />
+              )}
+            </div>
+          ))}
         </div>
       </div>
     </div>

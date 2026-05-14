@@ -13,9 +13,11 @@ import { ImagesModule } from "./images/images.module";
 import { CarsModule } from "./cars/cars.module";
 import { CarInspectionModule } from "./car-inspection/car-inspection.module";
 import { SellersModule } from "./sellers/sellers.module";
+import { UsersModule } from "./users/users.module";
 import { AdminModule } from "./admin/admin.module";
 import { WishlistModule } from "./wishlist/wishlist.module";
 import { ChatModule } from "./chat/chat.module";
+import { QuickPhrasesModule } from "./quick-phrases/quick-phrases.module";
 
 @Module({
   imports: [
@@ -31,9 +33,11 @@ import { ChatModule } from "./chat/chat.module";
     CarsModule,
     CarInspectionModule,
     SellersModule,
+    UsersModule,
     AdminModule,
     WishlistModule,
     ChatModule,
+    QuickPhrasesModule,
   ],
   controllers: [AppController],
   providers: [AppService],

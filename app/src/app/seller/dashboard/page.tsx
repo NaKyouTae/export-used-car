@@ -40,10 +40,15 @@ export default function SellerDashboardPage() {
   const [cars, setCars] = useState<Car[]>([]);
   const [loading, setLoading] = useState(true);
   useEffect(() => {
-    if (!isLoading && !isAuthenticated) {
-      router.push("/seller/login");
+    if (isLoading) return;
+    if (!isAuthenticated) {
+      router.replace("/login");
+      return;
     }
-  }, [isAuthenticated, isLoading, router]);
+    if (user?.role !== "SELLER") {
+      router.replace("/mypage");
+    }
+  }, [isAuthenticated, isLoading, user, router]);
 
   useEffect(() => {
     if (!isAuthenticated) return;
@@ -83,7 +88,7 @@ export default function SellerDashboardPage() {
   if (!isAuthenticated) return null;
 
   return (
-    <div className="min-h-screen bg-gray-50">
+    <div className="min-h-screen bg-white">
       <PageHeader
         title="Dashboard"
         showBack={false}

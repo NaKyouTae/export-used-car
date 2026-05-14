@@ -5,10 +5,9 @@ import {
 } from "@nestjs/common";
 import { ConfigService } from "@nestjs/config";
 import { JwtService } from "@nestjs/jwt";
-import { UserType } from "@prisma/client";
+import { UserRole } from "@prisma/client";
 import { PrismaService } from "../prisma/prisma.service";
-import { RegisterBuyerDto } from "./dto/register-buyer.dto";
-import { RegisterSellerDto } from "./dto/register-seller.dto";
+import { RegisterDto } from "./dto/register.dto";
 import { EmailService } from "./email.service";
 
 @Injectable()
@@ -21,12 +20,12 @@ export class AuthService {
   ) {}
 
   // ── send-code ──
-  async sendCode(email: string, userType: UserType) {
+  async sendCode(email: string) {
     const code = String(Math.floor(100000 + Math.random() * 900000));
     const expiresAt = new Date(Date.now() + 5 * 60 * 1000);
 
     await this.prisma.emailVerification.create({
-      data: { email, code, userType, expiresAt },
+      data: { email, code, expiresAt },
     });
 
     console.log(`[AUTH] Verification code for ${email}: ${code}`);
@@ -37,12 +36,11 @@ export class AuthService {
   }
 
   // ── verify-code ──
-  async verifyCode(email: string, code: string, userType: UserType) {
+  async verifyCode(email: string, code: string) {
     const verification = await this.prisma.emailVerification.findFirst({
       where: {
         email,
         code,
-        userType,
         isUsed: false,
         expiresAt: { gt: new Date() },
       },
@@ -58,77 +56,36 @@ export class AuthService {
       data: { isUsed: true },
     });
 
-    // Check if user already exists
-    const existingUser = await this.findUserByEmail(email, userType);
+    const existingUser = await this.prisma.user.findUnique({
+      where: { email },
+    });
 
     if (existingUser) {
-      const tokens = this.generateTokens(existingUser.id, userType);
+      const tokens = this.generateTokens(existingUser.id, existingUser.role);
       return { ...tokens, isNewUser: false };
     }
 
-    // Sellers cannot self-register — must be added by admin
-    if (userType === UserType.SELLER) {
-      throw new BadRequestException(
-        "You are not a registered seller. Please contact the administrator.",
-      );
-    }
-
-    // New buyer — return temp token for registration
+    // 신규 사용자 → 가입용 임시 토큰
     const tempToken = this.jwt.sign(
-      { email, userType, purpose: "registration" },
+      { email, purpose: "registration" },
       { expiresIn: "10m" as any },
     );
 
     return { tempToken, isNewUser: true };
   }
 
-  // ── register seller ──
-  async registerSeller(tempToken: string, dto: RegisterSellerDto) {
+  // ── register ──
+  async register(tempToken: string, dto: RegisterDto) {
     const payload = this.verifyTempToken(tempToken);
 
-    if (payload.userType !== UserType.SELLER) {
-      throw new BadRequestException(
-        "Invalid user type for seller registration",
-      );
-    }
-
-    const existing = await this.prisma.seller.findUnique({
+    const existing = await this.prisma.user.findUnique({
       where: { email: payload.email },
     });
     if (existing) {
-      throw new BadRequestException("Seller already exists with this email");
+      throw new BadRequestException("User already exists with this email");
     }
 
-    const seller = await this.prisma.seller.create({
-      data: {
-        email: payload.email,
-        companyName: dto.companyName,
-        contactName: dto.contactName,
-        phone: dto.phone,
-        businessNumber: dto.businessNumber,
-        address: dto.address,
-      },
-    });
-
-    return this.generateTokens(seller.id, UserType.SELLER);
-  }
-
-  // ── register buyer ──
-  async registerBuyer(tempToken: string, dto: RegisterBuyerDto) {
-    const payload = this.verifyTempToken(tempToken);
-
-    if (payload.userType !== UserType.BUYER) {
-      throw new BadRequestException("Invalid user type for buyer registration");
-    }
-
-    const existing = await this.prisma.buyer.findUnique({
-      where: { email: payload.email },
-    });
-    if (existing) {
-      throw new BadRequestException("Buyer already exists with this email");
-    }
-
-    const buyer = await this.prisma.buyer.create({
+    const user = await this.prisma.user.create({
       data: {
         email: payload.email,
         name: dto.name,
@@ -138,7 +95,7 @@ export class AuthService {
       },
     });
 
-    return this.generateTokens(buyer.id, UserType.BUYER);
+    return this.generateTokens(user.id, user.role);
   }
 
   // ── refresh ──
@@ -154,44 +111,25 @@ export class AuthService {
       throw new UnauthorizedException("Invalid token type");
     }
 
-    const user = await this.findUserById(payload.sub, payload.userType);
+    const user = await this.prisma.user.findUnique({
+      where: { id: payload.sub },
+    });
     if (!user) {
       throw new UnauthorizedException("User not found");
     }
 
-    return this.generateTokens(payload.sub, payload.userType);
+    return this.generateTokens(user.id, user.role);
   }
 
   // ── profile ──
   getProfile(user: any) {
-    const { userType, ...profile } = user;
-    return { userType, ...profile };
+    return user;
   }
 
   // ── helpers ──
-  private async findUserByEmail(email: string, userType: UserType) {
-    if (userType === UserType.SELLER) {
-      return this.prisma.seller.findUnique({ where: { email } });
-    }
-    if (userType === UserType.BUYER) {
-      return this.prisma.buyer.findUnique({ where: { email } });
-    }
-    return null;
-  }
-
-  private async findUserById(id: string, userType: string) {
-    if (userType === "SELLER") {
-      return this.prisma.seller.findUnique({ where: { id } });
-    }
-    if (userType === "BUYER") {
-      return this.prisma.buyer.findUnique({ where: { id } });
-    }
-    return null;
-  }
-
-  private generateTokens(userId: string, userType: UserType) {
+  private generateTokens(userId: string, role: UserRole) {
     const accessToken = this.jwt.sign(
-      { sub: userId, userType, type: "access" },
+      { sub: userId, role, type: "access" },
       {
         expiresIn: (this.config.get<string>("JWT_ACCESS_EXPIRES_IN") ||
           "1h") as any,
@@ -199,7 +137,7 @@ export class AuthService {
     );
 
     const refreshToken = this.jwt.sign(
-      { sub: userId, userType, type: "refresh" },
+      { sub: userId, role, type: "refresh" },
       {
         expiresIn: (this.config.get<string>("JWT_REFRESH_EXPIRES_IN") ||
           "7d") as any,
@@ -211,7 +149,6 @@ export class AuthService {
 
   private verifyTempToken(token: string): {
     email: string;
-    userType: UserType;
     purpose: string;
   } {
     let payload: any;

@@ -1,5 +1,6 @@
 "use client";
 
+import Link from "next/link";
 import { useEffect, useState } from "react";
 
 interface Seller {
@@ -13,24 +14,6 @@ interface Seller {
   createdAt: string;
   _count?: { cars: number };
 }
-
-interface CreateSellerForm {
-  email: string;
-  companyName: string;
-  contactName: string;
-  phone: string;
-  businessNumber: string;
-  address: string;
-}
-
-const initialForm: CreateSellerForm = {
-  email: "",
-  companyName: "",
-  contactName: "",
-  phone: "",
-  businessNumber: "",
-  address: "",
-};
 
 function StatusBadge({ status }: { status: string }) {
   const cls =
@@ -53,9 +36,6 @@ export default function SellersPage() {
   const [status, setStatus] = useState("");
   const [loading, setLoading] = useState(true);
   const [nextCursor, setNextCursor] = useState<string | null>(null);
-  const [showModal, setShowModal] = useState(false);
-  const [form, setForm] = useState<CreateSellerForm>(initialForm);
-  const [creating, setCreating] = useState(false);
 
   const load = async (cursor?: string | null, reset = false) => {
     if (reset) {
@@ -90,47 +70,10 @@ export default function SellersPage() {
   };
 
   useEffect(() => {
-    const fetchData = async () => {
-      await load(null, true);
-    };
-    fetchData();
+    // eslint-disable-next-line react-hooks/set-state-in-effect
+    load(null, true);
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [status]);
-
-  const handleCreateSeller = async () => {
-    if (!form.email || !form.companyName || !form.contactName || !form.phone) {
-      alert("Please fill in all required fields");
-      return;
-    }
-    setCreating(true);
-    try {
-      const body: Record<string, string> = {
-        email: form.email,
-        companyName: form.companyName,
-        contactName: form.contactName,
-        phone: form.phone,
-      };
-      if (form.businessNumber) body.businessNumber = form.businessNumber;
-      if (form.address) body.address = form.address;
-
-      const res = await fetch("/api/sellers", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify(body),
-      });
-      if (!res.ok) {
-        const err = await res.json().catch(() => null);
-        throw new Error(err?.message || "Failed to create seller");
-      }
-      setShowModal(false);
-      setForm(initialForm);
-      await load(null, true);
-    } catch (e) {
-      alert(e instanceof Error ? e.message : "Failed to create seller");
-    } finally {
-      setCreating(false);
-    }
-  };
 
   const handleToggleStatus = async (id: string, current: string) => {
     const newStatus = current === "ACTIVE" ? "SUSPENDED" : "ACTIVE";
@@ -161,12 +104,9 @@ export default function SellersPage() {
           <option value="ACTIVE">ACTIVE</option>
           <option value="SUSPENDED">SUSPENDED</option>
         </select>
-        <button
-          onClick={() => setShowModal(true)}
-          className="btn btn-primary"
-        >
-          + Register Seller
-        </button>
+        <Link href="/users" className="btn btn-primary">
+          Promote a user →
+        </Link>
       </div>
 
       <div className="bg-white rounded-xl shadow-sm overflow-hidden">
@@ -203,9 +143,7 @@ export default function SellersPage() {
                       {(s.status === "ACTIVE" ||
                         s.status === "SUSPENDED") && (
                         <button
-                          onClick={() =>
-                            handleToggleStatus(s.id, s.status)
-                          }
+                          onClick={() => handleToggleStatus(s.id, s.status)}
                           className={`btn btn-sm ${s.status === "ACTIVE" ? "btn-danger" : "btn-primary"}`}
                         >
                           {s.status === "ACTIVE" ? "Suspend" : "Activate"}
@@ -216,11 +154,12 @@ export default function SellersPage() {
                 ))}
                 {sellers.length === 0 && (
                   <tr>
-                    <td
-                      colSpan={8}
-                      className="text-center text-gray-400 py-8"
-                    >
-                      No sellers found
+                    <td colSpan={8} className="text-center text-gray-400 py-8">
+                      No sellers found. Promote a user from the{" "}
+                      <Link href="/users" className="text-blue-600 underline">
+                        Users
+                      </Link>{" "}
+                      page.
                     </td>
                   </tr>
                 )}
@@ -239,116 +178,6 @@ export default function SellersPage() {
           </>
         )}
       </div>
-      {showModal && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/40">
-          <div className="bg-white rounded-xl shadow-lg w-full max-w-md mx-4 p-6">
-            <h2 className="text-lg font-semibold mb-4">Register Seller</h2>
-            <div className="space-y-3">
-              <div>
-                <label className="block text-sm font-medium text-gray-700 mb-1">
-                  Email <span className="text-red-500">*</span>
-                </label>
-                <input
-                  type="email"
-                  value={form.email}
-                  onChange={(e) =>
-                    setForm((f) => ({ ...f, email: e.target.value }))
-                  }
-                  className="w-full border border-gray-300 rounded-lg px-3 py-2 text-sm"
-                  placeholder="seller@example.com"
-                />
-              </div>
-              <div>
-                <label className="block text-sm font-medium text-gray-700 mb-1">
-                  Company Name <span className="text-red-500">*</span>
-                </label>
-                <input
-                  type="text"
-                  value={form.companyName}
-                  onChange={(e) =>
-                    setForm((f) => ({ ...f, companyName: e.target.value }))
-                  }
-                  className="w-full border border-gray-300 rounded-lg px-3 py-2 text-sm"
-                />
-              </div>
-              <div>
-                <label className="block text-sm font-medium text-gray-700 mb-1">
-                  Contact Name <span className="text-red-500">*</span>
-                </label>
-                <input
-                  type="text"
-                  value={form.contactName}
-                  onChange={(e) =>
-                    setForm((f) => ({ ...f, contactName: e.target.value }))
-                  }
-                  className="w-full border border-gray-300 rounded-lg px-3 py-2 text-sm"
-                />
-              </div>
-              <div>
-                <label className="block text-sm font-medium text-gray-700 mb-1">
-                  Phone <span className="text-red-500">*</span>
-                </label>
-                <input
-                  type="text"
-                  value={form.phone}
-                  onChange={(e) =>
-                    setForm((f) => ({ ...f, phone: e.target.value }))
-                  }
-                  className="w-full border border-gray-300 rounded-lg px-3 py-2 text-sm"
-                />
-              </div>
-              <div>
-                <label className="block text-sm font-medium text-gray-700 mb-1">
-                  Business Number
-                </label>
-                <input
-                  type="text"
-                  value={form.businessNumber}
-                  onChange={(e) =>
-                    setForm((f) => ({
-                      ...f,
-                      businessNumber: e.target.value,
-                    }))
-                  }
-                  className="w-full border border-gray-300 rounded-lg px-3 py-2 text-sm"
-                />
-              </div>
-              <div>
-                <label className="block text-sm font-medium text-gray-700 mb-1">
-                  Address
-                </label>
-                <input
-                  type="text"
-                  value={form.address}
-                  onChange={(e) =>
-                    setForm((f) => ({ ...f, address: e.target.value }))
-                  }
-                  className="w-full border border-gray-300 rounded-lg px-3 py-2 text-sm"
-                />
-              </div>
-            </div>
-            <div className="flex justify-end gap-2 mt-6">
-              <button
-                onClick={() => {
-                  setShowModal(false);
-                  setForm(initialForm);
-                }}
-                className="btn btn-secondary"
-                disabled={creating}
-              >
-                Cancel
-              </button>
-              <button
-                onClick={handleCreateSeller}
-                className="btn btn-primary"
-                disabled={creating}
-              >
-                {creating ? "Saving..." : "Save"}
-              </button>
-            </div>
-          </div>
-        </div>
-      )}
     </div>
   );
 }

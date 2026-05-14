@@ -5,12 +5,9 @@ import { useRouter } from "next/navigation";
 import PageHeader from "@/components/PageHeader";
 import { useAuth } from "@/hooks/useAuth";
 
-type UserType = "BUYER" | "SELLER";
-
 export default function LoginPage() {
   const router = useRouter();
   const { login } = useAuth();
-  const [userType, setUserType] = useState<UserType>("BUYER");
   const [step, setStep] = useState<"email" | "code">("email");
   const [email, setEmail] = useState("");
   const [code, setCode] = useState("");
@@ -42,7 +39,7 @@ export default function LoginPage() {
       const res = await fetch("/api/auth/send-code", {
         method: "POST",
         headers: { "content-type": "application/json" },
-        body: JSON.stringify({ email, userType }),
+        body: JSON.stringify({ email }),
       });
 
       const data = await res.json();
@@ -67,7 +64,7 @@ export default function LoginPage() {
       const res = await fetch("/api/auth/verify-code", {
         method: "POST",
         headers: { "content-type": "application/json" },
-        body: JSON.stringify({ email, code, userType }),
+        body: JSON.stringify({ email, code }),
         credentials: "include",
       });
 
@@ -79,7 +76,7 @@ export default function LoginPage() {
 
       if (data.accessToken || data.authenticated) {
         await login();
-        router.push(userType === "SELLER" ? "/seller/dashboard" : "/");
+        router.push("/");
       } else if (data.tempToken) {
         router.push(
           `/register?tempToken=${data.tempToken}&email=${encodeURIComponent(email)}`
@@ -94,14 +91,6 @@ export default function LoginPage() {
     }
   };
 
-  const switchUserType = (type: UserType) => {
-    setUserType(type);
-    setStep("email");
-    setEmail("");
-    setCode("");
-    setError("");
-  };
-
   return (
     <div className="min-h-screen bg-white">
       <PageHeader title="Login" />
@@ -112,32 +101,6 @@ export default function LoginPage() {
           <p className="text-gray-500 text-sm mt-1">
             Sign in with your email to continue
           </p>
-        </div>
-
-        {/* User Type Tabs */}
-        <div className="flex bg-gray-100 rounded-xl p-1 mb-6">
-          <button
-            type="button"
-            onClick={() => switchUserType("BUYER")}
-            className={`flex-1 py-2.5 text-sm font-semibold rounded-lg transition-colors ${
-              userType === "BUYER"
-                ? "bg-white text-gray-900 shadow-sm"
-                : "text-gray-500"
-            }`}
-          >
-            Buyer
-          </button>
-          <button
-            type="button"
-            onClick={() => switchUserType("SELLER")}
-            className={`flex-1 py-2.5 text-sm font-semibold rounded-lg transition-colors ${
-              userType === "SELLER"
-                ? "bg-white text-gray-900 shadow-sm"
-                : "text-gray-500"
-            }`}
-          >
-            Seller
-          </button>
         </div>
 
         {step === "email" ? (

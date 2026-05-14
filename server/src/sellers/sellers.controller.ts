@@ -24,7 +24,7 @@ export class SellersController {
 
   @Get("me")
   getMe(@CurrentUser() user: any) {
-    if (user.userType !== "SELLER") {
+    if (user.role !== "SELLER") {
       throw new ForbiddenException("Only sellers can access this endpoint");
     }
     return this.sellersService.findMe(user.id);
@@ -32,7 +32,7 @@ export class SellersController {
 
   @Patch("me")
   updateMe(@Body() dto: UpdateSellerDto, @CurrentUser() user: any) {
-    if (user.userType !== "SELLER") {
+    if (user.role !== "SELLER") {
       throw new ForbiddenException("Only sellers can access this endpoint");
     }
     return this.sellersService.updateMe(user.id, dto);
@@ -40,7 +40,7 @@ export class SellersController {
 
   @Get("me/cars")
   getMyCars(@Query() query: PaginationDto, @CurrentUser() user: any) {
-    if (user.userType !== "SELLER") {
+    if (user.role !== "SELLER") {
       throw new ForbiddenException("Only sellers can access this endpoint");
     }
     return this.carsService.findBySeller(user.id, query.cursor, query.limit);

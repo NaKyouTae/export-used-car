@@ -1,7 +1,7 @@
 {
   "name": "server",
   "version": "0.0.1",
-  "description": "중고차 수출 API 서버",
+  "description": "Ajucar API 서버",
   "author": "",
   "private": true,
   "license": "UNLICENSED",

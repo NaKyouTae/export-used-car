@@ -1,6 +1,6 @@
 'use client';
 
-import { useEffect, useState } from 'react';
+import { Fragment, useEffect, useState } from 'react';
 
 interface OptionItem {
   id: string;
@@ -11,7 +11,7 @@ interface OptionItem {
 interface OptionCategory {
   id: string;
   name: string;
-  nameKo?: string;
+  slug: string;
   displayOrder: number;
   items?: OptionItem[];
 }
@@ -23,13 +23,13 @@ export default function OptionsPage() {
 
   // Add category form
   const [catName, setCatName] = useState('');
-  const [catNameKo, setCatNameKo] = useState('');
+  const [catSlug, setCatSlug] = useState('');
   const [catOrder, setCatOrder] = useState(0);
 
   // Edit category
   const [editCatId, setEditCatId] = useState<string | null>(null);
   const [editCatName, setEditCatName] = useState('');
-  const [editCatNameKo, setEditCatNameKo] = useState('');
+  const [editCatSlug, setEditCatSlug] = useState('');
   const [editCatOrder, setEditCatOrder] = useState(0);
 
   // Add item form
@@ -56,10 +56,10 @@ export default function OptionsPage() {
       const res = await fetch('/api/options', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ name: catName, nameKo: catNameKo || undefined, displayOrder: catOrder }),
+        body: JSON.stringify({ name: catName, slug: catSlug, displayOrder: catOrder }),
       });
       if (!res.ok) throw new Error();
-      setCatName(''); setCatNameKo(''); setCatOrder(0);
+      setCatName(''); setCatSlug(''); setCatOrder(0);
       load();
     } catch {
       alert('Failed to add option category');
@@ -71,7 +71,7 @@ export default function OptionsPage() {
       const res = await fetch(`/api/options/${id}`, {
         method: 'PATCH',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ name: editCatName, nameKo: editCatNameKo || undefined, displayOrder: editCatOrder }),
+        body: JSON.stringify({ name: editCatName, slug: editCatSlug, displayOrder: editCatOrder }),
       });
       if (!res.ok) throw new Error();
       setEditCatId(null);
@@ -95,7 +95,7 @@ export default function OptionsPage() {
   const startEditCategory = (c: OptionCategory) => {
     setEditCatId(c.id);
     setEditCatName(c.name);
-    setEditCatNameKo(c.nameKo || '');
+    setEditCatSlug(c.slug);
     setEditCatOrder(c.displayOrder);
   };
 
@@ -105,7 +105,7 @@ export default function OptionsPage() {
       const res = await fetch('/api/option-items', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ name: itemName, nameKo: itemNameKo || undefined, optionCategoryId: categoryId }),
+        body: JSON.stringify({ name: itemName, nameKo: itemNameKo || undefined, categoryId }),
       });
       if (!res.ok) throw new Error();
       setItemName(''); setItemNameKo('');
@@ -136,9 +136,9 @@ export default function OptionsPage() {
             className="border border-gray-300 rounded-lg px-3 py-2 text-sm" placeholder="Category name" />
         </div>
         <div>
-          <label className="block text-xs text-gray-500 mb-1">Korean Name</label>
-          <input value={catNameKo} onChange={(e) => setCatNameKo(e.target.value)}
-            className="border border-gray-300 rounded-lg px-3 py-2 text-sm" placeholder="Korean name" />
+          <label className="block text-xs text-gray-500 mb-1">Slug</label>
+          <input value={catSlug} onChange={(e) => setCatSlug(e.target.value)} required
+            className="border border-gray-300 rounded-lg px-3 py-2 text-sm" placeholder="category-slug" />
         </div>
         <div>
           <label className="block text-xs text-gray-500 mb-1">Order</label>
@@ -157,7 +157,7 @@ export default function OptionsPage() {
               <tr>
                 <th></th>
                 <th>Name</th>
-                <th>Korean Name</th>
+                <th>Slug</th>
                 <th>Order</th>
                 <th>Items</th>
                 <th>Actions</th>
@@ -165,13 +165,13 @@ export default function OptionsPage() {
             </thead>
             <tbody>
               {categories.map((c) => (
-                <>
+                <Fragment key={c.id}>
                   {editCatId === c.id ? (
-                    <tr key={c.id}>
+                    <tr>
                       <td></td>
                       <td><input value={editCatName} onChange={(e) => setEditCatName(e.target.value)}
                         className="border border-gray-300 rounded px-2 py-1 text-sm w-full" /></td>
-                      <td><input value={editCatNameKo} onChange={(e) => setEditCatNameKo(e.target.value)}
+                      <td><input value={editCatSlug} onChange={(e) => setEditCatSlug(e.target.value)}
                         className="border border-gray-300 rounded px-2 py-1 text-sm w-full" /></td>
                       <td><input type="number" value={editCatOrder} onChange={(e) => setEditCatOrder(Number(e.target.value))}
                         className="border border-gray-300 rounded px-2 py-1 text-sm w-20" /></td>
@@ -182,14 +182,14 @@ export default function OptionsPage() {
                       </td>
                     </tr>
                   ) : (
-                    <tr key={c.id} className="cursor-pointer" onClick={() => setExpandedId(expandedId === c.id ? null : c.id)}>
+                    <tr className="cursor-pointer" onClick={() => setExpandedId(expandedId === c.id ? null : c.id)}>
                       <td className="w-8 text-center">
                         <span className={`inline-block transition-transform ${expandedId === c.id ? 'rotate-90' : ''}`}>
                           &#9654;
                         </span>
                       </td>
                       <td className="font-medium">{c.name}</td>
-                      <td className="text-gray-500">{c.nameKo || '-'}</td>
+                      <td className="text-gray-500">{c.slug}</td>
                       <td>{c.displayOrder}</td>
                       <td>{c.items?.length ?? 0}</td>
                       <td className="space-x-2">
@@ -201,7 +201,7 @@ export default function OptionsPage() {
                     </tr>
                   )}
                   {expandedId === c.id && editCatId !== c.id && (
-                    <tr key={`${c.id}-items`}>
+                    <tr>
                       <td colSpan={6} className="bg-gray-50 p-4">
                         <div className="space-y-3">
                           <h4 className="text-sm font-semibold text-gray-600">Items in {c.name}</h4>
@@ -235,7 +235,7 @@ export default function OptionsPage() {
                       </td>
                     </tr>
                   )}
-                </>
+                </Fragment>
               ))}
               {categories.length === 0 && (
                 <tr><td colSpan={6} className="text-center text-gray-400 py-8">No option categories yet</td></tr>

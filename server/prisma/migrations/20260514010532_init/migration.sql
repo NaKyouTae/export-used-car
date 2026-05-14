@@ -1,8 +1,8 @@
 -- CreateEnum
-CREATE TYPE "UserType" AS ENUM ('SELLER', 'BUYER', 'ADMIN');
+CREATE TYPE "AdminRole" AS ENUM ('SUPER', 'MANAGER');
 
 -- CreateEnum
-CREATE TYPE "AdminRole" AS ENUM ('SUPER', 'MANAGER');
+CREATE TYPE "UserRole" AS ENUM ('BUYER', 'SELLER');
 
 -- CreateEnum
 CREATE TYPE "SellerStatus" AS ENUM ('PENDING', 'ACTIVE', 'SUSPENDED');
@@ -33,7 +33,6 @@ CREATE TABLE "email_verifications" (
     "id" TEXT NOT NULL,
     "email" TEXT NOT NULL,
     "code" TEXT NOT NULL,
-    "userType" "UserType" NOT NULL,
     "expiresAt" TIMESTAMP(3) NOT NULL,
     "isUsed" BOOLEAN NOT NULL DEFAULT false,
     "createdAt" TIMESTAMP(3) NOT NULL DEFAULT CURRENT_TIMESTAMP,
@@ -53,34 +52,24 @@ CREATE TABLE "admins" (
 );
 
 -- CreateTable
-CREATE TABLE "sellers" (
+CREATE TABLE "users" (
     "id" TEXT NOT NULL,
     "email" TEXT NOT NULL,
-    "companyName" TEXT NOT NULL,
-    "contactName" TEXT NOT NULL,
-    "phone" TEXT NOT NULL,
+    "name" TEXT,
+    "phone" TEXT,
+    "country" TEXT,
+    "company" TEXT,
+    "role" "UserRole" NOT NULL DEFAULT 'BUYER',
+    "companyName" TEXT,
+    "contactName" TEXT,
     "businessNumber" TEXT,
     "address" TEXT,
     "isVerified" BOOLEAN NOT NULL DEFAULT false,
-    "status" "SellerStatus" NOT NULL DEFAULT 'PENDING',
+    "sellerStatus" "SellerStatus",
     "createdAt" TIMESTAMP(3) NOT NULL DEFAULT CURRENT_TIMESTAMP,
     "updatedAt" TIMESTAMP(3) NOT NULL,
 
-    CONSTRAINT "sellers_pkey" PRIMARY KEY ("id")
-);
-
--- CreateTable
-CREATE TABLE "buyers" (
-    "id" TEXT NOT NULL,
-    "email" TEXT NOT NULL,
-    "name" TEXT NOT NULL,
-    "phone" TEXT,
-    "country" TEXT NOT NULL,
-    "company" TEXT,
-    "createdAt" TIMESTAMP(3) NOT NULL DEFAULT CURRENT_TIMESTAMP,
-    "updatedAt" TIMESTAMP(3) NOT NULL,
-
-    CONSTRAINT "buyers_pkey" PRIMARY KEY ("id")
+    CONSTRAINT "users_pkey" PRIMARY KEY ("id")
 );
 
 -- CreateTable
@@ -140,9 +129,10 @@ CREATE TABLE "cars" (
     "displacement" INTEGER,
     "color" TEXT,
     "plateNumber" TEXT,
-    "price" DECIMAL(12,2) NOT NULL,
+    "priceMin" DECIMAL(12,0) NOT NULL,
+    "priceMax" DECIMAL(12,0) NOT NULL,
     "description" TEXT,
-    "status" "CarStatus" NOT NULL DEFAULT 'DRAFT',
+    "status" "CarStatus" NOT NULL DEFAULT 'ACTIVE',
     "viewCount" INTEGER NOT NULL DEFAULT 0,
     "wishlistCount" INTEGER NOT NULL DEFAULT 0,
     "chatCount" INTEGER NOT NULL DEFAULT 0,
@@ -242,7 +232,7 @@ CREATE TABLE "images" (
 -- CreateTable
 CREATE TABLE "wishlists" (
     "id" TEXT NOT NULL,
-    "buyerId" TEXT NOT NULL,
+    "userId" TEXT NOT NULL,
     "carId" TEXT NOT NULL,
     "createdAt" TIMESTAMP(3) NOT NULL DEFAULT CURRENT_TIMESTAMP,
 
@@ -276,6 +266,19 @@ CREATE TABLE "chat_messages" (
     CONSTRAINT "chat_messages_pkey" PRIMARY KEY ("id")
 );
 
+-- CreateTable
+CREATE TABLE "quick_phrases" (
+    "id" TEXT NOT NULL,
+    "userId" TEXT NOT NULL,
+    "category" TEXT NOT NULL DEFAULT 'General',
+    "content" TEXT NOT NULL,
+    "displayOrder" INTEGER NOT NULL DEFAULT 0,
+    "createdAt" TIMESTAMP(3) NOT NULL DEFAULT CURRENT_TIMESTAMP,
+    "updatedAt" TIMESTAMP(3) NOT NULL,
+
+    CONSTRAINT "quick_phrases_pkey" PRIMARY KEY ("id")
+);
+
 -- CreateIndex
 CREATE INDEX "email_verifications_email_code_idx" ON "email_verifications"("email", "code");
 
@@ -283,10 +286,10 @@ CREATE INDEX "email_verifications_email_code_idx" ON "email_verifications"("emai
 CREATE UNIQUE INDEX "admins_email_key" ON "admins"("email");
 
 -- CreateIndex
-CREATE UNIQUE INDEX "sellers_email_key" ON "sellers"("email");
+CREATE UNIQUE INDEX "users_email_key" ON "users"("email");
 
 -- CreateIndex
-CREATE UNIQUE INDEX "buyers_email_key" ON "buyers"("email");
+CREATE INDEX "users_role_idx" ON "users"("role");
 
 -- CreateIndex
 CREATE UNIQUE INDEX "categories_name_key" ON "categories"("name");
@@ -316,7 +319,10 @@ CREATE INDEX "cars_modelId_idx" ON "cars"("modelId");
 CREATE INDEX "cars_year_idx" ON "cars"("year");
 
 -- CreateIndex
-CREATE INDEX "cars_price_idx" ON "cars"("price");
+CREATE INDEX "cars_priceMin_idx" ON "cars"("priceMin");
+
+-- CreateIndex
+CREATE INDEX "cars_priceMax_idx" ON "cars"("priceMax");
 
 -- CreateIndex
 CREATE UNIQUE INDEX "option_categories_name_key" ON "option_categories"("name");
@@ -340,13 +346,16 @@ CREATE UNIQUE INDEX "car_inspections_carId_key" ON "car_inspections"("carId");
 CREATE INDEX "images_targetId_imageCategory_idx" ON "images"("targetId", "imageCategory");
 
 -- CreateIndex
-CREATE UNIQUE INDEX "wishlists_buyerId_carId_key" ON "wishlists"("buyerId", "carId");
+CREATE UNIQUE INDEX "wishlists_userId_carId_key" ON "wishlists"("userId", "carId");
 
 -- CreateIndex
 CREATE UNIQUE INDEX "chat_rooms_carId_sellerId_buyerId_key" ON "chat_rooms"("carId", "sellerId", "buyerId");
 
 -- CreateIndex
 CREATE INDEX "chat_messages_roomId_createdAt_idx" ON "chat_messages"("roomId", "createdAt");
+
+-- CreateIndex
+CREATE INDEX "quick_phrases_userId_idx" ON "quick_phrases"("userId");
 
 -- AddForeignKey
 ALTER TABLE "car_models" ADD CONSTRAINT "car_models_makeId_fkey" FOREIGN KEY ("makeId") REFERENCES "makes"("id") ON DELETE RESTRICT ON UPDATE CASCADE;
@@ -355,7 +364,7 @@ ALTER TABLE "car_models" ADD CONSTRAINT "car_models_makeId_fkey" FOREIGN KEY ("m
 ALTER TABLE "car_models" ADD CONSTRAINT "car_models_categoryId_fkey" FOREIGN KEY ("categoryId") REFERENCES "categories"("id") ON DELETE SET NULL ON UPDATE CASCADE;
 
 -- AddForeignKey
-ALTER TABLE "cars" ADD CONSTRAINT "cars_sellerId_fkey" FOREIGN KEY ("sellerId") REFERENCES "sellers"("id") ON DELETE RESTRICT ON UPDATE CASCADE;
+ALTER TABLE "cars" ADD CONSTRAINT "cars_sellerId_fkey" FOREIGN KEY ("sellerId") REFERENCES "users"("id") ON DELETE RESTRICT ON UPDATE CASCADE;
 
 -- AddForeignKey
 ALTER TABLE "cars" ADD CONSTRAINT "cars_categoryId_fkey" FOREIGN KEY ("categoryId") REFERENCES "categories"("id") ON DELETE RESTRICT ON UPDATE CASCADE;
@@ -388,19 +397,13 @@ ALTER TABLE "car_inspections" ADD CONSTRAINT "car_inspections_carId_fkey" FOREIG
 ALTER TABLE "inspection_parts" ADD CONSTRAINT "inspection_parts_inspectionId_fkey" FOREIGN KEY ("inspectionId") REFERENCES "car_inspections"("id") ON DELETE CASCADE ON UPDATE CASCADE;
 
 -- AddForeignKey
-ALTER TABLE "wishlists" ADD CONSTRAINT "wishlists_buyerId_fkey" FOREIGN KEY ("buyerId") REFERENCES "buyers"("id") ON DELETE CASCADE ON UPDATE CASCADE;
-
--- AddForeignKey
-ALTER TABLE "wishlists" ADD CONSTRAINT "wishlists_carId_fkey" FOREIGN KEY ("carId") REFERENCES "cars"("id") ON DELETE CASCADE ON UPDATE CASCADE;
-
--- AddForeignKey
 ALTER TABLE "chat_rooms" ADD CONSTRAINT "chat_rooms_carId_fkey" FOREIGN KEY ("carId") REFERENCES "cars"("id") ON DELETE SET NULL ON UPDATE CASCADE;
 
 -- AddForeignKey
-ALTER TABLE "chat_rooms" ADD CONSTRAINT "chat_rooms_sellerId_fkey" FOREIGN KEY ("sellerId") REFERENCES "sellers"("id") ON DELETE RESTRICT ON UPDATE CASCADE;
+ALTER TABLE "chat_rooms" ADD CONSTRAINT "chat_rooms_sellerId_fkey" FOREIGN KEY ("sellerId") REFERENCES "users"("id") ON DELETE RESTRICT ON UPDATE CASCADE;
 
 -- AddForeignKey
-ALTER TABLE "chat_rooms" ADD CONSTRAINT "chat_rooms_buyerId_fkey" FOREIGN KEY ("buyerId") REFERENCES "buyers"("id") ON DELETE RESTRICT ON UPDATE CASCADE;
+ALTER TABLE "chat_rooms" ADD CONSTRAINT "chat_rooms_buyerId_fkey" FOREIGN KEY ("buyerId") REFERENCES "users"("id") ON DELETE RESTRICT ON UPDATE CASCADE;
 
 -- AddForeignKey
 ALTER TABLE "chat_messages" ADD CONSTRAINT "chat_messages_roomId_fkey" FOREIGN KEY ("roomId") REFERENCES "chat_rooms"("id") ON DELETE CASCADE ON UPDATE CASCADE;

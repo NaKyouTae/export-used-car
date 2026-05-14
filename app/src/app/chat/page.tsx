@@ -55,7 +55,7 @@ function ChatListContent() {
   useEffect(() => {
     if (authLoading) return;
     if (!isAuthenticated) {
-      router.push("/login");
+      router.replace("/login");
       return;
     }
 
@@ -114,7 +114,7 @@ function ChatListContent() {
         <div className="divide-y divide-gray-100">
           {rooms.map((room) => {
             const otherName =
-              user?.userType === "BUYER"
+              user?.role === "BUYER"
                 ? room.seller.companyName
                 : room.buyer.name || room.buyer.email;
 

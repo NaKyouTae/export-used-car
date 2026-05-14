@@ -139,7 +139,7 @@ export class CarsService {
     const car = await this.prisma.car.findUnique({
       where: { id },
       include: {
-        seller: { select: { companyName: true } },
+        seller: { select: { companyName: true, contactName: true } },
         category: { select: { id: true, name: true } },
         make: { select: { id: true, name: true, nameKo: true } },
         carModel: { select: { id: true, name: true, nameKo: true } },

@@ -26,16 +26,21 @@ interface Car {
 
 export default function SellerCarsPage() {
   const router = useRouter();
-  const { isAuthenticated, isLoading } = useAuth();
+  const { isAuthenticated, isLoading, user } = useAuth();
   const [cars, setCars] = useState<Car[]>([]);
   const [loading, setLoading] = useState(true);
   const [statusFilter, setStatusFilter] = useState<string>("");
 
   useEffect(() => {
-    if (!isLoading && !isAuthenticated) {
-      router.push("/seller/login");
+    if (isLoading) return;
+    if (!isAuthenticated) {
+      router.replace("/login");
+      return;
     }
-  }, [isAuthenticated, isLoading, router]);
+    if (user?.role !== "SELLER") {
+      router.replace("/mypage");
+    }
+  }, [isAuthenticated, isLoading, user, router]);
 
   useEffect(() => {
     if (!isAuthenticated) return;
@@ -70,7 +75,7 @@ export default function SellerCarsPage() {
   const statuses = ["", "DRAFT", "ACTIVE", "RESERVED", "SOLD", "HIDDEN"];
 
   return (
-    <div className="min-h-screen bg-gray-50">
+    <div className="min-h-screen bg-white">
       <PageHeader
         title="My Cars"
         rightAction={

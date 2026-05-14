@@ -1,5 +1,4 @@
-import { IsEmail, IsEnum, IsString, Length } from "class-validator";
-import { SendCodeUserType } from "./send-code.dto";
+import { IsEmail, IsString, Length } from "class-validator";
 
 export class VerifyCodeDto {
   @IsEmail()
@@ -8,7 +7,4 @@ export class VerifyCodeDto {
   @IsString()
   @Length(6, 6)
   code: string;
-
-  @IsEnum(SendCodeUserType)
-  userType: SendCodeUserType;
 }

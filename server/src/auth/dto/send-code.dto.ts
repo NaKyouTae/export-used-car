@@ -1,14 +1,6 @@
-import { IsEmail, IsEnum } from "class-validator";
-
-export enum SendCodeUserType {
-  SELLER = "SELLER",
-  BUYER = "BUYER",
-}
+import { IsEmail } from "class-validator";
 
 export class SendCodeDto {
   @IsEmail()
   email: string;
-
-  @IsEnum(SendCodeUserType)
-  userType: SendCodeUserType;
 }

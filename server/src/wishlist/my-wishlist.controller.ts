@@ -10,6 +10,6 @@ export class MyWishlistController {
   @UseGuards(JwtAuthGuard)
   @Get()
   getMyWishlist(@CurrentUser() user: any) {
-    return this.wishlistService.getMyWishlist(user.id, user.userType);
+    return this.wishlistService.getMyWishlist(user.id);
   }
 }

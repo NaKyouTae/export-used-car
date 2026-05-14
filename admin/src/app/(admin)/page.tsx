@@ -5,6 +5,7 @@ import { useEffect, useState } from 'react';
 interface DashboardData {
   cars?: { total: number; byStatus: Record<string, number> };
   sellers?: { total: number; byStatus: Record<string, number> };
+  users?: { total: number };
   buyers?: { total: number };
   recentSellers?: Array<{
     id: string;
@@ -65,6 +66,7 @@ export default function DashboardPage() {
       {/* Stat cards */}
       <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
         <StatCard label="Total Cars" value={data.cars?.total ?? 0} sub={data.cars?.byStatus} />
+        <StatCard label="Total Users" value={data.users?.total ?? 0} />
         <StatCard label="Total Sellers" value={data.sellers?.total ?? 0} sub={data.sellers?.byStatus} />
         <StatCard label="Total Buyers" value={data.buyers?.total ?? 0} />
       </div>

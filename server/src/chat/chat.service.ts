@@ -45,9 +45,9 @@ export class ChatService {
     return room;
   }
 
-  async getRooms(userId: string, userType: string, carId?: string) {
+  async getRooms(userId: string, role: string, carId?: string) {
     const where: any =
-      userType === "BUYER" ? { buyerId: userId } : { sellerId: userId };
+      role === "BUYER" ? { buyerId: userId } : { sellerId: userId };
     if (carId) where.carId = carId;
 
     const rooms = await this.prisma.chatRoom.findMany({
@@ -82,16 +82,14 @@ export class ChatService {
       buyer: room.buyer,
       lastMessage: room.messages[0] || null,
       unreadCount:
-        userType === "BUYER" ? room.buyerUnreadCount : room.sellerUnreadCount,
+        role === "BUYER" ? room.buyerUnreadCount : room.sellerUnreadCount,
       createdAt: room.createdAt,
     }));
   }
 
-  async getTotalUnreadCount(userId: string, userType: string) {
-    const where =
-      userType === "BUYER" ? { buyerId: userId } : { sellerId: userId };
-    const field =
-      userType === "BUYER" ? "buyerUnreadCount" : "sellerUnreadCount";
+  async getTotalUnreadCount(userId: string, role: string) {
+    const where = role === "BUYER" ? { buyerId: userId } : { sellerId: userId };
+    const field = role === "BUYER" ? "buyerUnreadCount" : "sellerUnreadCount";
 
     const result = await this.prisma.chatRoom.aggregate({
       where,
@@ -101,7 +99,7 @@ export class ChatService {
     return { unreadCount: (result._sum as any)?.[field] ?? 0 };
   }
 
-  async getRoom(roomId: string, userId: string, _userType: string) {
+  async getRoom(roomId: string, userId: string, _role: string) {
     const room = await this.prisma.chatRoom.findUnique({
       where: { id: roomId },
       include: {
@@ -124,7 +122,7 @@ export class ChatService {
   async getMessages(
     roomId: string,
     userId: string,
-    userType: string,
+    role: string,
     options?: { cursor?: string; limit?: number },
   ) {
     const room = await this.prisma.chatRoom.findUnique({
@@ -137,8 +135,8 @@ export class ChatService {
 
     // Mark messages as read
     const unreadField =
-      userType === "BUYER" ? "buyerUnreadCount" : "sellerUnreadCount";
-    const oppositeType = userType === "BUYER" ? "SELLER" : "BUYER";
+      role === "BUYER" ? "buyerUnreadCount" : "sellerUnreadCount";
+    const oppositeType = role === "BUYER" ? "SELLER" : "BUYER";
 
     await this.prisma.$transaction([
       this.prisma.chatMessage.updateMany({
@@ -186,7 +184,7 @@ export class ChatService {
   async sendMessage(
     roomId: string,
     userId: string,
-    userType: string,
+    role: string,
     content: string,
   ) {
     const room = await this.prisma.chatRoom.findUnique({
@@ -197,9 +195,9 @@ export class ChatService {
       throw new ForbiddenException("Access denied");
     }
 
-    const senderType = userType === "BUYER" ? "BUYER" : "SELLER";
+    const senderType = role === "BUYER" ? "BUYER" : "SELLER";
     const unreadField =
-      userType === "BUYER" ? "sellerUnreadCount" : "buyerUnreadCount";
+      role === "BUYER" ? "sellerUnreadCount" : "buyerUnreadCount";
 
     const [message] = await this.prisma.$transaction([
       this.prisma.chatMessage.create({

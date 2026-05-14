@@ -5,7 +5,7 @@ import { useState, useEffect, useCallback } from "react";
 interface User {
   id: string;
   email: string;
-  userType: "SELLER" | "BUYER";
+  role: "SELLER" | "BUYER";
   name?: string;
   companyName?: string;
   phone?: string;

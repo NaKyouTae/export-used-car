@@ -11,19 +11,12 @@ model EmailVerification {
   id        String   @id @default(uuid())
   email     String
   code      String
-  userType  UserType
   expiresAt DateTime
   isUsed    Boolean  @default(false)
   createdAt DateTime @default(now())
 
   @@index([email, code])
   @@map("email_verifications")
-}
-
-enum UserType {
-  SELLER
-  BUYER
-  ADMIN
 }
 
 // ── 관리자 ──
@@ -42,46 +35,44 @@ enum AdminRole {
   MANAGER
 }
 
-// ── 셀러 ──
-model Seller {
-  id             String       @id @default(uuid())
-  email          String       @unique
-  companyName    String
-  contactName    String
-  phone          String
+// ── 사용자 (구 Buyer + Seller 통합) ──
+model User {
+  id        String   @id @default(uuid())
+  email     String   @unique
+  name      String?
+  phone     String?
+  country   String?
+  company   String?
+
+  // 셀러로 승격되면 채워지는 필드
+  role           UserRole      @default(BUYER)
+  companyName    String?
+  contactName    String?
   businessNumber String?
   address        String?
-  isVerified     Boolean      @default(false)
-  status         SellerStatus @default(PENDING)
-  createdAt      DateTime     @default(now())
-  updatedAt      DateTime     @updatedAt
+  isVerified     Boolean       @default(false)
+  sellerStatus   SellerStatus?
 
-  cars      Car[]
-  chatRooms ChatRoom[]
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
 
-  @@map("sellers")
+  cars            Car[]
+  sellerChatRooms ChatRoom[] @relation("ChatSeller")
+  buyerChatRooms  ChatRoom[] @relation("ChatBuyer")
+
+  @@index([role])
+  @@map("users")
+}
+
+enum UserRole {
+  BUYER
+  SELLER
 }
 
 enum SellerStatus {
   PENDING
   ACTIVE
   SUSPENDED
-}
-
-// ── 바이어 ──
-model Buyer {
-  id        String   @id @default(uuid())
-  email     String   @unique
-  name      String
-  phone     String?
-  country   String
-  company   String?
-  createdAt DateTime @default(now())
-  updatedAt DateTime @updatedAt
-
-  chatRooms ChatRoom[]
-
-  @@map("buyers")
 }
 
 // ── 카테고리 ──
@@ -162,7 +153,7 @@ model Car {
   createdAt        DateTime     @default(now())
   updatedAt        DateTime     @updatedAt
 
-  seller     Seller          @relation(fields: [sellerId], references: [id])
+  seller     User            @relation(fields: [sellerId], references: [id])
   category   Category        @relation(fields: [categoryId], references: [id])
   make       Make            @relation(fields: [makeId], references: [id])
   carModel   CarModel        @relation(fields: [modelId], references: [id])
@@ -328,11 +319,10 @@ enum ImageCategory {
 model Wishlist {
   id        String   @id @default(uuid())
   userId    String
-  userType  String
   carId     String
   createdAt DateTime @default(now())
 
-  @@unique([userId, userType, carId])
+  @@unique([userId, carId])
   @@map("wishlists")
 }
 
@@ -348,8 +338,8 @@ model ChatRoom {
   createdAt         DateTime  @default(now())
 
   car      Car?          @relation(fields: [carId], references: [id])
-  seller   Seller        @relation(fields: [sellerId], references: [id])
-  buyer    Buyer         @relation(fields: [buyerId], references: [id])
+  seller   User          @relation("ChatSeller", fields: [sellerId], references: [id])
+  buyer    User          @relation("ChatBuyer", fields: [buyerId], references: [id])
   messages ChatMessage[]
 
   @@unique([carId, sellerId, buyerId])
@@ -375,4 +365,18 @@ model ChatMessage {
 enum SenderType {
   SELLER
   BUYER
+}
+
+// ── 채팅 간편 문구 ──
+model QuickPhrase {
+  id           String   @id @default(uuid())
+  userId       String
+  category     String   @default("General")
+  content      String
+  displayOrder Int      @default(0)
+  createdAt    DateTime @default(now())
+  updatedAt    DateTime @updatedAt
+
+  @@index([userId])
+  @@map("quick_phrases")
 }

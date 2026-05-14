@@ -6,6 +6,7 @@ import { usePathname, useRouter } from 'next/navigation';
 
 const NAV_ITEMS = [
   { href: '/', label: 'Dashboard' },
+  { href: '/users', label: 'Users' },
   { href: '/sellers', label: 'Sellers' },
   { href: '/cars', label: 'Cars' },
   { href: '/categories', label: 'Categories' },
@@ -46,7 +47,7 @@ export default function AdminLayout({ children }: { children: React.ReactNode })
         }`}
       >
         <div className="p-6 border-b border-gray-700">
-          <h1 className="text-xl font-bold">Export Used Car</h1>
+          <h1 className="text-xl font-bold">Ajucar</h1>
           <p className="text-gray-400 text-sm mt-1">Admin Panel</p>
         </div>
         <nav className="p-4 space-y-1">

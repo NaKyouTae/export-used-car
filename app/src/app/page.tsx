@@ -114,10 +114,6 @@ export default async function HomePage() {
         )}
       </section>
 
-      {/* Footer */}
-      <footer className="border-t border-gray-100 py-6 px-4 text-center text-xs text-gray-400">
-        <p>AutoExport - Korean Used Car Export Platform</p>
-      </footer>
     </div>
   );
 }

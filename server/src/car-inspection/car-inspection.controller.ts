@@ -28,7 +28,7 @@ export class CarInspectionController {
     @Body() dto: UpsertInspectionDto,
     @CurrentUser() user: any,
   ) {
-    if (user.userType !== "SELLER") {
+    if (user.role !== "SELLER") {
       throw new ForbiddenException("Only sellers can manage inspections");
     }
     return this.carInspectionService.upsert(carId, dto, user.id);

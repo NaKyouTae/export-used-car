@@ -10,12 +10,12 @@ export class WishlistController {
   @UseGuards(JwtAuthGuard)
   @Post()
   toggle(@Param("carId") carId: string, @CurrentUser() user: any) {
-    return this.wishlistService.toggle(user.id, user.userType, carId);
+    return this.wishlistService.toggle(user.id, carId);
   }
 
   @UseGuards(JwtAuthGuard)
   @Get()
   check(@Param("carId") carId: string, @CurrentUser() user: any) {
-    return this.wishlistService.isWishlisted(user.id, user.userType, carId);
+    return this.wishlistService.isWishlisted(user.id, carId);
   }
 }

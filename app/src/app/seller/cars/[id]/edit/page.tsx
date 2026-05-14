@@ -40,7 +40,7 @@ export default function EditCarPage({
 }) {
   const { id } = use(params);
   const router = useRouter();
-  const { isAuthenticated, isLoading: authLoading } = useAuth();
+  const { isAuthenticated, isLoading: authLoading, user } = useAuth();
 
   const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState(false);
@@ -74,10 +74,15 @@ export default function EditCarPage({
   });
 
   useEffect(() => {
-    if (!authLoading && !isAuthenticated) {
-      router.push("/seller/login");
+    if (authLoading) return;
+    if (!isAuthenticated) {
+      router.push("/login");
+      return;
     }
-  }, [isAuthenticated, authLoading, router]);
+    if (user?.role !== "SELLER") {
+      router.push("/mypage");
+    }
+  }, [isAuthenticated, authLoading, user, router]);
 
   // Fetch car data + images + tags + options
   useEffect(() => {
@@ -255,7 +260,7 @@ export default function EditCarPage({
   const labelClass = "block text-sm font-medium text-gray-700 mb-1";
 
   return (
-    <div className="min-h-screen bg-gray-50">
+    <div className="min-h-screen bg-white">
       <PageHeader title="Edit Car" />
 
       <form

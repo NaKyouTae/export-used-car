@@ -7,7 +7,7 @@ export async function POST(request: NextRequest) {
   const body = await request.json();
   const { tempToken, ...registerData } = body;
 
-  const apiResponse = await fetch(`${API_URL}/auth/buyer/register`, {
+  const apiResponse = await fetch(`${API_URL}/auth/register`, {
     method: "POST",
     headers: {
       "content-type": "application/json",

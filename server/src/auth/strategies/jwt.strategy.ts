@@ -6,7 +6,7 @@ import { PrismaService } from "../../prisma/prisma.service";
 
 export interface JwtPayload {
   sub: string;
-  userType: "SELLER" | "BUYER";
+  role: "SELLER" | "BUYER";
   type: "access" | "refresh";
 }
 
@@ -32,22 +32,14 @@ export class JwtStrategy extends PassportStrategy(Strategy) {
       throw new UnauthorizedException("Invalid token type");
     }
 
-    let user: any;
-
-    if (payload.userType === "SELLER") {
-      user = await this.prisma.seller.findUnique({
-        where: { id: payload.sub },
-      });
-    } else if (payload.userType === "BUYER") {
-      user = await this.prisma.buyer.findUnique({
-        where: { id: payload.sub },
-      });
-    }
+    const user = await this.prisma.user.findUnique({
+      where: { id: payload.sub },
+    });
 
     if (!user) {
       throw new UnauthorizedException("User not found");
     }
 
-    return { ...user, userType: payload.userType };
+    return user;
   }
 }

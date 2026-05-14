@@ -37,7 +37,7 @@ export class CarsController {
   @Post()
   @UseGuards(JwtAuthGuard)
   create(@Body() dto: CreateCarDto, @CurrentUser() user: any) {
-    if (user.userType !== "SELLER") {
+    if (user.role !== "SELLER") {
       throw new ForbiddenException("Only sellers can create cars");
     }
     return this.carsService.create(dto, user.id);
@@ -50,7 +50,7 @@ export class CarsController {
     @Body() dto: UpdateCarDto,
     @CurrentUser() user: any,
   ) {
-    if (user.userType !== "SELLER") {
+    if (user.role !== "SELLER") {
       throw new ForbiddenException("Only sellers can update cars");
     }
     return this.carsService.update(id, dto, user.id);
@@ -59,7 +59,7 @@ export class CarsController {
   @Delete(":id")
   @UseGuards(JwtAuthGuard)
   remove(@Param("id") id: string, @CurrentUser() user: any) {
-    if (user.userType !== "SELLER") {
+    if (user.role !== "SELLER") {
       throw new ForbiddenException("Only sellers can delete cars");
     }
     return this.carsService.remove(id, user.id);
@@ -72,7 +72,7 @@ export class CarsController {
     @Body() dto: SetCarOptionsDto,
     @CurrentUser() user: any,
   ) {
-    if (user.userType !== "SELLER") {
+    if (user.role !== "SELLER") {
       throw new ForbiddenException("Only sellers can manage car options");
     }
     return this.carsService.setOptions(id, dto.optionItemIds, user.id);
@@ -85,7 +85,7 @@ export class CarsController {
     @Body() dto: SetCarTagsDto,
     @CurrentUser() user: any,
   ) {
-    if (user.userType !== "SELLER") {
+    if (user.role !== "SELLER") {
       throw new ForbiddenException("Only sellers can manage car tags");
     }
     return this.carsService.setTags(id, dto.tagIds, user.id);

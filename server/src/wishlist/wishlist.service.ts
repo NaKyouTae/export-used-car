@@ -5,9 +5,9 @@ import { PrismaService } from "../prisma/prisma.service";
 export class WishlistService {
   constructor(private readonly prisma: PrismaService) {}
 
-  async toggle(userId: string, userType: string, carId: string) {
+  async toggle(userId: string, carId: string) {
     const existing = await this.prisma.wishlist.findUnique({
-      where: { userId_userType_carId: { userId, userType, carId } },
+      where: { userId_carId: { userId, carId } },
     });
 
     if (existing) {
@@ -22,7 +22,7 @@ export class WishlistService {
     }
 
     await this.prisma.wishlist.create({
-      data: { userId, userType, carId },
+      data: { userId, carId },
     });
     await this.prisma.car.update({
       where: { id: carId },
@@ -31,16 +31,16 @@ export class WishlistService {
     return { wishlisted: true };
   }
 
-  async isWishlisted(userId: string, userType: string, carId: string) {
+  async isWishlisted(userId: string, carId: string) {
     const existing = await this.prisma.wishlist.findUnique({
-      where: { userId_userType_carId: { userId, userType, carId } },
+      where: { userId_carId: { userId, carId } },
     });
     return { wishlisted: !!existing };
   }
 
-  async getMyWishlist(userId: string, userType: string) {
+  async getMyWishlist(userId: string) {
     const wishlists = await this.prisma.wishlist.findMany({
-      where: { userId, userType },
+      where: { userId },
       orderBy: { createdAt: "desc" },
     });
 
@@ -85,7 +85,6 @@ export class WishlistService {
       }
     }
 
-    // Maintain wishlist order (newest first)
     const carMap = new Map(cars.map((c) => [c.id, c]));
     return carIds
       .map((id) => {

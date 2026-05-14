@@ -11,22 +11,9 @@ export async function PATCH(request: NextRequest) {
     return Response.json({ error: "Unauthorized" }, { status: 401 });
   }
 
-  // Get user type from profile first
-  const profileRes = await fetch(`${API_URL}/auth/profile`, {
-    headers: { authorization: `Bearer ${token}` },
-  });
-
-  if (!profileRes.ok) {
-    return Response.json({ error: "Unauthorized" }, { status: 401 });
-  }
-
-  const user = await profileRes.json();
-  const endpoint =
-    user.userType === "SELLER" ? "/sellers/me" : "/buyers/me";
-
   const body = await request.text();
 
-  const res = await fetch(`${API_URL}${endpoint}`, {
+  const res = await fetch(`${API_URL}/users/me`, {
     method: "PATCH",
     headers: {
       authorization: `Bearer ${token}`,

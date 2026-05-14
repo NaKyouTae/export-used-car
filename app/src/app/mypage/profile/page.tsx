@@ -36,7 +36,7 @@ function ProfileForm({
   user: AuthUser;
   reloadUser: () => Promise<unknown>;
 }) {
-  const isSeller = user.userType === "SELLER";
+  const isSeller = user.role === "SELLER";
 
   const [name, setName] = useState(() => user.name || "");
   const [phone, setPhone] = useState(() => user.phone || "");
@@ -103,7 +103,7 @@ function ProfileForm({
     "w-full px-4 py-3 bg-white border border-gray-200 rounded-xl text-sm text-gray-900 focus:outline-none focus:border-main-500 focus:ring-1 focus:ring-main-500";
 
   return (
-    <div className="min-h-screen bg-gray-50 pb-[80px]">
+    <div className="min-h-screen bg-white pb-[80px]">
       <PageHeader title="Edit Profile" />
 
       <div className="px-4 py-4 space-y-5">
@@ -119,7 +119,7 @@ function ProfileForm({
         <div>
           <label className="block text-sm font-medium text-gray-500 mb-1.5">Account Type</label>
           <div className="w-full px-4 py-3 bg-gray-100 rounded-xl text-sm text-gray-400">
-            {isSeller ? "Seller" : "Buyer"}
+            {isSeller ? "Seller" : "User"}
           </div>
         </div>
 

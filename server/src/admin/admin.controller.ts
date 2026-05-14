@@ -14,8 +14,9 @@ import { AdminLoginDto } from "./dto/admin-login.dto";
 import { UpdateSellerStatusDto } from "./dto/update-seller-status.dto";
 import { UpdateCarStatusDto } from "./dto/update-car-status.dto";
 import { AdminSellersQueryDto } from "./dto/admin-sellers-query.dto";
+import { AdminUsersQueryDto } from "./dto/admin-users-query.dto";
 import { AdminCarsQueryDto } from "./dto/admin-cars-query.dto";
-import { CreateSellerDto } from "./dto/create-seller.dto";
+import { PromoteToSellerDto } from "./dto/promote-to-seller.dto";
 
 @Controller("admin")
 export class AdminController {
@@ -32,16 +33,22 @@ export class AdminController {
     return this.adminService.getDashboard();
   }
 
+  @Get("users")
+  @UseGuards(AdminGuard)
+  findUsers(@Query() query: AdminUsersQueryDto) {
+    return this.adminService.findUsers(query);
+  }
+
+  @Post("users/:id/promote-to-seller")
+  @UseGuards(AdminGuard)
+  promoteToSeller(@Param("id") id: string, @Body() dto: PromoteToSellerDto) {
+    return this.adminService.promoteToSeller(id, dto);
+  }
+
   @Get("sellers")
   @UseGuards(AdminGuard)
   findSellers(@Query() query: AdminSellersQueryDto) {
     return this.adminService.findSellers(query);
-  }
-
-  @Post("sellers")
-  @UseGuards(AdminGuard)
-  createSeller(@Body() dto: CreateSellerDto) {
-    return this.adminService.createSeller(dto);
   }
 
   @Patch("sellers/:id/status")

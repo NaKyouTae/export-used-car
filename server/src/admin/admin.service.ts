@@ -1,9 +1,16 @@
-import { Injectable, UnauthorizedException } from "@nestjs/common";
+import {
+  BadRequestException,
+  Injectable,
+  NotFoundException,
+  UnauthorizedException,
+} from "@nestjs/common";
 import { ConfigService } from "@nestjs/config";
-import { Prisma, SellerStatus, CarStatus } from "@prisma/client";
+import { CarStatus, Prisma, SellerStatus, UserRole } from "@prisma/client";
 import { PrismaService } from "../prisma/prisma.service";
-import { AdminSellersQueryDto } from "./dto/admin-sellers-query.dto";
 import { AdminCarsQueryDto } from "./dto/admin-cars-query.dto";
+import { AdminSellersQueryDto } from "./dto/admin-sellers-query.dto";
+import { AdminUsersQueryDto } from "./dto/admin-users-query.dto";
+import { PromoteToSellerDto } from "./dto/promote-to-seller.dto";
 
 @Injectable()
 export class AdminService {
@@ -24,6 +31,7 @@ export class AdminService {
     const [
       carsByStatus,
       sellersByStatus,
+      totalUsers,
       totalBuyers,
       recentCars,
       recentSellers,
@@ -32,11 +40,13 @@ export class AdminService {
         by: ["status"],
         _count: { id: true },
       }),
-      this.prisma.seller.groupBy({
-        by: ["status"],
+      this.prisma.user.groupBy({
+        by: ["sellerStatus"],
+        where: { role: UserRole.SELLER },
         _count: { id: true },
       }),
-      this.prisma.buyer.count(),
+      this.prisma.user.count(),
+      this.prisma.user.count({ where: { role: UserRole.BUYER } }),
       this.prisma.car.findMany({
         take: 5,
         orderBy: { createdAt: "desc" },
@@ -50,7 +60,8 @@ export class AdminService {
           seller: { select: { companyName: true } },
         },
       }),
-      this.prisma.seller.findMany({
+      this.prisma.user.findMany({
+        where: { role: UserRole.SELLER },
         take: 5,
         orderBy: { createdAt: "desc" },
         select: {
@@ -58,7 +69,7 @@ export class AdminService {
           companyName: true,
           contactName: true,
           email: true,
-          status: true,
+          sellerStatus: true,
           isVerified: true,
           createdAt: true,
         },
@@ -80,8 +91,11 @@ export class AdminService {
       ACTIVE: 0,
       SUSPENDED: 0,
     };
+    let totalSellers = 0;
     for (const row of sellersByStatus) {
-      sellerStatusCounts[row.status] = row._count.id;
+      const key = row.sellerStatus ?? "ACTIVE";
+      sellerStatusCounts[key] = row._count.id;
+      totalSellers += row._count.id;
     }
 
     return {
@@ -90,20 +104,31 @@ export class AdminService {
         byStatus: carStatusCounts,
       },
       sellers: {
-        total: Object.values(sellerStatusCounts).reduce((a, b) => a + b, 0),
+        total: totalSellers,
         byStatus: sellerStatusCounts,
       },
+      users: { total: totalUsers },
       buyers: { total: totalBuyers },
       recentCars,
-      recentSellers,
+      recentSellers: recentSellers.map((s) => ({
+        ...s,
+        status: s.sellerStatus,
+      })),
     };
   }
 
-  async findSellers(query: AdminSellersQueryDto) {
-    const { status, cursor, limit = 20 } = query;
+  async findUsers(query: AdminUsersQueryDto) {
+    const { role, search, cursor, limit = 20 } = query;
 
-    const where: Prisma.SellerWhereInput = {};
-    if (status) where.status = status;
+    const where: Prisma.UserWhereInput = {};
+    if (role) where.role = role;
+    if (search) {
+      where.OR = [
+        { email: { contains: search, mode: "insensitive" } },
+        { name: { contains: search, mode: "insensitive" } },
+        { companyName: { contains: search, mode: "insensitive" } },
+      ];
+    }
 
     if (cursor) {
       const decoded = JSON.parse(
@@ -122,27 +147,28 @@ export class AdminService {
       ];
     }
 
-    const sellers = await this.prisma.seller.findMany({
+    const users = await this.prisma.user.findMany({
       where,
       orderBy: [{ createdAt: "desc" }, { id: "desc" }],
       take: limit + 1,
       select: {
         id: true,
         email: true,
+        name: true,
+        phone: true,
+        country: true,
+        company: true,
+        role: true,
         companyName: true,
         contactName: true,
-        phone: true,
-        businessNumber: true,
+        sellerStatus: true,
         isVerified: true,
-        status: true,
         createdAt: true,
-        updatedAt: true,
-        _count: { select: { cars: true } },
       },
     });
 
-    const hasMore = sellers.length > limit;
-    const data = hasMore ? sellers.slice(0, limit) : sellers;
+    const hasMore = users.length > limit;
+    const data = hasMore ? users.slice(0, limit) : users;
 
     let nextCursor: string | null = null;
     if (hasMore) {
@@ -158,32 +184,98 @@ export class AdminService {
     return { data, nextCursor };
   }
 
-  async createSeller(data: {
-    email: string;
-    companyName: string;
-    contactName: string;
-    phone: string;
-    businessNumber?: string;
-    address?: string;
-  }) {
-    return this.prisma.seller.create({
+  async promoteToSeller(userId: string, dto: PromoteToSellerDto) {
+    const user = await this.prisma.user.findUnique({ where: { id: userId } });
+    if (!user) throw new NotFoundException("User not found");
+    if (user.role === UserRole.SELLER) {
+      throw new BadRequestException("User is already a seller");
+    }
+
+    return this.prisma.user.update({
+      where: { id: userId },
       data: {
-        email: data.email,
-        companyName: data.companyName,
-        contactName: data.contactName,
-        phone: data.phone,
-        businessNumber: data.businessNumber,
-        address: data.address,
+        role: UserRole.SELLER,
+        companyName: dto.companyName,
+        contactName: dto.contactName,
+        phone: dto.phone,
+        businessNumber: dto.businessNumber,
+        address: dto.address,
         isVerified: true,
-        status: SellerStatus.ACTIVE,
+        sellerStatus: SellerStatus.ACTIVE,
       },
     });
   }
 
+  async findSellers(query: AdminSellersQueryDto) {
+    const { status, cursor, limit = 20 } = query;
+
+    const where: Prisma.UserWhereInput = { role: UserRole.SELLER };
+    if (status) where.sellerStatus = status;
+
+    if (cursor) {
+      const decoded = JSON.parse(
+        Buffer.from(cursor, "base64").toString("utf-8"),
+      );
+      where.AND = [
+        {
+          OR: [
+            { createdAt: { lt: new Date(decoded.createdAt) } },
+            {
+              createdAt: new Date(decoded.createdAt),
+              id: { lt: decoded.id },
+            },
+          ],
+        },
+      ];
+    }
+
+    const sellers = await this.prisma.user.findMany({
+      where,
+      orderBy: [{ createdAt: "desc" }, { id: "desc" }],
+      take: limit + 1,
+      select: {
+        id: true,
+        email: true,
+        companyName: true,
+        contactName: true,
+        phone: true,
+        businessNumber: true,
+        isVerified: true,
+        sellerStatus: true,
+        createdAt: true,
+        updatedAt: true,
+        _count: { select: { cars: true } },
+      },
+    });
+
+    const hasMore = sellers.length > limit;
+    const data = (hasMore ? sellers.slice(0, limit) : sellers).map((s) => ({
+      ...s,
+      status: s.sellerStatus,
+    }));
+
+    let nextCursor: string | null = null;
+    if (hasMore) {
+      const last = sellers[limit - 1];
+      nextCursor = Buffer.from(
+        JSON.stringify({
+          createdAt: last.createdAt.toISOString(),
+          id: last.id,
+        }),
+      ).toString("base64");
+    }
+
+    return { data, nextCursor };
+  }
+
   async updateSellerStatus(id: string, status: SellerStatus) {
-    return this.prisma.seller.update({
+    const user = await this.prisma.user.findUnique({ where: { id } });
+    if (!user || user.role !== UserRole.SELLER) {
+      throw new NotFoundException("Seller not found");
+    }
+    return this.prisma.user.update({
       where: { id },
-      data: { status },
+      data: { sellerStatus: status },
     });
   }
 
@@ -236,7 +328,6 @@ export class AdminService {
     const hasMore = cars.length > limit;
     const data = hasMore ? cars.slice(0, limit) : cars;
 
-    // Attach thumbnails
     const carIds = data.map((c) => c.id);
     const thumbnails = await this.prisma.image.findMany({
       where: {

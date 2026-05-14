@@ -1,19 +1,23 @@
 import { IsNotEmpty, IsOptional, IsString } from "class-validator";
 
-export class RegisterBuyerDto {
+export class PromoteToSellerDto {
   @IsString()
   @IsNotEmpty()
-  name: string;
+  companyName: string;
 
   @IsString()
   @IsNotEmpty()
-  country: string;
+  contactName: string;
+
+  @IsString()
+  @IsNotEmpty()
+  phone: string;
 
   @IsString()
   @IsOptional()
-  company?: string;
+  businessNumber?: string;
 
   @IsString()
   @IsOptional()
-  phone?: string;
+  address?: string;
 }

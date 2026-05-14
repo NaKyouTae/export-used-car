@@ -113,7 +113,7 @@ export default function CarDetailClient({ car }: { car: CarDetail }) {
     }
   }, [car.id, togglingWishlist, isAuthenticated, router]);
 
-  const isSeller = user?.userType === "SELLER";
+  const isSeller = user?.role === "SELLER";
 
   const handleChatAction = useCallback(async () => {
     if (!isAuthenticated) {

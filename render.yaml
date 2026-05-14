@@ -1,7 +1,7 @@
 services:
-  # ── 중고차 수출 NestJS Backend ──
+  # ── Ajucar NestJS Backend ──
   - type: web
-    name: export-used-car-server
+    name: ajucar-server
     env: docker
     region: singapore
     plan: starter

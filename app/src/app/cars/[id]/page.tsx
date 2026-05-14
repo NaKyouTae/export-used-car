@@ -60,7 +60,7 @@ export async function generateMetadata({
   const car = await getCar(id);
   if (!car) return { title: "Car Not Found" };
   return {
-    title: `${car.title} - AutoExport`,
+    title: `${car.title} - Ajucar`,
     description: `${car.year} ${car.make?.name || ""} ${car.carModel?.name || ""} - ${Number(car.priceMin).toLocaleString()}원`,
   };
 }

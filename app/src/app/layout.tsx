@@ -3,7 +3,7 @@ import "./globals.css";
 import LayoutShell from "@/components/LayoutShell";
 
 export const metadata: Metadata = {
-  title: "Used Car Export Platform",
+  title: "Ajucar",
   description: "Premium Korean used cars for international buyers",
 };
 

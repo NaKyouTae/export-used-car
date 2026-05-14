@@ -29,8 +29,7 @@ export class EmailService {
     }
 
     await this.transporter.sendMail({
-      from:
-        this.config.get<string>("SMTP_FROM") || "noreply@export-used-car.com",
+      from: this.config.get<string>("EMAIL_FROM") || "ajucar0510@naver.com",
       to: email,
       subject: "Your verification code",
       text: `Your verification code is: ${code}\n\nThis code expires in 5 minutes.`,
