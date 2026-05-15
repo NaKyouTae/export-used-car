@@ -21,7 +21,7 @@ type Car = {
 async function getPopularCars() {
   try {
     const res = await fetch(`${API_URL}/cars?limit=5&sort=wishlist`, {
-      next: { revalidate: 60 },
+      cache: "no-store",
     });
     if (!res.ok) return [];
     const json = await res.json();
@@ -34,7 +34,7 @@ async function getPopularCars() {
 async function getRecentCars() {
   try {
     const res = await fetch(`${API_URL}/cars?limit=10&sort=newest`, {
-      next: { revalidate: 60 },
+      cache: "no-store",
     });
     if (!res.ok) return [];
     const json = await res.json();

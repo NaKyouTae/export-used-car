@@ -12,6 +12,7 @@ import {
   UseGuards,
 } from "@nestjs/common";
 import { JwtAuthGuard } from "../common/guards/jwt-auth.guard";
+import { JwtOptionalAuthGuard } from "../common/guards/jwt-optional-auth.guard";
 import { CurrentUser } from "../common/decorators/current-user.decorator";
 import { CarsService } from "./cars.service";
 import { CreateCarDto } from "./dto/create-car.dto";
@@ -30,8 +31,9 @@ export class CarsController {
   }
 
   @Get(":id")
-  findOne(@Param("id") id: string) {
-    return this.carsService.findOne(id);
+  @UseGuards(JwtOptionalAuthGuard)
+  findOne(@Param("id") id: string, @CurrentUser() user: any) {
+    return this.carsService.findOne(id, user?.id);
   }
 
   @Post()

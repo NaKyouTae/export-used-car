@@ -1,7 +1,9 @@
 import { notFound } from "next/navigation";
+import { cookies } from "next/headers";
 import CarDetailClient from "./CarDetailClient";
 
 const API_URL = process.env.NEXT_PUBLIC_API_URL || "http://localhost:18090";
+const COOKIE_ACCESS = "euc_at";
 
 interface CarDetail {
   id: string;
@@ -41,8 +43,17 @@ interface CarDetail {
 
 async function getCar(id: string): Promise<CarDetail | null> {
   try {
+    const cookieStore = await cookies();
+    const accessToken = cookieStore.get(COOKIE_ACCESS)?.value;
+
+    const headers: Record<string, string> = {};
+    if (accessToken) headers.authorization = `Bearer ${accessToken}`;
+
     const res = await fetch(`${API_URL}/cars/${id}`, {
-      next: { revalidate: 30 },
+      headers,
+      // Auth-aware response — don't cache so the seller-view rule applies per request
+      cache: accessToken ? "no-store" : undefined,
+      next: accessToken ? undefined : { revalidate: 30 },
     });
     if (!res.ok) return null;
     return res.json();

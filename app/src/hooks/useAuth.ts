@@ -1,6 +1,7 @@
 "use client";
 
 import { useState, useEffect, useCallback } from "react";
+import { usePathname } from "next/navigation";
 
 interface User {
   id: string;
@@ -64,19 +65,19 @@ async function fetchAuthState(): Promise<AuthState> {
 }
 
 export function useAuth() {
+  const pathname = usePathname();
   const [state, setState] = useState<AuthState>(
     cachedAuth || { user: null, isAuthenticated: false, isLoading: true }
   );
 
+  // Revalidate on every route change so role/identity changes propagate
+  // immediately and a stale cachedAuth from a previous session/account
+  // cannot leak (e.g. lingering SELLER role for a BUYER).
   useEffect(() => {
     let cancelled = false;
 
     const init = async () => {
-      if (cachedAuth) {
-        setState(cachedAuth);
-        return;
-      }
-
+      cachedAuth = null;
       if (!fetchPromise) {
         fetchPromise = fetchAuthState();
       }
@@ -95,7 +96,7 @@ export function useAuth() {
     return () => {
       cancelled = true;
     };
-  }, []);
+  }, [pathname]);
 
   const login = useCallback(async () => {
     cachedAuth = null;

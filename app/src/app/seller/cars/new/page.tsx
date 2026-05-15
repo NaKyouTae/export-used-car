@@ -221,7 +221,7 @@ export default function NewCarPage() {
       }
       await Promise.all(promises);
 
-      router.push("/seller/dashboard");
+      router.push("/seller/cars");
     } catch {
       setError("Network error. Please try again.");
     } finally {
@@ -246,23 +246,21 @@ export default function NewCarPage() {
     <div className="min-h-screen bg-white">
       <PageHeader title="Register Car" />
 
-      <form onSubmit={handleSubmit} className=" py-6 space-y-6">
+      <form onSubmit={handleSubmit} className="px-4 pt-6 space-y-6">
         {/* Photos */}
-        <section className="bg-white rounded-xl overflow-hidden mx-4">
-          <h2 className="font-semibold text-gray-900 px-4 pt-4 pb-2">
+        <section className="space-y-2">
+          <h2 className="font-semibold text-gray-900">
             Photos {images.length > 0 && `(${images.length})`}
           </h2>
-          <div className="px-4 pb-4">
-            <CarImageUploader images={images} onChange={setImages} />
-          </div>
+          <CarImageUploader images={images} onChange={setImages} />
         </section>
 
         {/* Basic Info */}
-        <section className="bg-white rounded-xl p-4 space-y-4 mx-4">
+        <section className="space-y-4">
           <h2 className="font-semibold text-gray-900">Basic Information</h2>
 
           <div>
-            <label className={labelClass}>Title *</label>
+            <label className={labelClass}>Title <span className="text-red-500">*</span></label>
             <input
               type="text"
               value={form.title}
@@ -275,10 +273,11 @@ export default function NewCarPage() {
 
           <div className="grid grid-cols-2 gap-3">
             <div>
-              <label className={labelClass}>Category</label>
+              <label className={labelClass}>Category <span className="text-red-500">*</span></label>
               <select
                 value={form.categoryId}
                 onChange={(e) => updateForm("categoryId", e.target.value)}
+                required
                 className={inputClass}
               >
                 <option value="">Select</option>
@@ -288,13 +287,14 @@ export default function NewCarPage() {
               </select>
             </div>
             <div>
-              <label className={labelClass}>Make</label>
+              <label className={labelClass}>Make <span className="text-red-500">*</span></label>
               <select
                 value={form.makeId}
                 onChange={(e) => {
                   updateForm("makeId", e.target.value);
                   updateForm("modelId", "");
                 }}
+                required
                 className={inputClass}
               >
                 <option value="">Select</option>
@@ -307,11 +307,12 @@ export default function NewCarPage() {
 
           <div className="grid grid-cols-2 gap-3">
             <div>
-              <label className={labelClass}>Model</label>
+              <label className={labelClass}>Model <span className="text-red-500">*</span></label>
               <select
                 value={form.modelId}
                 onChange={(e) => updateForm("modelId", e.target.value)}
                 disabled={!form.makeId}
+                required
                 className={inputClass}
               >
                 <option value="">Select</option>
@@ -321,7 +322,7 @@ export default function NewCarPage() {
               </select>
             </div>
             <div>
-              <label className={labelClass}>Year *</label>
+              <label className={labelClass}>Year <span className="text-red-500">*</span></label>
               <input
                 type="number"
                 value={form.year}
@@ -359,12 +360,12 @@ export default function NewCarPage() {
         </section>
 
         {/* Specs */}
-        <section className="bg-white rounded-xl p-4 space-y-4 mx-4">
+        <section className="space-y-4">
           <h2 className="font-semibold text-gray-900">Specifications</h2>
 
           <div className="grid grid-cols-2 gap-3">
             <div>
-              <label className={labelClass}>Mileage (km) *</label>
+              <label className={labelClass}>Mileage (km) <span className="text-red-500">*</span></label>
               <input
                 type="number"
                 value={form.mileage || ""}
@@ -388,7 +389,7 @@ export default function NewCarPage() {
 
           <div className="grid grid-cols-2 gap-3">
             <div>
-              <label className={labelClass}>Fuel Type *</label>
+              <label className={labelClass}>Fuel Type <span className="text-red-500">*</span></label>
               <select
                 value={form.fuelType}
                 onChange={(e) => updateForm("fuelType", e.target.value)}
@@ -400,7 +401,7 @@ export default function NewCarPage() {
               </select>
             </div>
             <div>
-              <label className={labelClass}>Transmission *</label>
+              <label className={labelClass}>Transmission <span className="text-red-500">*</span></label>
               <select
                 value={form.transmission}
                 onChange={(e) => updateForm("transmission", e.target.value)}
@@ -452,7 +453,7 @@ export default function NewCarPage() {
 
         {/* Tags */}
         {tags.length > 0 && (
-          <section className="bg-white rounded-xl p-4 space-y-3 mx-4">
+          <section className="space-y-3">
             <h2 className="font-semibold text-gray-900">Tags</h2>
             <div className="flex flex-wrap gap-2">
               {tags.map((tag) => {
@@ -484,7 +485,7 @@ export default function NewCarPage() {
 
         {/* Options */}
         {optionCategories.length > 0 && (
-          <section className="bg-white rounded-xl p-4 space-y-4 mx-4">
+          <section className="space-y-4">
             <h2 className="font-semibold text-gray-900">Options</h2>
             {optionCategories.map((category) => (
               <div key={category.id} className="space-y-2">
@@ -522,12 +523,12 @@ export default function NewCarPage() {
         )}
 
         {/* Price & Description */}
-        <section className="bg-white rounded-xl p-4 space-y-4 mx-4">
+        <section className="space-y-4">
           <h2 className="font-semibold text-gray-900">Price & Description</h2>
 
           <div className="grid grid-cols-2 gap-3">
             <div>
-              <label className={labelClass}>Min Price (KRW) *</label>
+              <label className={labelClass}>Min Price (KRW) <span className="text-red-500">*</span></label>
               <input
                 type="text"
                 inputMode="numeric"
@@ -542,7 +543,7 @@ export default function NewCarPage() {
               />
             </div>
             <div>
-              <label className={labelClass}>Max Price (KRW) *</label>
+              <label className={labelClass}>Max Price (KRW) <span className="text-red-500">*</span></label>
               <input
                 type="text"
                 inputMode="numeric"
@@ -571,16 +572,16 @@ export default function NewCarPage() {
         </section>
 
         {error && (
-          <div className="bg-red-50 text-red-600 text-sm p-3 rounded-xl mx-4">
+          <div className="bg-red-50 text-red-600 text-sm p-3 rounded-xl">
             {error}
           </div>
         )}
 
-        <div className="mx-4">
+        <div className="fixed bottom-0 left-1/2 -translate-x-1/2 w-full max-w-[390px] z-40 bg-white border-t border-gray-100 px-4 pt-3 pb-[max(12px,env(safe-area-inset-bottom))]">
           <button
             type="submit"
-            disabled={loading || !form.title || !form.priceMin || !form.priceMax}
-            className="w-full py-3 bg-main-500 text-white font-semibold rounded-xl hover:bg-main-600 disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
+            disabled={loading || !form.title || !form.categoryId || !form.makeId || !form.modelId || !form.priceMin || !form.priceMax}
+            className="w-full h-12 bg-main-500 text-white text-base font-semibold rounded-xl hover:bg-main-600 disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
           >
             {loading ? "Registering..." : "Register Car"}
           </button>

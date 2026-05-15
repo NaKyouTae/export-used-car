@@ -76,14 +76,7 @@ export default function SellerCarsPage() {
 
   return (
     <div className="min-h-screen bg-white">
-      <PageHeader
-        title="My Cars"
-        rightAction={
-          <Link href="/seller/cars/new" className="text-sm text-main-600 font-medium">
-            + New
-          </Link>
-        }
-      />
+      <PageHeader title="My Cars" />
 
       <div className="">
         {/* Status Filter */}

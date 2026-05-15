@@ -73,7 +73,9 @@ export default function BottomNav() {
     return null;
   if (/^\/cars\/[^/]+$/.test(pathname)) return null;
   if (pathname.startsWith("/chat/")) return null;
-  if (pathname.startsWith("/mypage/profile")) return null;
+  if (/^\/mypage\/.+/.test(pathname)) return null;
+  if (pathname === "/seller/cars/new") return null;
+  if (/^\/seller\/cars\/[^/]+\/edit$/.test(pathname)) return null;
   if (isAuthLoading) return null;
 
   return (

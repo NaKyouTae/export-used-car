@@ -71,7 +71,7 @@ export default function MyPage() {
         {/* Seller-only section */}
         {isSeller && (
           <MenuSection title="My Deals">
-            <MenuItem href="/seller/cars" icon={<CarIcon />} label="My Listings" />
+            <MenuItem href="/seller/cars" icon={<CarIcon />} label="My Cars" />
           </MenuSection>
         )}
 

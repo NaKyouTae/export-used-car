@@ -135,7 +135,7 @@ export class CarsService {
     return { data: result, nextCursor };
   }
 
-  async findOne(id: string) {
+  async findOne(id: string, viewerId?: string) {
     const car = await this.prisma.car.findUnique({
       where: { id },
       include: {
@@ -167,11 +167,13 @@ export class CarsService {
       throw new NotFoundException("Car not found");
     }
 
-    // Increment viewCount
-    await this.prisma.car.update({
-      where: { id },
-      data: { viewCount: { increment: 1 } },
-    });
+    // Increment viewCount (skip when the seller views their own car)
+    if (viewerId !== car.sellerId) {
+      await this.prisma.car.update({
+        where: { id },
+        data: { viewCount: { increment: 1 } },
+      });
+    }
 
     // Fetch images
     const images = await this.prisma.image.findMany({

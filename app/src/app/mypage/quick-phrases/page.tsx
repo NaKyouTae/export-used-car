@@ -123,7 +123,7 @@ export default function QuickPhrasesPage() {
 
   if (authLoading || loading) {
     return (
-      <div className="min-h-screen bg-gray-50">
+      <div className="min-h-screen bg-white">
         <PageHeader title="Quick Phrases" />
         <div className="flex items-center justify-center py-20">
           <div className="w-6 h-6 border-2 border-main-500 border-t-transparent rounded-full animate-spin" />
@@ -136,7 +136,7 @@ export default function QuickPhrasesPage() {
   const categories = Object.keys(grouped);
 
   return (
-    <div className="min-h-screen bg-gray-50 pb-[88px]">
+    <div className="min-h-screen bg-white pb-[88px]">
       <PageHeader title="Quick Phrases" />
 
       {phrases.length === 0 ? (
