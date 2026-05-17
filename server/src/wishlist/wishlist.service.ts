@@ -1,9 +1,13 @@
 import { Injectable } from "@nestjs/common";
 import { PrismaService } from "../prisma/prisma.service";
+import { StorageService } from "../storage/storage.service";
 
 @Injectable()
 export class WishlistService {
-  constructor(private readonly prisma: PrismaService) {}
+  constructor(
+    private readonly prisma: PrismaService,
+    private readonly storage: StorageService,
+  ) {}
 
   async toggle(userId: string, carId: string) {
     const existing = await this.prisma.wishlist.findUnique({
@@ -81,7 +85,7 @@ export class WishlistService {
     const thumbnailMap = new Map<string, string>();
     for (const img of thumbnails) {
       if (!thumbnailMap.has(img.targetId)) {
-        thumbnailMap.set(img.targetId, img.url);
+        thumbnailMap.set(img.targetId, this.storage.normalizeUrl(img.url));
       }
     }
 

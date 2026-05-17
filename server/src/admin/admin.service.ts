@@ -7,6 +7,7 @@ import {
 import { ConfigService } from "@nestjs/config";
 import { CarStatus, Prisma, SellerStatus, UserRole } from "@prisma/client";
 import { PrismaService } from "../prisma/prisma.service";
+import { StorageService } from "../storage/storage.service";
 import { AdminCarsQueryDto } from "./dto/admin-cars-query.dto";
 import { AdminSellersQueryDto } from "./dto/admin-sellers-query.dto";
 import { AdminUsersQueryDto } from "./dto/admin-users-query.dto";
@@ -17,6 +18,7 @@ export class AdminService {
   constructor(
     private readonly prisma: PrismaService,
     private readonly config: ConfigService,
+    private readonly storage: StorageService,
   ) {}
 
   login(token: string) {
@@ -340,7 +342,7 @@ export class AdminService {
     const thumbnailMap = new Map<string, string>();
     for (const img of thumbnails) {
       if (!thumbnailMap.has(img.targetId)) {
-        thumbnailMap.set(img.targetId, img.url);
+        thumbnailMap.set(img.targetId, this.storage.normalizeUrl(img.url));
       }
     }
 

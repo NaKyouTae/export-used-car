@@ -6,6 +6,7 @@ import {
 import { PrismaService } from "../prisma/prisma.service";
 import { CreateCategoryDto } from "./dto/create-category.dto";
 import { UpdateCategoryDto } from "./dto/update-category.dto";
+import { generateSlug } from "./slug.util";
 
 @Injectable()
 export class CategoriesService {
@@ -18,16 +19,22 @@ export class CategoriesService {
   }
 
   async create(dto: CreateCategoryDto) {
+    const displayOrder = dto.displayOrder ?? (await this.nextDisplayOrder());
+    const slug = dto.slug?.trim() || generateSlug(dto.name);
     return this.prisma.category.create({
-      data: dto,
+      data: { name: dto.name, slug, displayOrder },
     });
   }
 
   async update(id: string, dto: UpdateCategoryDto) {
     await this.ensureExists(id);
+    const data: UpdateCategoryDto = { ...dto };
+    if (dto.name && !dto.slug) {
+      data.slug = generateSlug(dto.name);
+    }
     return this.prisma.category.update({
       where: { id },
-      data: dto,
+      data,
     });
   }
 
@@ -43,6 +50,25 @@ export class CategoriesService {
     }
 
     return this.prisma.category.delete({ where: { id } });
+  }
+
+  async reorder(ids: string[]) {
+    await this.prisma.$transaction(
+      ids.map((id, index) =>
+        this.prisma.category.update({
+          where: { id },
+          data: { displayOrder: index },
+        }),
+      ),
+    );
+    return this.findAll();
+  }
+
+  private async nextDisplayOrder() {
+    const max = await this.prisma.category.aggregate({
+      _max: { displayOrder: true },
+    });
+    return (max._max.displayOrder ?? -1) + 1;
   }
 
   private async ensureExists(id: string) {

@@ -8,6 +8,7 @@ import {
   Post,
   UseGuards,
 } from "@nestjs/common";
+import { ReorderDto } from "../common/dto/reorder.dto";
 import { AdminGuard } from "../common/guards/admin.guard";
 import { CreateCarModelDto } from "./dto/create-car-model.dto";
 import { CreateMakeDto } from "./dto/create-make.dto";
@@ -35,6 +36,12 @@ export class MakesController {
     return this.makesService.createMake(dto);
   }
 
+  @Patch("makes/reorder")
+  @UseGuards(AdminGuard)
+  reorderMakes(@Body() dto: ReorderDto) {
+    return this.makesService.reorderMakes(dto.ids);
+  }
+
   @Patch("makes/:id")
   @UseGuards(AdminGuard)
   updateMake(@Param("id") id: string, @Body() dto: UpdateMakeDto) {
@@ -51,6 +58,12 @@ export class MakesController {
   @UseGuards(AdminGuard)
   createModel(@Param("id") id: string, @Body() dto: CreateCarModelDto) {
     return this.makesService.createModel(id, dto);
+  }
+
+  @Patch("makes/:id/models/reorder")
+  @UseGuards(AdminGuard)
+  reorderModels(@Param("id") id: string, @Body() dto: ReorderDto) {
+    return this.makesService.reorderModels(id, dto.ids);
   }
 
   @Patch("car-models/:id")

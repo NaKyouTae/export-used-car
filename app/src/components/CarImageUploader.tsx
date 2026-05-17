@@ -1,6 +1,6 @@
 "use client";
 
-import { useRef, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 
 interface UploadedImage {
   id?: string;
@@ -15,30 +15,19 @@ interface CarImageUploaderProps {
   maxImages?: number;
 }
 
+const TILE_SIZE = 96;
+
 export default function CarImageUploader({
   images,
   onChange,
   maxImages = 20,
 }: CarImageUploaderProps) {
-  const galleryInputRef = useRef<HTMLInputElement>(null);
-  const cameraInputRef = useRef<HTMLInputElement>(null);
-  const scrollRef = useRef<HTMLDivElement>(null);
+  const fileInputRef = useRef<HTMLInputElement>(null);
   const [uploading, setUploading] = useState(false);
-  const [currentIndex, setCurrentIndex] = useState(0);
-  const [sourceSheetOpen, setSourceSheetOpen] = useState(false);
+  const [viewerIndex, setViewerIndex] = useState<number | null>(null);
 
   const handleAddClick = () => {
-    setSourceSheetOpen(true);
-  };
-
-  const handlePickFromGallery = () => {
-    setSourceSheetOpen(false);
-    galleryInputRef.current?.click();
-  };
-
-  const handleTakePhoto = () => {
-    setSourceSheetOpen(false);
-    cameraInputRef.current?.click();
+    fileInputRef.current?.click();
   };
 
   const handleFileChange = async (e: React.ChangeEvent<HTMLInputElement>) => {
@@ -50,13 +39,13 @@ export default function CarImageUploader({
 
     setUploading(true);
 
-    const newImages: UploadedImage[] = [];
-    const filesToProcess = Array.from(files).slice(0, remaining);
-
-    for (const file of filesToProcess) {
-      const url = URL.createObjectURL(file);
-      newImages.push({ url, file, isNew: true });
-    }
+    const newImages: UploadedImage[] = Array.from(files)
+      .slice(0, remaining)
+      .map((file) => ({
+        url: URL.createObjectURL(file),
+        file,
+        isNew: true,
+      }));
 
     onChange([...images, ...newImages]);
     setUploading(false);
@@ -73,117 +62,163 @@ export default function CarImageUploader({
       URL.revokeObjectURL(removed.url);
     }
     onChange(updated);
-    if (currentIndex >= updated.length && updated.length > 0) {
-      setCurrentIndex(updated.length - 1);
-    }
-  };
-
-  const handleScroll = () => {
-    if (!scrollRef.current) return;
-    const el = scrollRef.current;
-    const width = el.clientWidth;
-    const index = Math.round(el.scrollLeft / width);
-    setCurrentIndex(index);
   };
 
   const canAdd = images.length < maxImages;
+  // Clamp to a safe index in case images shrink while the viewer is open
+  const safeViewerIndex =
+    viewerIndex !== null && viewerIndex >= 0 && viewerIndex < images.length
+      ? viewerIndex
+      : null;
+  const viewerOpen = safeViewerIndex !== null;
+
+  // Lock body scroll + keyboard navigation while viewer is open
+  useEffect(() => {
+    if (!viewerOpen) return;
+
+    const prevOverflow = document.body.style.overflow;
+    document.body.style.overflow = "hidden";
+
+    const onKey = (e: KeyboardEvent) => {
+      if (e.key === "Escape") setViewerIndex(null);
+      if (e.key === "ArrowLeft")
+        setViewerIndex((i) => (i === null || i <= 0 ? i : i - 1));
+      if (e.key === "ArrowRight")
+        setViewerIndex((i) =>
+          i === null || i >= images.length - 1 ? i : i + 1,
+        );
+    };
+    window.addEventListener("keydown", onKey);
+
+    return () => {
+      document.body.style.overflow = prevOverflow;
+      window.removeEventListener("keydown", onKey);
+    };
+  }, [viewerOpen, images.length]);
 
   return (
     <div>
-      {/* Hidden file inputs: gallery (no capture) + camera (capture) */}
       <input
-        ref={galleryInputRef}
+        ref={fileInputRef}
         type="file"
         accept="image/*"
         multiple
         onChange={handleFileChange}
         className="hidden"
       />
-      <input
-        ref={cameraInputRef}
-        type="file"
-        accept="image/*"
-        capture="environment"
-        onChange={handleFileChange}
-        className="hidden"
-      />
 
-      {/* Carousel */}
-      {images.length > 0 ? (
-        <div className="relative -mx-4">
-          {/* Scrollable images */}
-          <div
-            ref={scrollRef}
-            onScroll={handleScroll}
-            className="flex overflow-x-auto snap-x snap-mandatory scrollbar-hide"
-          >
-            {images.map((img, index) => (
-              <div
-                key={img.url}
-                className="snap-center flex-shrink-0 w-full relative"
+      <div className="flex">
+        {/* Fixed left: Add button */}
+        <button
+          type="button"
+          onClick={handleAddClick}
+          disabled={!canAdd || uploading}
+          style={{ width: TILE_SIZE, height: TILE_SIZE }}
+          className="flex-shrink-0 rounded-2xl bg-gray-50 border border-gray-100 flex flex-col items-center justify-center gap-1 text-gray-400 hover:bg-gray-100 hover:text-main-500 disabled:opacity-40 transition-colors"
+        >
+          {uploading ? (
+            <div className="w-5 h-5 border-2 border-main-500 border-t-transparent rounded-full animate-spin" />
+          ) : (
+            <>
+              <svg
+                className="w-6 h-6"
+                fill="none"
+                stroke="currentColor"
+                viewBox="0 0 24 24"
               >
-                <div className="aspect-square bg-gray-100">
-                  {/* eslint-disable-next-line @next/next/no-img-element */}
-                  <img
-                    src={img.url}
-                    alt={`Photo ${index + 1}`}
-                    className="w-full h-full object-cover"
-                  />
-                </div>
-                {/* Remove button */}
-                <button
-                  type="button"
-                  onClick={() => handleRemove(index)}
-                  className="absolute top-3 right-3 w-7 h-7 bg-black/50 text-white rounded-full flex items-center justify-center text-sm backdrop-blur-sm"
+                <path
+                  strokeLinecap="round"
+                  strokeLinejoin="round"
+                  strokeWidth={1.8}
+                  d="M12 5v14M5 12h14"
+                />
+              </svg>
+              <span className="text-[11px] font-medium">사진 추가</span>
+            </>
+          )}
+        </button>
+
+        {/* Horizontal scrolling thumbnails */}
+        {images.length > 0 && (
+          <div className="flex-1 min-w-0 overflow-x-auto scrollbar-hide">
+            <div className="flex gap-2 pl-2">
+              {images.map((img, index) => (
+                <div
+                  key={img.url}
+                  style={{ width: TILE_SIZE, height: TILE_SIZE }}
+                  className="relative flex-shrink-0 rounded-2xl overflow-hidden bg-gray-100"
                 >
-                  ×
-                </button>
-                {/* Cover badge */}
-                {index === 0 && (
-                  <span className="absolute bottom-3 left-3 bg-main-500 text-white text-xs px-2 py-0.5 rounded font-medium">
-                    Cover
-                  </span>
-                )}
-              </div>
-            ))}
+                  <button
+                    type="button"
+                    onClick={() => setViewerIndex(index)}
+                    aria-label={`View photo ${index + 1}`}
+                    className="absolute inset-0 w-full h-full"
+                  >
+                    {/* eslint-disable-next-line @next/next/no-img-element */}
+                    <img
+                      src={img.url}
+                      alt={`Photo ${index + 1}`}
+                      className="w-full h-full object-cover"
+                    />
+                  </button>
+                  {index === 0 && (
+                    <span className="pointer-events-none absolute bottom-1.5 left-1.5 bg-main-500 text-white text-[10px] px-1.5 py-0.5 rounded font-medium">
+                      Cover
+                    </span>
+                  )}
+                  <button
+                    type="button"
+                    onClick={(e) => {
+                      e.stopPropagation();
+                      handleRemove(index);
+                    }}
+                    aria-label="Remove photo"
+                    className="absolute top-1.5 right-1.5 w-6 h-6 bg-white shadow-md rounded-full flex items-center justify-center text-gray-600 hover:text-gray-900"
+                  >
+                    <svg
+                      className="w-3.5 h-3.5"
+                      fill="none"
+                      stroke="currentColor"
+                      viewBox="0 0 24 24"
+                    >
+                      <path
+                        strokeLinecap="round"
+                        strokeLinejoin="round"
+                        strokeWidth={2.2}
+                        d="M6 18L18 6M6 6l12 12"
+                      />
+                    </svg>
+                  </button>
+                </div>
+              ))}
+            </div>
           </div>
+        )}
+      </div>
 
-          {/* Indicator */}
-          <div className="absolute bottom-3 right-3 bg-black/50 text-white text-xs px-2 py-0.5 rounded-full backdrop-blur-sm">
-            {currentIndex + 1} / {images.length}
-          </div>
-        </div>
-      ) : (
-        /* Empty state */
-        <div className="aspect-video bg-gray-50 rounded-xl flex flex-col items-center justify-center text-gray-400">
-          <svg
-            className="w-10 h-10 mb-2"
-            fill="none"
-            stroke="currentColor"
-            viewBox="0 0 24 24"
+      {/* Fullscreen image viewer */}
+      {safeViewerIndex !== null && (
+        <div
+          className="fixed inset-0 z-[100] bg-black/95 flex items-center justify-center select-none"
+          onClick={() => setViewerIndex(null)}
+          role="dialog"
+          aria-modal="true"
+        >
+          {/* eslint-disable-next-line @next/next/no-img-element */}
+          <img
+            src={images[safeViewerIndex].url}
+            alt={`Photo ${safeViewerIndex + 1}`}
+            className="max-w-full max-h-full object-contain"
+            onClick={(e) => e.stopPropagation()}
+          />
+
+          {/* Close */}
+          <button
+            type="button"
+            onClick={() => setViewerIndex(null)}
+            aria-label="Close viewer"
+            className="absolute top-4 right-4 w-10 h-10 bg-white/15 hover:bg-white/25 backdrop-blur-sm rounded-full flex items-center justify-center text-white"
           >
-            <path
-              strokeLinecap="round"
-              strokeLinejoin="round"
-              strokeWidth={1.5}
-              d="M4 16l4.586-4.586a2 2 0 012.828 0L16 16m-2-2l1.586-1.586a2 2 0 012.828 0L20 14m-6-6h.01M6 20h12a2 2 0 002-2V6a2 2 0 00-2-2H6a2 2 0 00-2 2v12a2 2 0 002 2z"
-            />
-          </svg>
-          <p className="text-sm">No photos yet</p>
-        </div>
-      )}
-
-      {/* Upload button */}
-      <button
-        type="button"
-        onClick={handleAddClick}
-        disabled={!canAdd || uploading}
-        className="mt-3 w-full py-3 border-2 border-dashed border-gray-300 rounded-xl flex items-center justify-center gap-2 text-gray-500 hover:border-main-400 hover:text-main-500 disabled:opacity-40 transition-colors bg-white"
-      >
-        {uploading ? (
-          <div className="w-5 h-5 border-2 border-main-500 border-t-transparent rounded-full animate-spin" />
-        ) : (
-          <>
             <svg
               className="w-5 h-5"
               fill="none"
@@ -193,46 +228,25 @@ export default function CarImageUploader({
               <path
                 strokeLinecap="round"
                 strokeLinejoin="round"
-                strokeWidth={1.5}
-                d="M3 9a2 2 0 012-2h.93a2 2 0 001.664-.89l.812-1.22A2 2 0 0110.07 4h3.86a2 2 0 011.664.89l.812 1.22A2 2 0 0018.07 7H19a2 2 0 012 2v9a2 2 0 01-2 2H5a2 2 0 01-2-2V9z"
-              />
-              <path
-                strokeLinecap="round"
-                strokeLinejoin="round"
-                strokeWidth={1.5}
-                d="M15 13a3 3 0 11-6 0 3 3 0 016 0z"
+                strokeWidth={2}
+                d="M6 18L18 6M6 6l12 12"
               />
             </svg>
-            <span className="text-sm font-medium">
-              Add Photos ({images.length}/{maxImages})
-            </span>
-          </>
-        )}
-      </button>
+          </button>
 
-      {/* Source selection bottom sheet */}
-      {sourceSheetOpen && (
-        <div
-          className="fixed inset-0 z-50 flex items-end justify-center bg-black/40"
-          onClick={() => setSourceSheetOpen(false)}
-        >
-          <div
-            className="w-full max-w-md bg-white rounded-t-2xl pb-[env(safe-area-inset-bottom)] animate-slide-up"
-            onClick={(e) => e.stopPropagation()}
-          >
-            <div className="flex justify-center pt-3 pb-2">
-              <div className="w-10 h-1 bg-gray-300 rounded-full" />
-            </div>
-            <div className="px-4 pb-2 text-center text-sm font-medium text-gray-500">
-              Add Photos
-            </div>
+          {/* Prev */}
+          {safeViewerIndex > 0 && (
             <button
               type="button"
-              onClick={handleTakePhoto}
-              className="w-full flex items-center gap-3 px-5 py-4 border-t border-gray-100 text-left active:bg-gray-50"
+              onClick={(e) => {
+                e.stopPropagation();
+                setViewerIndex(safeViewerIndex - 1);
+              }}
+              aria-label="Previous photo"
+              className="absolute left-3 top-1/2 -translate-y-1/2 w-10 h-10 bg-white/15 hover:bg-white/25 backdrop-blur-sm rounded-full flex items-center justify-center text-white"
             >
               <svg
-                className="w-6 h-6 text-main-500"
+                className="w-5 h-5"
                 fill="none"
                 stroke="currentColor"
                 viewBox="0 0 24 24"
@@ -240,25 +254,26 @@ export default function CarImageUploader({
                 <path
                   strokeLinecap="round"
                   strokeLinejoin="round"
-                  strokeWidth={1.5}
-                  d="M3 9a2 2 0 012-2h.93a2 2 0 001.664-.89l.812-1.22A2 2 0 0110.07 4h3.86a2 2 0 011.664.89l.812 1.22A2 2 0 0018.07 7H19a2 2 0 012 2v9a2 2 0 01-2 2H5a2 2 0 01-2-2V9z"
-                />
-                <path
-                  strokeLinecap="round"
-                  strokeLinejoin="round"
-                  strokeWidth={1.5}
-                  d="M15 13a3 3 0 11-6 0 3 3 0 016 0z"
+                  strokeWidth={2}
+                  d="M15 19l-7-7 7-7"
                 />
               </svg>
-              <span className="text-base text-gray-900">Take Photo</span>
             </button>
+          )}
+
+          {/* Next */}
+          {safeViewerIndex < images.length - 1 && (
             <button
               type="button"
-              onClick={handlePickFromGallery}
-              className="w-full flex items-center gap-3 px-5 py-4 border-t border-gray-100 text-left active:bg-gray-50"
+              onClick={(e) => {
+                e.stopPropagation();
+                setViewerIndex(safeViewerIndex + 1);
+              }}
+              aria-label="Next photo"
+              className="absolute right-3 top-1/2 -translate-y-1/2 w-10 h-10 bg-white/15 hover:bg-white/25 backdrop-blur-sm rounded-full flex items-center justify-center text-white"
             >
               <svg
-                className="w-6 h-6 text-main-500"
+                className="w-5 h-5"
                 fill="none"
                 stroke="currentColor"
                 viewBox="0 0 24 24"
@@ -266,20 +281,19 @@ export default function CarImageUploader({
                 <path
                   strokeLinecap="round"
                   strokeLinejoin="round"
-                  strokeWidth={1.5}
-                  d="M4 16l4.586-4.586a2 2 0 012.828 0L16 16m-2-2l1.586-1.586a2 2 0 012.828 0L20 14m-6-6h.01M6 20h12a2 2 0 002-2V6a2 2 0 00-2-2H6a2 2 0 00-2 2v12a2 2 0 002 2z"
+                  strokeWidth={2}
+                  d="M9 5l7 7-7 7"
                 />
               </svg>
-              <span className="text-base text-gray-900">Choose from Gallery</span>
             </button>
-            <button
-              type="button"
-              onClick={() => setSourceSheetOpen(false)}
-              className="w-full px-5 py-4 mt-2 border-t border-gray-100 text-base text-gray-500 active:bg-gray-50"
-            >
-              Cancel
-            </button>
-          </div>
+          )}
+
+          {/* Counter */}
+          {images.length > 1 && (
+            <span className="absolute bottom-6 left-1/2 -translate-x-1/2 bg-white/15 backdrop-blur-sm text-white text-xs px-3 py-1 rounded-full">
+              {safeViewerIndex + 1} / {images.length}
+            </span>
+          )}
         </div>
       )}
     </div>

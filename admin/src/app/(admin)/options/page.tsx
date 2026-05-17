@@ -1,7 +1,8 @@
 'use client';
 
-import { Fragment, useEffect, useState } from 'react';
+import { useEffect, useState } from 'react';
 import Modal from '@/components/Modal';
+import { SortableList } from '@/components/SortableList';
 
 interface OptionItem {
   id: string;
@@ -32,7 +33,6 @@ export default function OptionsPage() {
 
   const [catName, setCatName] = useState('');
   const [catSlug, setCatSlug] = useState('');
-  const [catOrder, setCatOrder] = useState(0);
 
   const [itemName, setItemName] = useState('');
   const [itemNameKo, setItemNameKo] = useState('');
@@ -54,7 +54,6 @@ export default function OptionsPage() {
   const resetCategoryForm = () => {
     setCatName('');
     setCatSlug('');
-    setCatOrder(0);
     setEditCatId(null);
   };
 
@@ -67,7 +66,6 @@ export default function OptionsPage() {
     setEditCatId(c.id);
     setCatName(c.name);
     setCatSlug(c.slug);
-    setCatOrder(c.displayOrder);
     setCatModalMode('edit');
   };
 
@@ -85,7 +83,7 @@ export default function OptionsPage() {
       const res = await fetch(url, {
         method,
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ name: catName, slug: catSlug, displayOrder: catOrder }),
+        body: JSON.stringify({ name: catName, slug: catSlug }),
       });
       if (!res.ok) throw new Error();
       closeCatModal();
@@ -147,10 +145,44 @@ export default function OptionsPage() {
     }
   };
 
+  const handleReorderCategories = async (next: OptionCategory[]) => {
+    const previous = categories;
+    setCategories(next);
+    try {
+      const res = await fetch('/api/options/reorder', {
+        method: 'PATCH',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ ids: next.map((c) => c.id) }),
+      });
+      if (!res.ok) throw new Error();
+    } catch {
+      setCategories(previous);
+      alert('Failed to reorder categories');
+    }
+  };
+
+  const handleReorderItems = async (categoryId: string, next: OptionItem[]) => {
+    const previous = categories;
+    setCategories((prev) =>
+      prev.map((c) => (c.id === categoryId ? { ...c, items: next } : c))
+    );
+    try {
+      const res = await fetch(`/api/options/${categoryId}/items/reorder`, {
+        method: 'PATCH',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ ids: next.map((i) => i.id) }),
+      });
+      if (!res.ok) throw new Error();
+    } catch {
+      setCategories(previous);
+      alert('Failed to reorder items');
+    }
+  };
+
   return (
     <div className="space-y-4">
       <div className="flex items-center justify-between">
-        <p className="text-sm text-gray-500">{categories.length} option categories</p>
+        <p className="text-sm text-gray-500">{categories.length} option categories · drag to reorder</p>
         <button onClick={openCreateCategory} className="btn btn-primary btn-sm">+ New Category</button>
       </div>
 
@@ -160,93 +192,49 @@ export default function OptionsPage() {
         ) : categories.length === 0 ? (
           <div className="p-8 text-center text-gray-400">No option categories yet</div>
         ) : (
-          <>
-            {/* Desktop table */}
-            <table className="admin-table hidden sm:table">
-              <thead>
-                <tr>
-                  <th></th>
-                  <th>Name</th>
-                  <th>Slug</th>
-                  <th>Order</th>
-                  <th>Items</th>
-                  <th className="text-right">Actions</th>
-                </tr>
-              </thead>
-              <tbody>
-                {categories.map((c) => (
-                  <Fragment key={c.id}>
-                    <tr className="cursor-pointer" onClick={() => setExpandedId(expandedId === c.id ? null : c.id)}>
-                      <td className="w-8 text-center">
-                        <span className={`inline-block transition-transform ${expandedId === c.id ? 'rotate-90' : ''}`}>
-                          &#9654;
-                        </span>
-                      </td>
-                      <td className="font-medium">{c.name}</td>
-                      <td className="text-gray-500">{c.slug}</td>
-                      <td>{c.displayOrder}</td>
-                      <td>{c.items?.length ?? 0}</td>
-                      <td className="text-right space-x-2">
-                        <button onClick={(e) => { e.stopPropagation(); openEditCategory(c); }}
-                          className="btn btn-secondary btn-sm">Edit</button>
-                        <button onClick={(e) => { e.stopPropagation(); handleDeleteCategory(c.id); }}
-                          className="btn btn-danger btn-sm">Delete</button>
-                      </td>
-                    </tr>
-                    {expandedId === c.id && (
-                      <tr>
-                        <td colSpan={6} className="bg-gray-50 p-4">
-                          <ItemsPanel
-                            category={c}
-                            onAdd={() => openCreateItem(c.id, c.name)}
-                            onDelete={handleDeleteItem}
-                          />
-                        </td>
-                      </tr>
-                    )}
-                  </Fragment>
-                ))}
-              </tbody>
-            </table>
-
-            {/* Mobile cards */}
-            <ul className="sm:hidden divide-y divide-gray-100">
-              {categories.map((c) => (
-                <li key={c.id} className="p-4 space-y-3">
-                  <button
-                    onClick={() => setExpandedId(expandedId === c.id ? null : c.id)}
-                    className="w-full flex items-start justify-between gap-3 text-left"
-                  >
-                    <div className="min-w-0 flex-1">
-                      <div className="flex items-center gap-2">
-                        <span className={`inline-block text-xs transition-transform ${expandedId === c.id ? 'rotate-90' : ''}`}>&#9654;</span>
+          <ul className="divide-y divide-gray-100">
+            <SortableList
+              items={categories}
+              onReorder={handleReorderCategories}
+              renderItem={(c, handle) => (
+                <li className="bg-white p-3 sm:p-4 space-y-3">
+                  <div className="flex items-center gap-3">
+                    {handle}
+                    <button
+                      onClick={() => setExpandedId(expandedId === c.id ? null : c.id)}
+                      className="flex-1 flex items-center gap-2 text-left min-w-0"
+                    >
+                      <span className={`inline-block text-xs transition-transform ${expandedId === c.id ? 'rotate-90' : ''}`}>
+                        ▶
+                      </span>
+                      <div className="min-w-0 flex-1">
                         <p className="font-medium text-gray-900 truncate">{c.name}</p>
+                        <p className="text-xs text-gray-500 truncate">{c.slug}</p>
                       </div>
-                      <p className="text-xs text-gray-500 mt-1 truncate">{c.slug}</p>
+                      <span className="shrink-0 text-xs text-gray-400">
+                        {c.items?.length ?? 0} items
+                      </span>
+                    </button>
+                    <div className="flex gap-2 shrink-0">
+                      <button onClick={() => openEditCategory(c)} className="btn btn-secondary btn-sm">Edit</button>
+                      <button onClick={() => handleDeleteCategory(c.id)} className="btn btn-danger btn-sm">Delete</button>
                     </div>
-                    <span className="shrink-0 text-xs text-gray-400">
-                      {c.items?.length ?? 0} items · #{c.displayOrder}
-                    </span>
-                  </button>
+                  </div>
 
                   {expandedId === c.id && (
-                    <div className="bg-gray-50 -mx-4 px-4 py-3 border-t border-gray-100">
+                    <div className="bg-gray-50 -mx-3 sm:-mx-4 px-3 sm:px-4 py-3 border-t border-gray-100">
                       <ItemsPanel
                         category={c}
                         onAdd={() => openCreateItem(c.id, c.name)}
                         onDelete={handleDeleteItem}
+                        onReorder={(next) => handleReorderItems(c.id, next)}
                       />
                     </div>
                   )}
-
-                  <div className="flex gap-2">
-                    <button onClick={() => openEditCategory(c)} className="btn btn-secondary btn-sm flex-1">Edit</button>
-                    <button onClick={() => handleDeleteCategory(c.id)} className="btn btn-danger btn-sm flex-1">Delete</button>
-                  </div>
                 </li>
-              ))}
-            </ul>
-          </>
+              )}
+            />
+          </ul>
         )}
       </div>
 
@@ -289,15 +277,6 @@ export default function OptionsPage() {
               required
               className="border border-gray-300 rounded-lg px-3 py-2 text-sm w-full"
               placeholder="category-slug"
-            />
-          </div>
-          <div>
-            <label className="block text-xs text-gray-500 mb-1">Order</label>
-            <input
-              type="number"
-              value={catOrder}
-              onChange={(e) => setCatOrder(Number(e.target.value))}
-              className="border border-gray-300 rounded-lg px-3 py-2 text-sm w-full sm:w-32"
             />
           </div>
         </form>
@@ -353,31 +332,45 @@ function ItemsPanel({
   category,
   onAdd,
   onDelete,
+  onReorder,
 }: {
   category: OptionCategory;
   onAdd: () => void;
   onDelete: (id: string) => void;
+  onReorder: (next: OptionItem[]) => void;
 }) {
+  const items = category.items || [];
   return (
     <div className="space-y-3">
       <div className="flex items-center justify-between">
         <h4 className="text-sm font-semibold text-gray-600">Items in {category.name}</h4>
         <button onClick={onAdd} className="btn btn-primary btn-sm">+ Add Item</button>
       </div>
-      <div className="space-y-1">
-        {(category.items || []).map((item) => (
-          <div key={item.id} className="flex items-center justify-between text-sm py-1 px-2 hover:bg-gray-100 rounded">
-            <div className="flex items-center gap-3 min-w-0">
-              <span className="font-medium truncate">{item.name}</span>
-              {item.nameKo && <span className="text-gray-400 truncate">{item.nameKo}</span>}
-            </div>
-            <button onClick={() => onDelete(item.id)} className="text-red-500 hover:text-red-700 text-xs shrink-0">
-              Delete
-            </button>
-          </div>
-        ))}
-        {(!category.items || category.items.length === 0) && (
-          <p className="text-gray-400 text-sm">No items yet</p>
+      <div className="bg-white rounded-lg overflow-hidden">
+        {items.length > 0 ? (
+          <ul className="divide-y divide-gray-100">
+            <SortableList
+              items={items}
+              onReorder={onReorder}
+              renderItem={(item, handle) => (
+                <li className="bg-white px-3 py-2 flex items-center gap-3 text-sm">
+                  {handle}
+                  <div className="min-w-0 flex-1">
+                    <span className="font-medium truncate">{item.name}</span>
+                    {item.nameKo && <span className="ml-2 text-gray-400 truncate">{item.nameKo}</span>}
+                  </div>
+                  <button
+                    onClick={() => onDelete(item.id)}
+                    className="text-red-500 hover:text-red-700 text-xs shrink-0"
+                  >
+                    Delete
+                  </button>
+                </li>
+              )}
+            />
+          </ul>
+        ) : (
+          <p className="text-gray-400 text-sm px-3 py-2">No items yet</p>
         )}
       </div>
     </div>

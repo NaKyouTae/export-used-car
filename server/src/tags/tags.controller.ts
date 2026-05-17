@@ -8,6 +8,7 @@ import {
   Post,
   UseGuards,
 } from "@nestjs/common";
+import { ReorderDto } from "../common/dto/reorder.dto";
 import { AdminGuard } from "../common/guards/admin.guard";
 import { CreateTagDto } from "./dto/create-tag.dto";
 import { UpdateTagDto } from "./dto/update-tag.dto";
@@ -26,6 +27,12 @@ export class TagsController {
   @Post()
   create(@Body() dto: CreateTagDto) {
     return this.tagsService.create(dto);
+  }
+
+  @UseGuards(AdminGuard)
+  @Patch("reorder")
+  reorder(@Body() dto: ReorderDto) {
+    return this.tagsService.reorder(dto.ids);
   }
 
   @UseGuards(AdminGuard)

@@ -2,6 +2,7 @@
 
 import { useEffect, useState } from 'react';
 import Modal from '@/components/Modal';
+import { SortableList } from '@/components/SortableList';
 
 interface Category {
   id: string;
@@ -21,8 +22,6 @@ export default function CategoriesPage() {
   const [submitting, setSubmitting] = useState(false);
 
   const [name, setName] = useState('');
-  const [slug, setSlug] = useState('');
-  const [displayOrder, setDisplayOrder] = useState(0);
 
   const load = async () => {
     try {
@@ -40,8 +39,6 @@ export default function CategoriesPage() {
 
   const resetForm = () => {
     setName('');
-    setSlug('');
-    setDisplayOrder(0);
     setEditId(null);
   };
 
@@ -53,8 +50,6 @@ export default function CategoriesPage() {
   const openEdit = (c: Category) => {
     setEditId(c.id);
     setName(c.name);
-    setSlug(c.slug);
-    setDisplayOrder(c.displayOrder);
     setModalMode('edit');
   };
 
@@ -72,7 +67,7 @@ export default function CategoriesPage() {
       const res = await fetch(url, {
         method,
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ name, slug, displayOrder }),
+        body: JSON.stringify({ name }),
       });
       if (!res.ok) throw new Error();
       closeModal();
@@ -95,10 +90,26 @@ export default function CategoriesPage() {
     }
   };
 
+  const handleReorder = async (next: Category[]) => {
+    const previous = categories;
+    setCategories(next);
+    try {
+      const res = await fetch('/api/categories/reorder', {
+        method: 'PATCH',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ ids: next.map((c) => c.id) }),
+      });
+      if (!res.ok) throw new Error();
+    } catch {
+      setCategories(previous);
+      alert('Failed to reorder');
+    }
+  };
+
   return (
     <div className="space-y-4">
       <div className="flex items-center justify-between">
-        <p className="text-sm text-gray-500">{categories.length} categories</p>
+        <p className="text-sm text-gray-500">{categories.length} categories · drag to reorder</p>
         <button onClick={openCreate} className="btn btn-primary btn-sm">+ New</button>
       </div>
 
@@ -108,51 +119,25 @@ export default function CategoriesPage() {
         ) : categories.length === 0 ? (
           <div className="p-8 text-center text-gray-400">No categories yet</div>
         ) : (
-          <>
-            {/* Desktop table */}
-            <table className="admin-table hidden sm:table">
-              <thead>
-                <tr>
-                  <th>Name</th>
-                  <th>Slug</th>
-                  <th>Order</th>
-                  <th className="text-right">Actions</th>
-                </tr>
-              </thead>
-              <tbody>
-                {categories.map((c) => (
-                  <tr key={c.id}>
-                    <td className="font-medium">{c.name}</td>
-                    <td className="text-gray-500">{c.slug}</td>
-                    <td>{c.displayOrder}</td>
-                    <td className="text-right space-x-2">
-                      <button onClick={() => openEdit(c)} className="btn btn-secondary btn-sm">Edit</button>
-                      <button onClick={() => handleDelete(c.id)} className="btn btn-danger btn-sm">Delete</button>
-                    </td>
-                  </tr>
-                ))}
-              </tbody>
-            </table>
-
-            {/* Mobile cards */}
-            <ul className="sm:hidden divide-y divide-gray-100">
-              {categories.map((c) => (
-                <li key={c.id} className="p-4 space-y-2">
-                  <div className="flex items-start justify-between gap-3">
-                    <div className="min-w-0 flex-1">
-                      <p className="font-medium text-gray-900 truncate">{c.name}</p>
-                      <p className="text-xs text-gray-500 truncate">{c.slug}</p>
-                    </div>
-                    <span className="shrink-0 text-xs text-gray-400">#{c.displayOrder}</span>
+          <ul className="divide-y divide-gray-100">
+            <SortableList
+              items={categories}
+              onReorder={handleReorder}
+              renderItem={(c, handle) => (
+                <li className="bg-white p-3 sm:p-4 flex items-center gap-3">
+                  {handle}
+                  <div className="min-w-0 flex-1">
+                    <p className="font-medium text-gray-900 truncate">{c.name}</p>
+                    <p className="text-xs text-gray-500 truncate">{c.slug}</p>
                   </div>
-                  <div className="flex gap-2">
-                    <button onClick={() => openEdit(c)} className="btn btn-secondary btn-sm flex-1">Edit</button>
-                    <button onClick={() => handleDelete(c.id)} className="btn btn-danger btn-sm flex-1">Delete</button>
+                  <div className="flex gap-2 shrink-0">
+                    <button onClick={() => openEdit(c)} className="btn btn-secondary btn-sm">Edit</button>
+                    <button onClick={() => handleDelete(c.id)} className="btn btn-danger btn-sm">Delete</button>
                   </div>
                 </li>
-              ))}
-            </ul>
-          </>
+              )}
+            />
+          </ul>
         )}
       </div>
 
@@ -183,27 +168,9 @@ export default function CategoriesPage() {
               required
               autoFocus
               className="border border-gray-300 rounded-lg px-3 py-2 text-sm w-full"
-              placeholder="Category name"
+              placeholder="세단, SUV, 트럭 등"
             />
-          </div>
-          <div>
-            <label className="block text-xs text-gray-500 mb-1">Slug</label>
-            <input
-              value={slug}
-              onChange={(e) => setSlug(e.target.value)}
-              required
-              className="border border-gray-300 rounded-lg px-3 py-2 text-sm w-full"
-              placeholder="category-slug"
-            />
-          </div>
-          <div>
-            <label className="block text-xs text-gray-500 mb-1">Order</label>
-            <input
-              type="number"
-              value={displayOrder}
-              onChange={(e) => setDisplayOrder(Number(e.target.value))}
-              className="border border-gray-300 rounded-lg px-3 py-2 text-sm w-full sm:w-32"
-            />
+            <p className="text-[11px] text-gray-400 mt-1">URL용 식별자(slug)는 이름으로 자동 생성됩니다.</p>
           </div>
         </form>
       </Modal>

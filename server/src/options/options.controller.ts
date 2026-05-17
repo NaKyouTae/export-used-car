@@ -8,6 +8,7 @@ import {
   Post,
   UseGuards,
 } from "@nestjs/common";
+import { ReorderDto } from "../common/dto/reorder.dto";
 import { AdminGuard } from "../common/guards/admin.guard";
 import { CreateOptionCategoryDto } from "./dto/create-option-category.dto";
 import { CreateOptionItemDto } from "./dto/create-option-item.dto";
@@ -30,6 +31,18 @@ export class OptionsController {
   @Post("option-categories")
   createCategory(@Body() dto: CreateOptionCategoryDto) {
     return this.optionsService.createCategory(dto);
+  }
+
+  @UseGuards(AdminGuard)
+  @Patch("option-categories/reorder")
+  reorderCategories(@Body() dto: ReorderDto) {
+    return this.optionsService.reorderCategories(dto.ids);
+  }
+
+  @UseGuards(AdminGuard)
+  @Patch("option-categories/:id/items/reorder")
+  reorderItems(@Param("id") id: string, @Body() dto: ReorderDto) {
+    return this.optionsService.reorderItems(id, dto.ids);
   }
 
   @UseGuards(AdminGuard)

@@ -2,6 +2,7 @@
 
 import { useEffect, useState } from 'react';
 import Modal from '@/components/Modal';
+import { SortableList } from '@/components/SortableList';
 
 interface Tag {
   id: string;
@@ -22,7 +23,6 @@ export default function TagsPage() {
 
   const [name, setName] = useState('');
   const [nameKo, setNameKo] = useState('');
-  const [displayOrder, setDisplayOrder] = useState(0);
 
   const load = async () => {
     try {
@@ -41,7 +41,6 @@ export default function TagsPage() {
   const resetForm = () => {
     setName('');
     setNameKo('');
-    setDisplayOrder(0);
     setEditId(null);
   };
 
@@ -54,7 +53,6 @@ export default function TagsPage() {
     setEditId(t.id);
     setName(t.name);
     setNameKo(t.nameKo || '');
-    setDisplayOrder(t.displayOrder);
     setModalMode('edit');
   };
 
@@ -72,7 +70,7 @@ export default function TagsPage() {
       const res = await fetch(url, {
         method,
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ name, nameKo: nameKo || undefined, displayOrder }),
+        body: JSON.stringify({ name, nameKo: nameKo || undefined }),
       });
       if (!res.ok) throw new Error();
       closeModal();
@@ -95,10 +93,26 @@ export default function TagsPage() {
     }
   };
 
+  const handleReorder = async (next: Tag[]) => {
+    const previous = tags;
+    setTags(next);
+    try {
+      const res = await fetch('/api/tags/reorder', {
+        method: 'PATCH',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ ids: next.map((t) => t.id) }),
+      });
+      if (!res.ok) throw new Error();
+    } catch {
+      setTags(previous);
+      alert('Failed to reorder');
+    }
+  };
+
   return (
     <div className="space-y-4">
       <div className="flex items-center justify-between">
-        <p className="text-sm text-gray-500">{tags.length} tags</p>
+        <p className="text-sm text-gray-500">{tags.length} tags · drag to reorder</p>
         <button onClick={openCreate} className="btn btn-primary btn-sm">+ New</button>
       </div>
 
@@ -108,51 +122,25 @@ export default function TagsPage() {
         ) : tags.length === 0 ? (
           <div className="p-8 text-center text-gray-400">No tags yet</div>
         ) : (
-          <>
-            {/* Desktop table */}
-            <table className="admin-table hidden sm:table">
-              <thead>
-                <tr>
-                  <th>Name</th>
-                  <th>Korean Name</th>
-                  <th>Order</th>
-                  <th className="text-right">Actions</th>
-                </tr>
-              </thead>
-              <tbody>
-                {tags.map((t) => (
-                  <tr key={t.id}>
-                    <td className="font-medium">{t.name}</td>
-                    <td className="text-gray-500">{t.nameKo || '-'}</td>
-                    <td>{t.displayOrder}</td>
-                    <td className="text-right space-x-2">
-                      <button onClick={() => openEdit(t)} className="btn btn-secondary btn-sm">Edit</button>
-                      <button onClick={() => handleDelete(t.id)} className="btn btn-danger btn-sm">Delete</button>
-                    </td>
-                  </tr>
-                ))}
-              </tbody>
-            </table>
-
-            {/* Mobile cards */}
-            <ul className="sm:hidden divide-y divide-gray-100">
-              {tags.map((t) => (
-                <li key={t.id} className="p-4 space-y-2">
-                  <div className="flex items-start justify-between gap-3">
-                    <div className="min-w-0 flex-1">
-                      <p className="font-medium text-gray-900 truncate">{t.name}</p>
-                      {t.nameKo && <p className="text-xs text-gray-500 truncate">{t.nameKo}</p>}
-                    </div>
-                    <span className="shrink-0 text-xs text-gray-400">#{t.displayOrder}</span>
+          <ul className="divide-y divide-gray-100">
+            <SortableList
+              items={tags}
+              onReorder={handleReorder}
+              renderItem={(t, handle) => (
+                <li className="bg-white p-3 sm:p-4 flex items-center gap-3">
+                  {handle}
+                  <div className="min-w-0 flex-1">
+                    <p className="font-medium text-gray-900 truncate">{t.name}</p>
+                    {t.nameKo && <p className="text-xs text-gray-500 truncate">{t.nameKo}</p>}
                   </div>
-                  <div className="flex gap-2">
-                    <button onClick={() => openEdit(t)} className="btn btn-secondary btn-sm flex-1">Edit</button>
-                    <button onClick={() => handleDelete(t.id)} className="btn btn-danger btn-sm flex-1">Delete</button>
+                  <div className="flex gap-2 shrink-0">
+                    <button onClick={() => openEdit(t)} className="btn btn-secondary btn-sm">Edit</button>
+                    <button onClick={() => handleDelete(t.id)} className="btn btn-danger btn-sm">Delete</button>
                   </div>
                 </li>
-              ))}
-            </ul>
-          </>
+              )}
+            />
+          </ul>
         )}
       </div>
 
@@ -193,15 +181,6 @@ export default function TagsPage() {
               onChange={(e) => setNameKo(e.target.value)}
               className="border border-gray-300 rounded-lg px-3 py-2 text-sm w-full"
               placeholder="Korean name"
-            />
-          </div>
-          <div>
-            <label className="block text-xs text-gray-500 mb-1">Order</label>
-            <input
-              type="number"
-              value={displayOrder}
-              onChange={(e) => setDisplayOrder(Number(e.target.value))}
-              className="border border-gray-300 rounded-lg px-3 py-2 text-sm w-full sm:w-32"
             />
           </div>
         </form>

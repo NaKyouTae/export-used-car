@@ -8,6 +8,7 @@ import {
   Post,
   UseGuards,
 } from "@nestjs/common";
+import { ReorderDto } from "../common/dto/reorder.dto";
 import { AdminGuard } from "../common/guards/admin.guard";
 import { CategoriesService } from "./categories.service";
 import { CreateCategoryDto } from "./dto/create-category.dto";
@@ -26,6 +27,12 @@ export class CategoriesController {
   @UseGuards(AdminGuard)
   create(@Body() dto: CreateCategoryDto) {
     return this.categoriesService.create(dto);
+  }
+
+  @Patch("reorder")
+  @UseGuards(AdminGuard)
+  reorder(@Body() dto: ReorderDto) {
+    return this.categoriesService.reorder(dto.ids);
   }
 
   @Patch(":id")

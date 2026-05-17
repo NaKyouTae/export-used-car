@@ -31,7 +31,8 @@ export class MakesService {
   }
 
   async createMake(dto: CreateMakeDto) {
-    return this.prisma.make.create({ data: dto });
+    const displayOrder = dto.displayOrder ?? (await this.nextMakeOrder());
+    return this.prisma.make.create({ data: { ...dto, displayOrder } });
   }
 
   async updateMake(id: string, dto: UpdateMakeDto) {
@@ -59,10 +60,24 @@ export class MakesService {
     return this.prisma.make.delete({ where: { id } });
   }
 
+  async reorderMakes(ids: string[]) {
+    await this.prisma.$transaction(
+      ids.map((id, index) =>
+        this.prisma.make.update({
+          where: { id },
+          data: { displayOrder: index },
+        }),
+      ),
+    );
+    return this.findAll();
+  }
+
   async createModel(makeId: string, dto: CreateCarModelDto) {
     await this.ensureMakeExists(makeId);
+    const displayOrder =
+      dto.displayOrder ?? (await this.nextModelOrder(makeId));
     return this.prisma.carModel.create({
-      data: { ...dto, makeId },
+      data: { ...dto, displayOrder, makeId },
     });
   }
 
@@ -86,6 +101,41 @@ export class MakesService {
     }
 
     return this.prisma.carModel.delete({ where: { id } });
+  }
+
+  async reorderModels(makeId: string, ids: string[]) {
+    await this.ensureMakeExists(makeId);
+    const existing = await this.prisma.carModel.findMany({
+      where: { id: { in: ids }, makeId },
+      select: { id: true },
+    });
+    if (existing.length !== ids.length) {
+      throw new NotFoundException("Some models not found in this make");
+    }
+    await this.prisma.$transaction(
+      ids.map((id, index) =>
+        this.prisma.carModel.update({
+          where: { id },
+          data: { displayOrder: index },
+        }),
+      ),
+    );
+    return this.findModels(makeId);
+  }
+
+  private async nextMakeOrder() {
+    const max = await this.prisma.make.aggregate({
+      _max: { displayOrder: true },
+    });
+    return (max._max.displayOrder ?? -1) + 1;
+  }
+
+  private async nextModelOrder(makeId: string) {
+    const max = await this.prisma.carModel.aggregate({
+      where: { makeId },
+      _max: { displayOrder: true },
+    });
+    return (max._max.displayOrder ?? -1) + 1;
   }
 
   private async ensureMakeExists(id: string) {

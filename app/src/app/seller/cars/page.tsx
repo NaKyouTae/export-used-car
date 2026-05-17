@@ -21,6 +21,7 @@ interface Car {
   wishlistCount: number;
   chatCount: number;
   createdAt: string;
+  thumbnail?: string | null;
   images?: { url: string; isThumbnail: boolean }[];
 }
 
@@ -105,7 +106,10 @@ export default function SellerCarsPage() {
           ) : cars.length > 0 ? (
             <div className="space-y-3">
               {cars.map((car) => {
-                const thumb = car.images?.find((i) => i.isThumbnail)?.url || car.images?.[0]?.url;
+                const thumb =
+                  car.thumbnail ||
+                  car.images?.find((i) => i.isThumbnail)?.url ||
+                  car.images?.[0]?.url;
                 return (
                   <Link
                     key={car.id}

@@ -1,7 +1,8 @@
 'use client';
 
-import { Fragment, useEffect, useState } from 'react';
+import { useEffect, useState } from 'react';
 import Modal from '@/components/Modal';
+import { SortableList } from '@/components/SortableList';
 
 interface Model {
   id: string;
@@ -139,10 +140,42 @@ export default function MakesPage() {
     }
   };
 
+  const handleReorderMakes = async (next: Make[]) => {
+    const previous = makes;
+    setMakes(next);
+    try {
+      const res = await fetch('/api/makes/reorder', {
+        method: 'PATCH',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ ids: next.map((m) => m.id) }),
+      });
+      if (!res.ok) throw new Error();
+    } catch {
+      setMakes(previous);
+      alert('Failed to reorder makes');
+    }
+  };
+
+  const handleReorderModels = async (makeId: string, next: Model[]) => {
+    const previous = models[makeId];
+    setModels((prev) => ({ ...prev, [makeId]: next }));
+    try {
+      const res = await fetch(`/api/makes/${makeId}/models/reorder`, {
+        method: 'PATCH',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ ids: next.map((m) => m.id) }),
+      });
+      if (!res.ok) throw new Error();
+    } catch {
+      setModels((prev) => ({ ...prev, [makeId]: previous || [] }));
+      alert('Failed to reorder models');
+    }
+  };
+
   return (
     <div className="space-y-4">
       <div className="flex items-center justify-between">
-        <p className="text-sm text-gray-500">{makes.length} makes</p>
+        <p className="text-sm text-gray-500">{makes.length} makes · drag to reorder</p>
         <button onClick={openCreateMake} className="btn btn-primary btn-sm">+ New Make</button>
       </div>
 
@@ -152,96 +185,53 @@ export default function MakesPage() {
         ) : makes.length === 0 ? (
           <div className="p-8 text-center text-gray-400">No makes yet</div>
         ) : (
-          <>
-            {/* Desktop table */}
-            <table className="admin-table hidden sm:table">
-              <thead>
-                <tr>
-                  <th></th>
-                  <th>Name</th>
-                  <th>Korean Name</th>
-                  <th>Country</th>
-                  <th>Models</th>
-                  <th className="text-right">Actions</th>
-                </tr>
-              </thead>
-              <tbody>
-                {makes.map((m) => (
-                  <Fragment key={m.id}>
-                    <tr className="cursor-pointer" onClick={() => toggleExpand(m.id)}>
-                      <td className="w-8 text-center">
-                        <span className={`inline-block transition-transform ${expandedId === m.id ? 'rotate-90' : ''}`}>
-                          &#9654;
-                        </span>
-                      </td>
-                      <td className="font-medium">{m.name}</td>
-                      <td className="text-gray-500">{m.nameKo || '-'}</td>
-                      <td>{m.country || '-'}</td>
-                      <td>{m.modelCount ?? (m.models?.length ?? '-')}</td>
-                      <td className="text-right">
-                        <button
-                          onClick={(e) => { e.stopPropagation(); handleDeleteMake(m.id); }}
-                          className="btn btn-danger btn-sm"
-                        >
-                          Delete
-                        </button>
-                      </td>
-                    </tr>
-                    {expandedId === m.id && (
-                      <tr>
-                        <td colSpan={6} className="bg-gray-50 p-4">
-                          <ModelsPanel
-                            make={m}
-                            items={models[m.id]}
-                            onAdd={() => openCreateModel(m.id, m.name)}
-                          />
-                        </td>
-                      </tr>
-                    )}
-                  </Fragment>
-                ))}
-              </tbody>
-            </table>
-
-            {/* Mobile cards */}
-            <ul className="sm:hidden divide-y divide-gray-100">
-              {makes.map((m) => (
-                <li key={m.id} className="p-4 space-y-3">
-                  <button
-                    onClick={() => toggleExpand(m.id)}
-                    className="w-full flex items-start justify-between gap-3 text-left"
-                  >
-                    <div className="min-w-0 flex-1">
-                      <div className="flex items-center gap-2">
-                        <span className={`inline-block text-xs transition-transform ${expandedId === m.id ? 'rotate-90' : ''}`}>&#9654;</span>
+          <ul className="divide-y divide-gray-100">
+            <SortableList
+              items={makes}
+              onReorder={handleReorderMakes}
+              renderItem={(m, handle) => (
+                <li className="bg-white p-3 sm:p-4 space-y-3">
+                  <div className="flex items-center gap-3">
+                    {handle}
+                    <button
+                      onClick={() => toggleExpand(m.id)}
+                      className="flex-1 flex items-center gap-2 text-left min-w-0"
+                    >
+                      <span className={`inline-block text-xs transition-transform ${expandedId === m.id ? 'rotate-90' : ''}`}>
+                        ▶
+                      </span>
+                      <div className="min-w-0 flex-1">
                         <p className="font-medium text-gray-900 truncate">{m.name}</p>
+                        <p className="text-xs text-gray-500 truncate">
+                          {[m.nameKo, m.country].filter(Boolean).join(' · ') || '-'}
+                        </p>
                       </div>
-                      <p className="text-xs text-gray-500 mt-1 truncate">
-                        {[m.nameKo, m.country].filter(Boolean).join(' · ') || '-'}
-                      </p>
-                    </div>
-                    <span className="shrink-0 text-xs text-gray-400">
-                      {m.modelCount ?? (m.models?.length ?? 0)} models
-                    </span>
-                  </button>
+                      <span className="shrink-0 text-xs text-gray-400">
+                        {m.modelCount ?? (m.models?.length ?? 0)} models
+                      </span>
+                    </button>
+                    <button
+                      onClick={() => handleDeleteMake(m.id)}
+                      className="btn btn-danger btn-sm shrink-0"
+                    >
+                      Delete
+                    </button>
+                  </div>
 
                   {expandedId === m.id && (
-                    <div className="bg-gray-50 -mx-4 px-4 py-3 border-t border-gray-100">
+                    <div className="bg-gray-50 -mx-3 sm:-mx-4 px-3 sm:px-4 py-3 border-t border-gray-100">
                       <ModelsPanel
                         make={m}
                         items={models[m.id]}
                         onAdd={() => openCreateModel(m.id, m.name)}
+                        onReorder={(next) => handleReorderModels(m.id, next)}
                       />
                     </div>
                   )}
-
-                  <button onClick={() => handleDeleteMake(m.id)} className="btn btn-danger btn-sm w-full">
-                    Delete Make
-                  </button>
                 </li>
-              ))}
-            </ul>
-          </>
+              )}
+            />
+          </ul>
         )}
       </div>
 
@@ -347,10 +337,12 @@ function ModelsPanel({
   make,
   items,
   onAdd,
+  onReorder,
 }: {
   make: Make;
   items: Model[] | undefined;
   onAdd: () => void;
+  onReorder: (next: Model[]) => void;
 }) {
   return (
     <div className="space-y-3">
@@ -358,18 +350,27 @@ function ModelsPanel({
         <h4 className="text-sm font-semibold text-gray-600">Models for {make.name}</h4>
         <button onClick={onAdd} className="btn btn-primary btn-sm">+ Add Model</button>
       </div>
-      <div className="space-y-1">
-        {(items || []).map((model) => (
-          <div key={model.id} className="flex items-center gap-3 text-sm py-1">
-            <span className="font-medium">{model.name}</span>
-            {model.nameKo && <span className="text-gray-400">{model.nameKo}</span>}
-          </div>
-        ))}
-        {items && items.length === 0 && (
-          <p className="text-gray-400 text-sm">No models yet</p>
-        )}
-        {!items && (
-          <p className="text-gray-400 text-sm">Loading models...</p>
+      <div className="bg-white rounded-lg overflow-hidden">
+        {items && items.length > 0 ? (
+          <ul className="divide-y divide-gray-100">
+            <SortableList
+              items={items}
+              onReorder={onReorder}
+              renderItem={(model, handle) => (
+                <li className="bg-white px-3 py-2 flex items-center gap-3 text-sm">
+                  {handle}
+                  <div className="min-w-0 flex-1">
+                    <span className="font-medium">{model.name}</span>
+                    {model.nameKo && <span className="ml-2 text-gray-400">{model.nameKo}</span>}
+                  </div>
+                </li>
+              )}
+            />
+          </ul>
+        ) : items ? (
+          <p className="text-gray-400 text-sm px-3 py-2">No models yet</p>
+        ) : (
+          <p className="text-gray-400 text-sm px-3 py-2">Loading models...</p>
         )}
       </div>
     </div>

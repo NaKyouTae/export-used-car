@@ -117,7 +117,7 @@ export class CarsService {
     const thumbnailMap = new Map<string, string>();
     for (const img of thumbnails) {
       if (!thumbnailMap.has(img.targetId)) {
-        thumbnailMap.set(img.targetId, img.url);
+        thumbnailMap.set(img.targetId, this.storage.normalizeUrl(img.url));
       }
     }
 
@@ -181,7 +181,12 @@ export class CarsService {
       orderBy: [{ order: "asc" }],
     });
 
-    return { ...car, images };
+    const normalizedImages = images.map((img) => ({
+      ...img,
+      url: this.storage.normalizeUrl(img.url),
+    }));
+
+    return { ...car, images: normalizedImages };
   }
 
   async create(dto: CreateCarDto, sellerId: string) {
@@ -318,7 +323,7 @@ export class CarsService {
     const thumbnailMap = new Map<string, string>();
     for (const img of thumbnails) {
       if (!thumbnailMap.has(img.targetId)) {
-        thumbnailMap.set(img.targetId, img.url);
+        thumbnailMap.set(img.targetId, this.storage.normalizeUrl(img.url));
       }
     }
 

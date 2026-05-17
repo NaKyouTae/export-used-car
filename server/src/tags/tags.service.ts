@@ -13,8 +13,9 @@ export class TagsService {
     });
   }
 
-  create(dto: CreateTagDto) {
-    return this.prisma.tag.create({ data: dto });
+  async create(dto: CreateTagDto) {
+    const displayOrder = dto.displayOrder ?? (await this.nextDisplayOrder());
+    return this.prisma.tag.create({ data: { ...dto, displayOrder } });
   }
 
   update(id: string, dto: UpdateTagDto) {
@@ -31,5 +32,24 @@ export class TagsService {
     }
 
     return this.prisma.tag.delete({ where: { id } });
+  }
+
+  async reorder(ids: string[]) {
+    await this.prisma.$transaction(
+      ids.map((id, index) =>
+        this.prisma.tag.update({
+          where: { id },
+          data: { displayOrder: index },
+        }),
+      ),
+    );
+    return this.findAll();
+  }
+
+  private async nextDisplayOrder() {
+    const max = await this.prisma.tag.aggregate({
+      _max: { displayOrder: true },
+    });
+    return (max._max.displayOrder ?? -1) + 1;
   }
 }
