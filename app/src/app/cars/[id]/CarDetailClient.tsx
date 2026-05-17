@@ -11,6 +11,7 @@ import {
   DRIVETRAIN_LABELS,
 } from "@/lib/constants";
 import PageHeader from "@/components/PageHeader";
+import ImageViewer from "@/components/ImageViewer";
 import { useAuth } from "@/hooks/useAuth";
 import { addRecentlyViewed } from "@/hooks/useRecentlyViewed";
 
@@ -58,6 +59,7 @@ export default function CarDetailClient({ car }: { car: CarDetail }) {
   const [togglingWishlist, setTogglingWishlist] = useState(false);
   const [startingChat, setStartingChat] = useState(false);
   const [currentImageIdx, setCurrentImageIdx] = useState(0);
+  const [viewerIndex, setViewerIndex] = useState<number | null>(null);
   const galleryRef = useRef<HTMLDivElement>(null);
 
   useEffect(() => {
@@ -201,8 +203,11 @@ export default function CarDetailClient({ car }: { car: CarDetail }) {
             className="h-full w-full overflow-x-auto overflow-y-hidden flex snap-x snap-mandatory scroll-smooth [scrollbar-width:none] [-ms-overflow-style:none] [&::-webkit-scrollbar]:hidden touch-pan-x"
           >
             {sortedImages.map((img, idx) => (
-              <div
+              <button
                 key={img.id}
+                type="button"
+                onClick={() => setViewerIndex(idx)}
+                aria-label={`View photo ${idx + 1} fullscreen`}
                 className="relative flex-shrink-0 w-full h-full snap-center snap-always"
               >
                 <Image
@@ -213,7 +218,7 @@ export default function CarDetailClient({ car }: { car: CarDetail }) {
                   className="object-cover pointer-events-none"
                   priority={idx === 0}
                 />
-              </div>
+              </button>
             ))}
           </div>
         ) : (
@@ -345,6 +350,16 @@ export default function CarDetailClient({ car }: { car: CarDetail }) {
         )}
 
       </div>
+
+      {/* Fullscreen image viewer */}
+      {viewerIndex !== null && sortedImages.length > 0 && (
+        <ImageViewer
+          images={sortedImages.map((img) => img.url)}
+          initialIndex={viewerIndex}
+          onClose={() => setViewerIndex(null)}
+          alt={car.title}
+        />
+      )}
 
       {/* Sticky Bottom Bar */}
       <div className="fixed bottom-0 left-0 right-0 max-w-[390px] mx-auto bg-white border-t border-gray-200 px-4 py-3 pb-safe z-50">

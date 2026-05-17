@@ -5,10 +5,11 @@ import { useRouter } from "next/navigation";
 interface PageHeaderProps {
   title: string;
   showBack?: boolean;
+  backHref?: string;
   rightAction?: React.ReactNode;
 }
 
-export default function PageHeader({ title, showBack = true, rightAction }: PageHeaderProps) {
+export default function PageHeader({ title, showBack = true, backHref, rightAction }: PageHeaderProps) {
   const router = useRouter();
 
   return (
@@ -16,7 +17,7 @@ export default function PageHeader({ title, showBack = true, rightAction }: Page
       <div className="flex items-center h-12 px-4 ">
         {showBack && (
           <button
-            onClick={() => router.back()}
+            onClick={() => (backHref ? router.push(backHref) : router.back())}
             className="mr-2 -ml-1 p-1 text-gray-700"
             aria-label="Go back"
           >

@@ -214,7 +214,7 @@ export default function ChatRoomClient({ roomId }: { roomId: string }) {
   if (authLoading || loading) {
     return (
       <div className="min-h-dvh bg-white">
-        <PageHeader title="Chat" />
+        <PageHeader title="Chat" backHref="/chat" />
         <div className="flex items-center justify-center py-20">
           <div className="w-6 h-6 border-2 border-main-500 border-t-transparent rounded-full animate-spin" />
         </div>
@@ -234,6 +234,7 @@ export default function ChatRoomClient({ roomId }: { roomId: string }) {
       {/* Header */}
       <PageHeader
         title={otherName}
+        backHref="/chat"
         rightAction={
           room.car ? (
             <button
@@ -295,7 +296,7 @@ export default function ChatRoomClient({ roomId }: { roomId: string }) {
                   className={`max-w-[75%] px-3.5 py-2.5 rounded-2xl ${
                     isMe
                       ? "bg-main-500 text-white rounded-br-md"
-                      : "bg-white text-gray-900 rounded-bl-md shadow-sm"
+                      : "bg-gray-100 text-gray-900 rounded-bl-md border border-gray-200"
                   }`}
                 >
                   <p className="text-sm whitespace-pre-wrap break-words leading-relaxed">
@@ -303,7 +304,7 @@ export default function ChatRoomClient({ roomId }: { roomId: string }) {
                   </p>
                   <p
                     className={`text-[10px] mt-1 ${
-                      isMe ? "text-white/60" : "text-gray-400"
+                      isMe ? "text-white/60" : "text-gray-500"
                     }`}
                   >
                     {formatTime(msg.createdAt)}
@@ -369,41 +370,20 @@ function QuickPhraseBar({
   phrases: QuickPhrase[];
   onPick: (text: string) => void;
 }) {
-  const groups: { category: string; items: QuickPhrase[] }[] = [];
-  for (const p of phrases) {
-    const cat = p.category || "General";
-    const last = groups[groups.length - 1];
-    if (last && last.category === cat) {
-      last.items.push(p);
-    } else {
-      groups.push({ category: cat, items: [p] });
-    }
-  }
-
   return (
     <div className="bg-white border-t border-gray-100">
       <div className="overflow-x-auto scrollbar-hide">
-        <div className="flex items-center gap-3 px-4 py-2 whitespace-nowrap">
-          {groups.map((group, idx) => (
-            <div key={`${group.category}-${idx}`} className="flex items-center gap-1.5">
-              <span className="text-[10px] font-semibold text-gray-400 uppercase tracking-wide">
-                {group.category}
-              </span>
-              {group.items.map((p) => (
-                <button
-                  key={p.id}
-                  onClick={() => onPick(p.content)}
-                  className="flex-shrink-0 px-3 py-1.5 bg-main-50 text-main-700 text-xs font-medium rounded-full active:bg-main-100"
-                >
-                  {p.content.length > 20
-                    ? `${p.content.slice(0, 20)}…`
-                    : p.content}
-                </button>
-              ))}
-              {idx < groups.length - 1 && (
-                <span className="ml-1.5 h-4 w-px bg-gray-200" />
-              )}
-            </div>
+        <div className="flex items-center gap-1.5 px-4 py-2 whitespace-nowrap">
+          {phrases.map((p) => (
+            <button
+              key={p.id}
+              onClick={() => onPick(p.content)}
+              className="flex-shrink-0 px-3 py-1.5 bg-main-50 text-main-700 text-xs font-medium rounded-full active:bg-main-100"
+            >
+              {p.content.length > 20
+                ? `${p.content.slice(0, 20)}…`
+                : p.content}
+            </button>
           ))}
         </div>
       </div>

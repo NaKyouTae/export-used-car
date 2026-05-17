@@ -164,13 +164,16 @@ export default function QuickPhrasesPage() {
       ) : (
         <div className="px-4 pt-4 space-y-4">
           {categories.map((cat) => (
-            <section key={cat} className="bg-white rounded-xl overflow-hidden">
-              <div className="px-4 py-2.5 border-b border-gray-50">
-                <h2 className="text-xs font-semibold text-gray-400 uppercase tracking-wide">
+            <section
+              key={cat}
+              className="bg-white rounded-xl overflow-hidden border border-gray-200"
+            >
+              <div className="px-4 py-2.5 border-b border-gray-200 bg-gray-50">
+                <h2 className="text-xs font-semibold text-gray-500 uppercase tracking-wide">
                   {cat}
                 </h2>
               </div>
-              <div className="divide-y divide-gray-50">
+              <div className="divide-y divide-gray-200">
                 {grouped[cat].map((p) => (
                   <div
                     key={p.id}

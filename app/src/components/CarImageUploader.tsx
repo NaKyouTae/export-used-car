@@ -1,6 +1,7 @@
 "use client";
 
-import { useEffect, useRef, useState } from "react";
+import { useRef, useState } from "react";
+import ImageViewer from "./ImageViewer";
 
 interface UploadedImage {
   id?: string;
@@ -70,31 +71,6 @@ export default function CarImageUploader({
     viewerIndex !== null && viewerIndex >= 0 && viewerIndex < images.length
       ? viewerIndex
       : null;
-  const viewerOpen = safeViewerIndex !== null;
-
-  // Lock body scroll + keyboard navigation while viewer is open
-  useEffect(() => {
-    if (!viewerOpen) return;
-
-    const prevOverflow = document.body.style.overflow;
-    document.body.style.overflow = "hidden";
-
-    const onKey = (e: KeyboardEvent) => {
-      if (e.key === "Escape") setViewerIndex(null);
-      if (e.key === "ArrowLeft")
-        setViewerIndex((i) => (i === null || i <= 0 ? i : i - 1));
-      if (e.key === "ArrowRight")
-        setViewerIndex((i) =>
-          i === null || i >= images.length - 1 ? i : i + 1,
-        );
-    };
-    window.addEventListener("keydown", onKey);
-
-    return () => {
-      document.body.style.overflow = prevOverflow;
-      window.removeEventListener("keydown", onKey);
-    };
-  }, [viewerOpen, images.length]);
 
   return (
     <div>
@@ -198,103 +174,11 @@ export default function CarImageUploader({
 
       {/* Fullscreen image viewer */}
       {safeViewerIndex !== null && (
-        <div
-          className="fixed inset-0 z-[100] bg-black/95 flex items-center justify-center select-none"
-          onClick={() => setViewerIndex(null)}
-          role="dialog"
-          aria-modal="true"
-        >
-          {/* eslint-disable-next-line @next/next/no-img-element */}
-          <img
-            src={images[safeViewerIndex].url}
-            alt={`Photo ${safeViewerIndex + 1}`}
-            className="max-w-full max-h-full object-contain"
-            onClick={(e) => e.stopPropagation()}
-          />
-
-          {/* Close */}
-          <button
-            type="button"
-            onClick={() => setViewerIndex(null)}
-            aria-label="Close viewer"
-            className="absolute top-4 right-4 w-10 h-10 bg-white/15 hover:bg-white/25 backdrop-blur-sm rounded-full flex items-center justify-center text-white"
-          >
-            <svg
-              className="w-5 h-5"
-              fill="none"
-              stroke="currentColor"
-              viewBox="0 0 24 24"
-            >
-              <path
-                strokeLinecap="round"
-                strokeLinejoin="round"
-                strokeWidth={2}
-                d="M6 18L18 6M6 6l12 12"
-              />
-            </svg>
-          </button>
-
-          {/* Prev */}
-          {safeViewerIndex > 0 && (
-            <button
-              type="button"
-              onClick={(e) => {
-                e.stopPropagation();
-                setViewerIndex(safeViewerIndex - 1);
-              }}
-              aria-label="Previous photo"
-              className="absolute left-3 top-1/2 -translate-y-1/2 w-10 h-10 bg-white/15 hover:bg-white/25 backdrop-blur-sm rounded-full flex items-center justify-center text-white"
-            >
-              <svg
-                className="w-5 h-5"
-                fill="none"
-                stroke="currentColor"
-                viewBox="0 0 24 24"
-              >
-                <path
-                  strokeLinecap="round"
-                  strokeLinejoin="round"
-                  strokeWidth={2}
-                  d="M15 19l-7-7 7-7"
-                />
-              </svg>
-            </button>
-          )}
-
-          {/* Next */}
-          {safeViewerIndex < images.length - 1 && (
-            <button
-              type="button"
-              onClick={(e) => {
-                e.stopPropagation();
-                setViewerIndex(safeViewerIndex + 1);
-              }}
-              aria-label="Next photo"
-              className="absolute right-3 top-1/2 -translate-y-1/2 w-10 h-10 bg-white/15 hover:bg-white/25 backdrop-blur-sm rounded-full flex items-center justify-center text-white"
-            >
-              <svg
-                className="w-5 h-5"
-                fill="none"
-                stroke="currentColor"
-                viewBox="0 0 24 24"
-              >
-                <path
-                  strokeLinecap="round"
-                  strokeLinejoin="round"
-                  strokeWidth={2}
-                  d="M9 5l7 7-7 7"
-                />
-              </svg>
-            </button>
-          )}
-
-          {/* Counter */}
-          {images.length > 1 && (
-            <span className="absolute bottom-6 left-1/2 -translate-x-1/2 bg-white/15 backdrop-blur-sm text-white text-xs px-3 py-1 rounded-full">
-              {safeViewerIndex + 1} / {images.length}
-            </span>
-          )}
-        </div>
+        <ImageViewer
+          images={images.map((img) => img.url)}
+          initialIndex={safeViewerIndex}
+          onClose={() => setViewerIndex(null)}
+        />
       )}
     </div>
   );
