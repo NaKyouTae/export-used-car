@@ -93,7 +93,7 @@ export default function LoginPage() {
   };
 
   return (
-    <div className="min-h-screen bg-white">
+    <div className="min-h-dvh bg-white">
       <PageHeader title="Login" />
 
       <div className="max-w-md mx-auto px-4 pt-12">

@@ -16,10 +16,50 @@
 }
 
 :root {
+  color-scheme: light;
   --safe-area-inset-top: env(safe-area-inset-top, 0px);
   --safe-area-inset-bottom: env(safe-area-inset-bottom, 0px);
   --safe-area-inset-left: env(safe-area-inset-left, 0px);
   --safe-area-inset-right: env(safe-area-inset-right, 0px);
+}
+
+/* Force light mode appearance even when OS is in dark mode.
+   Why: app has no dark theme; without this, UA styles for inputs/scrollbars/
+   autofill flip to dark on iOS/Android/macOS and break the design. */
+html,
+body {
+  color-scheme: light;
+  background-color: #ffffff;
+  /* Anchor html/body to the small viewport so iOS Safari's address-bar
+     collapse doesn't cause layout jumps. Children use dvh for actual height. */
+  min-height: 100svh;
+}
+
+/* Block iOS rubber-band overscroll bleeding the body background through. */
+html,
+body {
+  overscroll-behavior-y: none;
+}
+
+@media (prefers-color-scheme: dark) {
+  :root,
+  html,
+  body {
+    color-scheme: light;
+    background-color: #ffffff;
+    color: #111827;
+  }
+
+  /* Chrome autofill turns yellow/dark in dark mode — keep it light. */
+  input:-webkit-autofill,
+  input:-webkit-autofill:hover,
+  input:-webkit-autofill:focus,
+  textarea:-webkit-autofill,
+  select:-webkit-autofill {
+    -webkit-text-fill-color: #111827;
+    -webkit-box-shadow: 0 0 0 1000px #ffffff inset;
+    caret-color: #111827;
+  }
 }
 
 /* Scrollbar hide utility */
@@ -57,6 +97,19 @@ body {
 /* Safe area padding for bottom bars */
 .pb-safe {
   padding-bottom: max(var(--safe-area-inset-bottom), 16px);
+}
+
+/* Safe area padding for headers under notch / status bar.
+   Headers use `sticky top-0` with viewport-fit=cover, so without this
+   the title sits behind the notch on iPhone 12+ / Dynamic Island devices. */
+.pt-safe {
+  padding-top: var(--safe-area-inset-top);
+}
+
+/* Margin variant — used by floating elements (BottomNav pill, FAB) that
+   need to clear the iPhone home indicator without changing internal padding. */
+.mb-safe {
+  margin-bottom: max(var(--safe-area-inset-bottom), 20px);
 }
 
 /* Slide-up animation (for bottom sheets) */

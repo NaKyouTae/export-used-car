@@ -93,7 +93,7 @@ export default function BottomNav() {
 
   return (
     <div className="fixed bottom-0 left-1/2 -translate-x-1/2 w-full max-w-[390px] z-50 pointer-events-none">
-      <div className="mx-5 mb-5 pointer-events-auto">
+      <div className="mx-5 mb-safe pointer-events-auto">
         <nav className="flex items-center justify-around h-[60px] bg-white/90 backdrop-blur-xl rounded-[32px] shadow-[0_0_20px_rgba(0,0,0,0.06)]">
           {NAV_ITEMS.map((item) => {
             const isActive =

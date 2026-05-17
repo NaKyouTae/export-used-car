@@ -31,7 +31,7 @@ export default function SellerFAB() {
       <Link
         href="/seller/cars/new"
         aria-label="Register new car"
-        className="pointer-events-auto absolute right-5 bottom-[96px] inline-flex items-center gap-1 h-8 pl-2.5 pr-3 rounded-full bg-main-600 text-white text-xs font-semibold shadow-[0_0_20px_rgba(0,0,0,0.1)] active:scale-95 transition-transform"
+        className="pointer-events-auto absolute right-5 bottom-[calc(76px+max(20px,env(safe-area-inset-bottom)))] inline-flex items-center gap-1 h-8 pl-2.5 pr-3 rounded-full bg-main-600 text-white text-xs font-semibold shadow-[0_0_20px_rgba(0,0,0,0.1)] active:scale-95 transition-transform"
       >
         <svg
           width="14"

@@ -20,7 +20,7 @@ export default function ProfilePage() {
 
   if (isLoading || !isAuthenticated || !user) {
     return (
-      <div className="min-h-screen bg-white flex items-center justify-center">
+      <div className="min-h-dvh bg-white flex items-center justify-center">
         <div className="w-8 h-8 border-2 border-main-500 border-t-transparent rounded-full animate-spin" />
       </div>
     );
@@ -103,7 +103,7 @@ function ProfileForm({
     "w-full px-4 py-3 bg-white border border-gray-200 rounded-xl text-sm text-gray-900 focus:outline-none focus:border-main-500 focus:ring-1 focus:ring-main-500";
 
   return (
-    <div className="min-h-screen bg-white pb-[80px]">
+    <div className="min-h-dvh bg-white pb-[80px]">
       <PageHeader title="Edit Profile" />
 
       <div className="px-4 py-4 space-y-5">

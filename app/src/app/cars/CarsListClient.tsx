@@ -204,9 +204,10 @@ export default function CarsListClient() {
   ];
 
   return (
-    <div className="min-h-screen bg-white">
+    <div className="min-h-dvh bg-white">
       <PageHeader
         title="Cars"
+        showBack={false}
         rightAction={
           <button
             onClick={() => setShowFilters(!showFilters)}

@@ -232,7 +232,7 @@ export default function NewCarPage() {
 
   if (authLoading) {
     return (
-      <div className="min-h-screen bg-white flex items-center justify-center">
+      <div className="min-h-dvh bg-white flex items-center justify-center">
         <div className="w-8 h-8 border-2 border-main-500 border-t-transparent rounded-full animate-spin" />
       </div>
     );
@@ -244,7 +244,7 @@ export default function NewCarPage() {
   const labelClass = "block text-sm font-medium text-gray-700 mb-1";
 
   return (
-    <div className="min-h-screen bg-white">
+    <div className="min-h-dvh bg-white">
       <PageHeader title="Register Car" />
 
       <form onSubmit={handleSubmit} className="px-4 pt-6 space-y-6">

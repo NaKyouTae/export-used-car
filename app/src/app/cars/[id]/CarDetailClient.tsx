@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useEffect, useCallback } from "react";
+import { useState, useEffect, useCallback, useRef } from "react";
 import { useRouter } from "next/navigation";
 import Image from "next/image";
 import {
@@ -57,6 +57,8 @@ export default function CarDetailClient({ car }: { car: CarDetail }) {
   const [wishlistCount, setWishlistCount] = useState(car.wishlistCount);
   const [togglingWishlist, setTogglingWishlist] = useState(false);
   const [startingChat, setStartingChat] = useState(false);
+  const [currentImageIdx, setCurrentImageIdx] = useState(0);
+  const galleryRef = useRef<HTMLDivElement>(null);
 
   useEffect(() => {
     const thumbnail =
@@ -151,6 +153,13 @@ export default function CarDetailClient({ car }: { car: CarDetail }) {
   const sortedImages = [...(car.images || [])].sort((a, b) => a.order - b.order);
   const imageCount = sortedImages.length;
 
+  const handleGalleryScroll = useCallback(() => {
+    const el = galleryRef.current;
+    if (!el) return;
+    const idx = Math.round(el.scrollLeft / el.clientWidth);
+    setCurrentImageIdx((prev) => (prev === idx ? prev : idx));
+  }, []);
+
   // Group options by category
   const optionsByCategory: Record<string, string[]> = {};
   car.options?.forEach((opt) => {
@@ -180,19 +189,33 @@ export default function CarDetailClient({ car }: { car: CarDetail }) {
   ].filter((row) => row.value);
 
   return (
-    <div className="min-h-screen bg-white pb-[72px]">
+    <div className="min-h-dvh bg-white pb-[72px]">
       <PageHeader title="Car Details" />
 
-      {/* Image Gallery Placeholder */}
-      <div className="relative bg-gray-100 aspect-[4/3] max-h-[400px] w-full overflow-hidden">
+      {/* Image Gallery */}
+      <div className="relative bg-gray-100 aspect-[4/3] max-h-[400px] w-full">
         {sortedImages.length > 0 ? (
-          <Image
-            src={sortedImages[0].url}
-            alt={car.title}
-            fill
-            sizes="(max-width: 1024px) 100vw, 1024px"
-            className="object-cover"
-          />
+          <div
+            ref={galleryRef}
+            onScroll={handleGalleryScroll}
+            className="h-full w-full overflow-x-auto overflow-y-hidden flex snap-x snap-mandatory scroll-smooth [scrollbar-width:none] [-ms-overflow-style:none] [&::-webkit-scrollbar]:hidden touch-pan-x"
+          >
+            {sortedImages.map((img, idx) => (
+              <div
+                key={img.id}
+                className="relative flex-shrink-0 w-full h-full snap-center snap-always"
+              >
+                <Image
+                  src={img.url}
+                  alt={`${car.title} - ${idx + 1}`}
+                  fill
+                  sizes="(max-width: 1024px) 100vw, 1024px"
+                  className="object-cover pointer-events-none"
+                  priority={idx === 0}
+                />
+              </div>
+            ))}
+          </div>
         ) : (
           <div className="w-full h-full flex items-center justify-center text-gray-400">
             <svg className="w-16 h-16" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -201,9 +224,21 @@ export default function CarDetailClient({ car }: { car: CarDetail }) {
           </div>
         )}
         {imageCount > 1 && (
-          <span className="absolute bottom-3 right-3 bg-black/60 text-white text-xs px-2 py-1 rounded-full">
-            1/{imageCount}
-          </span>
+          <>
+            <span className="absolute bottom-3 right-3 bg-black/60 text-white text-xs px-2 py-1 rounded-full pointer-events-none">
+              {currentImageIdx + 1}/{imageCount}
+            </span>
+            <div className="absolute bottom-3 left-1/2 -translate-x-1/2 flex gap-1.5 pointer-events-none">
+              {sortedImages.map((_, idx) => (
+                <span
+                  key={idx}
+                  className={`h-1.5 rounded-full transition-all ${
+                    idx === currentImageIdx ? "w-4 bg-white" : "w-1.5 bg-white/50"
+                  }`}
+                />
+              ))}
+            </div>
+          </>
         )}
       </div>
 

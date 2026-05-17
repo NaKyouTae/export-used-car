@@ -1,6 +1,7 @@
 'use client';
 
 import { useEffect, useState } from 'react';
+import { formatDate } from '@/lib/datetime';
 
 interface DashboardData {
   cars?: { total: number; byStatus: Record<string, number> };
@@ -35,10 +36,6 @@ function StatusBadge({ status }: { status: string }) {
     : status === 'HIDDEN' ? 'badge-hidden'
     : 'badge-draft';
   return <span className={cls}>{status}</span>;
-}
-
-function formatDate(s: string) {
-  return s ? s.slice(0, 10) : '-';
 }
 
 function formatPrice(n?: number | string) {

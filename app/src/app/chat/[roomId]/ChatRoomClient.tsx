@@ -5,6 +5,11 @@ import { useRouter } from "next/navigation";
 import { useAuth } from "@/hooks/useAuth";
 import { formatPriceRange } from "@/lib/constants";
 import { notifyChatUpdate } from "@/lib/chat-events";
+import {
+  formatTime,
+  formatDateSeparator,
+  getDateKey,
+} from "@/lib/datetime";
 import PageHeader from "@/components/PageHeader";
 
 interface ChatRoomInfo {
@@ -208,7 +213,7 @@ export default function ChatRoomClient({ roomId }: { roomId: string }) {
 
   if (authLoading || loading) {
     return (
-      <div className="min-h-screen bg-white">
+      <div className="min-h-dvh bg-white">
         <PageHeader title="Chat" />
         <div className="flex items-center justify-center py-20">
           <div className="w-6 h-6 border-2 border-main-500 border-t-transparent rounded-full animate-spin" />
@@ -224,33 +229,8 @@ export default function ChatRoomClient({ roomId }: { roomId: string }) {
       ? room.seller.companyName
       : room.buyer.name || room.buyer.email;
 
-  const formatTime = (dateStr: string) => {
-    return new Date(dateStr).toLocaleTimeString("en-US", {
-      hour: "numeric",
-      minute: "2-digit",
-      hour12: true,
-    });
-  };
-
-  const formatDateSeparator = (dateStr: string) => {
-    const date = new Date(dateStr);
-    const today = new Date();
-    const yesterday = new Date(today);
-    yesterday.setDate(yesterday.getDate() - 1);
-
-    if (date.toDateString() === today.toDateString()) return "Today";
-    if (date.toDateString() === yesterday.toDateString()) return "Yesterday";
-    return date.toLocaleDateString("en-US", {
-      month: "long",
-      day: "numeric",
-      year: "numeric",
-    });
-  };
-
-  const getDateKey = (dateStr: string) => new Date(dateStr).toDateString();
-
   return (
-    <div className="flex flex-col h-screen bg-white">
+    <div className="flex flex-col h-dvh bg-white">
       {/* Header */}
       <PageHeader
         title={otherName}
@@ -345,7 +325,7 @@ export default function ChatRoomClient({ roomId }: { roomId: string }) {
       )}
 
       {/* Input */}
-      <div className="bg-white border-t border-gray-200 px-4 pt-3 pb-2">
+      <div className="bg-white border-t border-gray-200 px-4 pt-3 pb-[max(8px,env(safe-area-inset-bottom))]">
         <div className="flex items-end gap-2">
           <textarea
             ref={inputRef}

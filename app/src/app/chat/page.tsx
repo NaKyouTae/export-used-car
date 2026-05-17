@@ -4,6 +4,7 @@ import { Suspense, useState, useEffect, useRef, useCallback } from "react";
 import { useRouter, useSearchParams } from "next/navigation";
 import { useAuth } from "@/hooks/useAuth";
 import PageHeader from "@/components/PageHeader";
+import { formatChatListTime } from "@/lib/datetime";
 
 interface ChatRoom {
   id: string;
@@ -69,27 +70,9 @@ function ChatListContent() {
     };
   }, [isAuthenticated, authLoading, router, fetchRooms]);
 
-  const formatTime = (dateStr: string) => {
-    const date = new Date(dateStr);
-    const now = new Date();
-    const diff = now.getTime() - date.getTime();
-    const days = Math.floor(diff / (1000 * 60 * 60 * 24));
-
-    if (days === 0) {
-      return date.toLocaleTimeString("en-US", {
-        hour: "numeric",
-        minute: "2-digit",
-        hour12: true,
-      });
-    }
-    if (days === 1) return "Yesterday";
-    if (days < 7) return `${days}d ago`;
-    return date.toLocaleDateString("en-US", { month: "short", day: "numeric" });
-  };
-
   if (authLoading || loading) {
     return (
-      <div className="min-h-screen bg-white">
+      <div className="min-h-dvh bg-white">
         <PageHeader title="Chat" showBack={!!carId} />
         <div className="flex items-center justify-center py-20">
           <div className="w-6 h-6 border-2 border-main-500 border-t-transparent rounded-full animate-spin" />
@@ -99,7 +82,7 @@ function ChatListContent() {
   }
 
   return (
-    <div className="min-h-screen bg-white pb-[100px]">
+    <div className="min-h-dvh bg-white pb-[100px]">
       <PageHeader title={carId ? "Car Chats" : "Chat"} showBack={!!carId} />
 
       {rooms.length === 0 ? (
@@ -139,7 +122,7 @@ function ChatListContent() {
                     </span>
                     {room.lastMessage && (
                       <span className="text-[11px] text-gray-400 ml-2 flex-shrink-0">
-                        {formatTime(room.lastMessage.createdAt)}
+                        {formatChatListTime(room.lastMessage.createdAt)}
                       </span>
                     )}
                   </div>
