@@ -4,7 +4,7 @@ import Link from "next/link";
 import { usePathname } from "next/navigation";
 import { useAuth } from "@/hooks/useAuth";
 
-const HIDDEN_EXACT_PATHS = ["/login", "/register"];
+const HIDDEN_EXACT_PATHS = ["/login", "/register", "/privacy", "/terms"];
 const HIDDEN_PREFIX_PATHS = [
   "/login/",
   "/register/",

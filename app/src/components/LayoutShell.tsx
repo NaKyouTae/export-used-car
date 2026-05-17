@@ -6,11 +6,14 @@ import BottomNav from "./BottomNav";
 import SellerFAB from "./SellerFAB";
 
 const FULL_SCREEN_PATHS = ["/chat/"];
+const NO_BOTTOM_PADDING_PATHS = ["/privacy", "/terms", "/register", "/login"];
 
 export default function LayoutShell({ children }: { children: React.ReactNode }) {
   const pathname = usePathname();
   const router = useRouter();
-  const isFullScreen = FULL_SCREEN_PATHS.some((p) => pathname.startsWith(p));
+  const isFullScreen =
+    FULL_SCREEN_PATHS.some((p) => pathname.startsWith(p)) ||
+    NO_BOTTOM_PADDING_PATHS.includes(pathname);
 
   // Refresh server data on every route change so navigation always
   // reflects the latest state (invalidates Next.js Router/Data cache).

@@ -20,13 +20,25 @@ export default function CarImageUploader({
   onChange,
   maxImages = 20,
 }: CarImageUploaderProps) {
-  const fileInputRef = useRef<HTMLInputElement>(null);
+  const galleryInputRef = useRef<HTMLInputElement>(null);
+  const cameraInputRef = useRef<HTMLInputElement>(null);
   const scrollRef = useRef<HTMLDivElement>(null);
   const [uploading, setUploading] = useState(false);
   const [currentIndex, setCurrentIndex] = useState(0);
+  const [sourceSheetOpen, setSourceSheetOpen] = useState(false);
 
-  const handleCapture = () => {
-    fileInputRef.current?.click();
+  const handleAddClick = () => {
+    setSourceSheetOpen(true);
+  };
+
+  const handlePickFromGallery = () => {
+    setSourceSheetOpen(false);
+    galleryInputRef.current?.click();
+  };
+
+  const handleTakePhoto = () => {
+    setSourceSheetOpen(false);
+    cameraInputRef.current?.click();
   };
 
   const handleFileChange = async (e: React.ChangeEvent<HTMLInputElement>) => {
@@ -49,8 +61,8 @@ export default function CarImageUploader({
     onChange([...images, ...newImages]);
     setUploading(false);
 
-    if (fileInputRef.current) {
-      fileInputRef.current.value = "";
+    if (e.target) {
+      e.target.value = "";
     }
   };
 
@@ -78,13 +90,20 @@ export default function CarImageUploader({
 
   return (
     <div>
-      {/* Hidden file input */}
+      {/* Hidden file inputs: gallery (no capture) + camera (capture) */}
       <input
-        ref={fileInputRef}
+        ref={galleryInputRef}
+        type="file"
+        accept="image/*"
+        multiple
+        onChange={handleFileChange}
+        className="hidden"
+      />
+      <input
+        ref={cameraInputRef}
         type="file"
         accept="image/*"
         capture="environment"
-        multiple
         onChange={handleFileChange}
         className="hidden"
       />
@@ -157,7 +176,7 @@ export default function CarImageUploader({
       {/* Upload button */}
       <button
         type="button"
-        onClick={handleCapture}
+        onClick={handleAddClick}
         disabled={!canAdd || uploading}
         className="mt-3 w-full py-3 border-2 border-dashed border-gray-300 rounded-xl flex items-center justify-center gap-2 text-gray-500 hover:border-main-400 hover:text-main-500 disabled:opacity-40 transition-colors bg-white"
       >
@@ -190,6 +209,79 @@ export default function CarImageUploader({
           </>
         )}
       </button>
+
+      {/* Source selection bottom sheet */}
+      {sourceSheetOpen && (
+        <div
+          className="fixed inset-0 z-50 flex items-end justify-center bg-black/40"
+          onClick={() => setSourceSheetOpen(false)}
+        >
+          <div
+            className="w-full max-w-md bg-white rounded-t-2xl pb-[env(safe-area-inset-bottom)] animate-slide-up"
+            onClick={(e) => e.stopPropagation()}
+          >
+            <div className="flex justify-center pt-3 pb-2">
+              <div className="w-10 h-1 bg-gray-300 rounded-full" />
+            </div>
+            <div className="px-4 pb-2 text-center text-sm font-medium text-gray-500">
+              Add Photos
+            </div>
+            <button
+              type="button"
+              onClick={handleTakePhoto}
+              className="w-full flex items-center gap-3 px-5 py-4 border-t border-gray-100 text-left active:bg-gray-50"
+            >
+              <svg
+                className="w-6 h-6 text-main-500"
+                fill="none"
+                stroke="currentColor"
+                viewBox="0 0 24 24"
+              >
+                <path
+                  strokeLinecap="round"
+                  strokeLinejoin="round"
+                  strokeWidth={1.5}
+                  d="M3 9a2 2 0 012-2h.93a2 2 0 001.664-.89l.812-1.22A2 2 0 0110.07 4h3.86a2 2 0 011.664.89l.812 1.22A2 2 0 0018.07 7H19a2 2 0 012 2v9a2 2 0 01-2 2H5a2 2 0 01-2-2V9z"
+                />
+                <path
+                  strokeLinecap="round"
+                  strokeLinejoin="round"
+                  strokeWidth={1.5}
+                  d="M15 13a3 3 0 11-6 0 3 3 0 016 0z"
+                />
+              </svg>
+              <span className="text-base text-gray-900">Take Photo</span>
+            </button>
+            <button
+              type="button"
+              onClick={handlePickFromGallery}
+              className="w-full flex items-center gap-3 px-5 py-4 border-t border-gray-100 text-left active:bg-gray-50"
+            >
+              <svg
+                className="w-6 h-6 text-main-500"
+                fill="none"
+                stroke="currentColor"
+                viewBox="0 0 24 24"
+              >
+                <path
+                  strokeLinecap="round"
+                  strokeLinejoin="round"
+                  strokeWidth={1.5}
+                  d="M4 16l4.586-4.586a2 2 0 012.828 0L16 16m-2-2l1.586-1.586a2 2 0 012.828 0L20 14m-6-6h.01M6 20h12a2 2 0 002-2V6a2 2 0 00-2-2H6a2 2 0 00-2 2v12a2 2 0 002 2z"
+                />
+              </svg>
+              <span className="text-base text-gray-900">Choose from Gallery</span>
+            </button>
+            <button
+              type="button"
+              onClick={() => setSourceSheetOpen(false)}
+              className="w-full px-5 py-4 mt-2 border-t border-gray-100 text-base text-gray-500 active:bg-gray-50"
+            >
+              Cancel
+            </button>
+          </div>
+        </div>
+      )}
     </div>
   );
 }

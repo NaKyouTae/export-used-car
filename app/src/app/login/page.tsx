@@ -1,6 +1,7 @@
 "use client";
 
 import { useState } from "react";
+import Link from "next/link";
 import { useRouter } from "next/navigation";
 import PageHeader from "@/components/PageHeader";
 import { useAuth } from "@/hooks/useAuth";
@@ -178,6 +179,18 @@ export default function LoginPage() {
             </button>
           </form>
         )}
+
+        <p className="mt-10 text-center text-[11px] text-gray-400 leading-relaxed">
+          By continuing, you agree to our{" "}
+          <Link href="/terms" className="underline text-gray-500">
+            Terms of Service
+          </Link>{" "}
+          and{" "}
+          <Link href="/privacy" className="underline text-gray-500">
+            Privacy Policy
+          </Link>
+          .
+        </p>
       </div>
     </div>
   );

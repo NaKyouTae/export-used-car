@@ -44,9 +44,44 @@ body {
   -moz-osx-font-smoothing: grayscale;
 }
 
+/* iOS Safari zooms when focusing inputs with font-size < 16px.
+   Force 16px on touch devices to suppress the zoom without changing visual size on desktop. */
+@supports (-webkit-touch-callout: none) {
+  input,
+  select,
+  textarea {
+    font-size: 16px !important;
+  }
+}
+
 /* Safe area padding for bottom bars */
 .pb-safe {
   padding-bottom: max(var(--safe-area-inset-bottom), 16px);
+}
+
+/* Slide-up animation (for bottom sheets) */
+@keyframes slide-up {
+  from {
+    transform: translateY(100%);
+  }
+  to {
+    transform: translateY(0);
+  }
+}
+.animate-slide-up {
+  animation: slide-up 0.22s ease-out;
+}
+
+@keyframes slide-down {
+  from {
+    transform: translateY(0);
+  }
+  to {
+    transform: translateY(100%);
+  }
+}
+.animate-slide-down {
+  animation: slide-down 0.2s ease-in forwards;
 }
 
 /* Line clamp utilities */

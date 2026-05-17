@@ -14,12 +14,23 @@ const NAV_ITEMS = [
 ] as const;
 
 const AUTH_PATHS = ["/login", "/register"];
+const LEGAL_PATHS = ["/privacy", "/terms"];
 
 export default function BottomNav() {
   const pathname = usePathname();
   const { isAuthenticated, isLoading: isAuthLoading } = useAuth();
   const [unreadCount, setUnreadCount] = useState(0);
+  const [isSheetOpen, setIsSheetOpen] = useState(false);
   const pollingRef = useRef<ReturnType<typeof setInterval>>(undefined);
+
+  useEffect(() => {
+    const handler = (e: Event) => {
+      const detail = (e as CustomEvent<{ open: boolean }>).detail;
+      setIsSheetOpen(!!detail?.open);
+    };
+    window.addEventListener("app:bottom-sheet", handler);
+    return () => window.removeEventListener("app:bottom-sheet", handler);
+  }, []);
 
   useEffect(() => {
     // Only poll for authenticated users — avoids silent 401s on login/auth pages
@@ -71,12 +82,14 @@ export default function BottomNav() {
   // Hide on sub-pages and auth pages that don't need bottom nav
   if (AUTH_PATHS.some((p) => pathname === p || pathname.startsWith(`${p}/`)))
     return null;
+  if (LEGAL_PATHS.includes(pathname)) return null;
   if (/^\/cars\/[^/]+$/.test(pathname)) return null;
   if (pathname.startsWith("/chat/")) return null;
   if (/^\/mypage\/.+/.test(pathname)) return null;
   if (pathname === "/seller/cars/new") return null;
   if (/^\/seller\/cars\/[^/]+\/edit$/.test(pathname)) return null;
   if (isAuthLoading) return null;
+  if (isSheetOpen) return null;
 
   return (
     <div className="fixed bottom-0 left-1/2 -translate-x-1/2 w-full max-w-[390px] z-50 pointer-events-none">

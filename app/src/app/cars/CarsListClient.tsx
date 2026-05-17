@@ -4,6 +4,7 @@ import { useState, useEffect, useCallback, useRef } from "react";
 import { useRouter, useSearchParams } from "next/navigation";
 import CarCard from "@/components/CarCard";
 import PageHeader from "@/components/PageHeader";
+import BottomSheetSelect from "@/components/BottomSheetSelect";
 
 interface Car {
   id: string;
@@ -61,6 +62,17 @@ export default function CarsListClient() {
     sort: searchParams.get("sort") || "newest",
     search: searchParams.get("search") || "",
   });
+
+  useEffect(() => {
+    window.dispatchEvent(
+      new CustomEvent("app:bottom-sheet", { detail: { open: showFilters } })
+    );
+    return () => {
+      window.dispatchEvent(
+        new CustomEvent("app:bottom-sheet", { detail: { open: false } })
+      );
+    };
+  }, [showFilters]);
 
   const buildQueryString = useCallback(
     (cursorVal?: string | null) => {
@@ -232,7 +244,13 @@ export default function CarsListClient() {
           <div className="w-10 h-1 bg-gray-300 rounded-full" />
         </div>
 
-        <div className=" px-4 pb-28 overflow-y-auto" style={{ maxHeight: "calc(85vh - 20px)" }}>
+        <div
+          className="px-4 overflow-y-auto"
+          style={{
+            maxHeight: "calc(85vh - 20px)",
+            paddingBottom: "calc(1.5rem + env(safe-area-inset-bottom))",
+          }}
+        >
           <div className="flex items-center justify-between mb-4">
             <h2 className="text-base font-semibold text-gray-900">Filters</h2>
             <button
@@ -249,61 +267,66 @@ export default function CarsListClient() {
             {/* Category */}
             <div>
               <label className="block text-xs font-medium text-gray-500 mb-1">Category</label>
-              <select
+              <BottomSheetSelect
                 value={filters.categoryId}
-                onChange={(e) => updateFilter("categoryId", e.target.value)}
-                className="w-full px-3 py-2.5 border border-gray-200 rounded-lg text-sm bg-white"
-              >
-                <option value="">All Categories</option>
-                {categories.map((cat) => (
-                  <option key={cat.id} value={cat.id}>{cat.name}</option>
-                ))}
-              </select>
+                onChange={(v) => updateFilter("categoryId", v)}
+                options={[
+                  { value: "", label: "All Categories" },
+                  ...categories.map((cat) => ({ value: cat.id, label: cat.name })),
+                ]}
+                placeholder="All Categories"
+                title="Select category"
+              />
             </div>
 
             {/* Make */}
             <div>
               <label className="block text-xs font-medium text-gray-500 mb-1">Make</label>
-              <select
+              <BottomSheetSelect
                 value={filters.makeId}
-                onChange={(e) => updateFilter("makeId", e.target.value)}
-                className="w-full px-3 py-2.5 border border-gray-200 rounded-lg text-sm bg-white"
-              >
-                <option value="">All Makes</option>
-                {makes.map((m) => (
-                  <option key={m.id} value={m.id}>{m.name}</option>
-                ))}
-              </select>
+                onChange={(v) => updateFilter("makeId", v)}
+                options={[
+                  { value: "", label: "All Makes" },
+                  ...makes.map((m) => ({ value: m.id, label: m.name })),
+                ]}
+                placeholder="All Makes"
+                title="Select make"
+                searchable
+              />
             </div>
 
             {/* Fuel & Transmission */}
             <div className="grid grid-cols-2 gap-3">
               <div>
                 <label className="block text-xs font-medium text-gray-500 mb-1">Fuel Type</label>
-                <select
+                <BottomSheetSelect
                   value={filters.fuelType}
-                  onChange={(e) => updateFilter("fuelType", e.target.value)}
-                  className="w-full px-3 py-2.5 border border-gray-200 rounded-lg text-sm bg-white"
-                >
-                  <option value="">All</option>
-                  <option value="GASOLINE">Gasoline</option>
-                  <option value="DIESEL">Diesel</option>
-                  <option value="HYBRID">Hybrid</option>
-                  <option value="ELECTRIC">Electric</option>
-                  <option value="LPG">LPG</option>
-                </select>
+                  onChange={(v) => updateFilter("fuelType", v)}
+                  options={[
+                    { value: "", label: "All" },
+                    { value: "GASOLINE", label: "Gasoline" },
+                    { value: "DIESEL", label: "Diesel" },
+                    { value: "HYBRID", label: "Hybrid" },
+                    { value: "ELECTRIC", label: "Electric" },
+                    { value: "LPG", label: "LPG" },
+                  ]}
+                  placeholder="All"
+                  title="Select fuel type"
+                />
               </div>
               <div>
                 <label className="block text-xs font-medium text-gray-500 mb-1">Transmission</label>
-                <select
+                <BottomSheetSelect
                   value={filters.transmission}
-                  onChange={(e) => updateFilter("transmission", e.target.value)}
-                  className="w-full px-3 py-2.5 border border-gray-200 rounded-lg text-sm bg-white"
-                >
-                  <option value="">All</option>
-                  <option value="AUTOMATIC">Automatic</option>
-                  <option value="MANUAL">Manual</option>
-                </select>
+                  onChange={(v) => updateFilter("transmission", v)}
+                  options={[
+                    { value: "", label: "All" },
+                    { value: "AUTOMATIC", label: "Automatic" },
+                    { value: "MANUAL", label: "Manual" },
+                  ]}
+                  placeholder="All"
+                  title="Select transmission"
+                />
               </div>
             </div>
           </div>

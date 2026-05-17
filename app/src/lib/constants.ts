@@ -245,6 +245,16 @@ export const COUNTRIES = [
   { code: "ZW", name: "Zimbabwe" },
 ];
 
+export function getCountryFlag(code: string): string {
+  if (!code || code.length !== 2) return "";
+  const A = 0x1f1e6;
+  const a = "A".charCodeAt(0);
+  return String.fromCodePoint(
+    A + (code.charCodeAt(0) - a),
+    A + (code.charCodeAt(1) - a)
+  );
+}
+
 export function formatPrice(price: number | string): string {
   const num = typeof price === "string" ? parseFloat(price) : price;
   return `₩${num.toLocaleString("ko-KR")}`;

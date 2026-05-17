@@ -1,4 +1,4 @@
-import { IsOptional, IsString } from "class-validator";
+import { Equals, IsBoolean, IsOptional, IsString } from "class-validator";
 
 export class RegisterDto {
   @IsString()
@@ -16,4 +16,12 @@ export class RegisterDto {
   @IsString()
   @IsOptional()
   phone?: string;
+
+  @IsBoolean()
+  @Equals(true, { message: "You must accept the Terms of Service" })
+  agreedToTerms!: boolean;
+
+  @IsBoolean()
+  @Equals(true, { message: "You must accept the Privacy Policy" })
+  agreedToPrivacy!: boolean;
 }

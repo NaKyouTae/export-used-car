@@ -85,6 +85,7 @@ export class AuthService {
       throw new BadRequestException("User already exists with this email");
     }
 
+    const now = new Date();
     const user = await this.prisma.user.create({
       data: {
         email: payload.email,
@@ -92,6 +93,8 @@ export class AuthService {
         country: dto.country,
         company: dto.company,
         phone: dto.phone,
+        termsAcceptedAt: now,
+        privacyAcceptedAt: now,
       },
     });
 

@@ -3,8 +3,8 @@
 import { useState, useEffect } from "react";
 import { useRouter } from "next/navigation";
 import { useAuth } from "@/hooks/useAuth";
-import { COUNTRIES } from "@/lib/constants";
 import PageHeader from "@/components/PageHeader";
+import CountrySelect from "@/components/CountrySelect";
 
 type AuthUser = NonNullable<ReturnType<typeof useAuth>["user"]>;
 
@@ -201,18 +201,7 @@ function ProfileForm({
 
             <div>
               <label className="block text-sm font-medium text-gray-700 mb-1.5">Country</label>
-              <select
-                value={country}
-                onChange={(e) => setCountry(e.target.value)}
-                className={`${inputClass} bg-white`}
-              >
-                <option value="">Select your country</option>
-                {COUNTRIES.map((c) => (
-                  <option key={c.code} value={c.code}>
-                    {c.name}
-                  </option>
-                ))}
-              </select>
+              <CountrySelect value={country} onChange={setCountry} />
             </div>
 
             <div>

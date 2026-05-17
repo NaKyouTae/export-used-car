@@ -5,6 +5,7 @@ import { useRouter } from "next/navigation";
 import { useAuth } from "@/hooks/useAuth";
 import PageHeader from "@/components/PageHeader";
 import CarImageUploader from "@/components/CarImageUploader";
+import BottomSheetSelect from "@/components/BottomSheetSelect";
 import { FUEL_TYPE_LABELS, TRANSMISSION_LABELS } from "@/lib/constants";
 
 interface UploadedImage {
@@ -274,52 +275,45 @@ export default function NewCarPage() {
           <div className="grid grid-cols-2 gap-3">
             <div>
               <label className={labelClass}>Category <span className="text-red-500">*</span></label>
-              <select
+              <BottomSheetSelect
                 value={form.categoryId}
-                onChange={(e) => updateForm("categoryId", e.target.value)}
+                onChange={(v) => updateForm("categoryId", v)}
+                options={categories.map((c) => ({ value: c.id, label: c.name }))}
+                placeholder="Select"
+                title="Select category"
                 required
-                className={inputClass}
-              >
-                <option value="">Select</option>
-                {categories.map((c) => (
-                  <option key={c.id} value={c.id}>{c.name}</option>
-                ))}
-              </select>
+              />
             </div>
             <div>
               <label className={labelClass}>Make <span className="text-red-500">*</span></label>
-              <select
+              <BottomSheetSelect
                 value={form.makeId}
-                onChange={(e) => {
-                  updateForm("makeId", e.target.value);
+                onChange={(v) => {
+                  updateForm("makeId", v);
                   updateForm("modelId", "");
                 }}
+                options={makes.map((m) => ({ value: m.id, label: m.name }))}
+                placeholder="Select"
+                title="Select make"
+                searchable
                 required
-                className={inputClass}
-              >
-                <option value="">Select</option>
-                {makes.map((m) => (
-                  <option key={m.id} value={m.id}>{m.name}</option>
-                ))}
-              </select>
+              />
             </div>
           </div>
 
           <div className="grid grid-cols-2 gap-3">
             <div>
               <label className={labelClass}>Model <span className="text-red-500">*</span></label>
-              <select
+              <BottomSheetSelect
                 value={form.modelId}
-                onChange={(e) => updateForm("modelId", e.target.value)}
+                onChange={(v) => updateForm("modelId", v)}
+                options={models.map((m) => ({ value: m.id, label: m.name }))}
+                placeholder="Select"
+                title="Select model"
+                searchable
                 disabled={!form.makeId}
                 required
-                className={inputClass}
-              >
-                <option value="">Select</option>
-                {models.map((m) => (
-                  <option key={m.id} value={m.id}>{m.name}</option>
-                ))}
-              </select>
+              />
             </div>
             <div>
               <label className={labelClass}>Year <span className="text-red-500">*</span></label>
@@ -390,42 +384,43 @@ export default function NewCarPage() {
           <div className="grid grid-cols-2 gap-3">
             <div>
               <label className={labelClass}>Fuel Type <span className="text-red-500">*</span></label>
-              <select
+              <BottomSheetSelect
                 value={form.fuelType}
-                onChange={(e) => updateForm("fuelType", e.target.value)}
-                className={inputClass}
-              >
-                {Object.entries(FUEL_TYPE_LABELS).map(([k, v]) => (
-                  <option key={k} value={k}>{v}</option>
-                ))}
-              </select>
+                onChange={(v) => updateForm("fuelType", v)}
+                options={Object.entries(FUEL_TYPE_LABELS).map(([k, v]) => ({
+                  value: k,
+                  label: v,
+                }))}
+                title="Select fuel type"
+              />
             </div>
             <div>
               <label className={labelClass}>Transmission <span className="text-red-500">*</span></label>
-              <select
+              <BottomSheetSelect
                 value={form.transmission}
-                onChange={(e) => updateForm("transmission", e.target.value)}
-                className={inputClass}
-              >
-                {Object.entries(TRANSMISSION_LABELS).map(([k, v]) => (
-                  <option key={k} value={k}>{v}</option>
-                ))}
-              </select>
+                onChange={(v) => updateForm("transmission", v)}
+                options={Object.entries(TRANSMISSION_LABELS).map(([k, v]) => ({
+                  value: k,
+                  label: v,
+                }))}
+                title="Select transmission"
+              />
             </div>
           </div>
 
           <div className="grid grid-cols-2 gap-3">
             <div>
               <label className={labelClass}>Drivetrain</label>
-              <select
+              <BottomSheetSelect
                 value={form.drivetrain}
-                onChange={(e) => updateForm("drivetrain", e.target.value)}
-                className={inputClass}
-              >
-                <option value="FWD">FWD</option>
-                <option value="RWD">RWD</option>
-                <option value="AWD">AWD</option>
-              </select>
+                onChange={(v) => updateForm("drivetrain", v)}
+                options={[
+                  { value: "FWD", label: "FWD" },
+                  { value: "RWD", label: "RWD" },
+                  { value: "AWD", label: "AWD" },
+                ]}
+                title="Select drivetrain"
+              />
             </div>
             <div>
               <label className={labelClass}>Color</label>
