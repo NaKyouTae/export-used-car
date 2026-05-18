@@ -260,8 +260,16 @@ function PhraseEditor({
   onSave: () => void;
 }) {
   return (
-    <div className="fixed inset-0 z-50 flex items-end justify-center bg-black/40">
-      <div className="w-full max-w-[390px] bg-white rounded-t-2xl px-4 pt-3 pb-safe">
+    <div
+      className="fixed inset-0 z-50 flex items-end justify-center bg-black/40"
+      onClick={() => {
+        if (!saving) onClose();
+      }}
+    >
+      <div
+        className="w-full max-w-[390px] bg-white rounded-t-2xl px-4 pt-3 pb-safe"
+        onClick={(e) => e.stopPropagation()}
+      >
         <div className="flex justify-center pb-2">
           <span className="block w-10 h-1 rounded-full bg-gray-200" />
         </div>
