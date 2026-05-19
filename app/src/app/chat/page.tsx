@@ -82,7 +82,7 @@ function ChatListContent() {
   }
 
   return (
-    <div className="bg-white pb-[100px]">
+    <div className="bg-white">
       <PageHeader title={carId ? "Car Chats" : "Chat"} showBack={!!carId} />
 
       {rooms.length === 0 ? (
