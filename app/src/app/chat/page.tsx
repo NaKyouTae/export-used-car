@@ -72,7 +72,7 @@ function ChatListContent() {
 
   if (authLoading || loading) {
     return (
-      <div className="min-h-dvh bg-white">
+      <div className="bg-white">
         <PageHeader title="Chat" showBack={!!carId} />
         <div className="flex items-center justify-center py-20">
           <div className="w-6 h-6 border-2 border-main-500 border-t-transparent rounded-full animate-spin" />
@@ -82,7 +82,7 @@ function ChatListContent() {
   }
 
   return (
-    <div className="min-h-dvh bg-white pb-[100px]">
+    <div className="bg-white pb-[100px]">
       <PageHeader title={carId ? "Car Chats" : "Chat"} showBack={!!carId} />
 
       {rooms.length === 0 ? (

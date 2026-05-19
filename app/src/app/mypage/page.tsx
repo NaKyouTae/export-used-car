@@ -10,7 +10,7 @@ export default function MyPage() {
 
   if (isLoading) {
     return (
-      <div className="min-h-dvh bg-white flex items-center justify-center">
+      <div className="flex-1 bg-white flex items-center justify-center">
         <div className="w-8 h-8 border-2 border-main-500 border-t-transparent rounded-full animate-spin" />
       </div>
     );
@@ -19,7 +19,7 @@ export default function MyPage() {
   const isSeller = isAuthenticated && user?.role === "SELLER";
 
   return (
-    <div className="min-h-dvh bg-white flex flex-col">
+    <div className="flex-1 bg-white flex flex-col">
       <header className="sticky top-0 z-40 bg-white border-b border-gray-100">
         <div className="flex items-center h-12 px-4">
           <h1 className="text-lg font-semibold text-gray-900">My Page</h1>

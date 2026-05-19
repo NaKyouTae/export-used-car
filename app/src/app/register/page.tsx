@@ -247,7 +247,7 @@ function ConsentRow({
 
 export default function RegisterPage() {
   return (
-    <div className="flex flex-col min-h-dvh bg-white">
+    <div className="flex-1 flex flex-col bg-white">
       <PageHeader title="Register" />
       <Suspense
         fallback={

@@ -28,7 +28,7 @@ export default function LayoutShell({ children }: { children: React.ReactNode })
   return (
     <>
       <div
-        className={`mx-auto w-full max-w-[390px] min-h-dvh bg-white shadow-sm ${
+        className={`mx-auto w-full max-w-[390px] min-h-dvh bg-white shadow-sm flex flex-col ${
           isFullScreen ? "" : "pb-[calc(74px+env(safe-area-inset-bottom))]"
         }`}
       >

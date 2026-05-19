@@ -191,7 +191,7 @@ export default function CarDetailClient({ car }: { car: CarDetail }) {
   ].filter((row) => row.value);
 
   return (
-    <div className="min-h-dvh bg-white pb-[72px]">
+    <div className="bg-white pb-[72px]">
       <PageHeader title="Car Details" />
 
       {/* Image Gallery */}

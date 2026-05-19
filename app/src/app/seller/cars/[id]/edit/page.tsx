@@ -248,7 +248,7 @@ export default function EditCarPage({
 
   if (authLoading || loading) {
     return (
-      <div className="min-h-dvh bg-white flex items-center justify-center">
+      <div className="flex-1 bg-white flex items-center justify-center">
         <div className="w-8 h-8 border-2 border-main-500 border-t-transparent rounded-full animate-spin" />
       </div>
     );
@@ -261,7 +261,7 @@ export default function EditCarPage({
   const labelClass = "block text-sm font-medium text-gray-700 mb-1";
 
   return (
-    <div className="min-h-dvh bg-white">
+    <div className="bg-white">
       <PageHeader title="Edit Car" />
 
       <form

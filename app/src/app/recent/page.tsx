@@ -14,7 +14,7 @@ export default function RecentlyViewedPage() {
   const loaded = useSyncExternalStore(subscribeNoop, getTrue, getFalse);
 
   return (
-    <div className="min-h-dvh bg-white">
+    <div className="bg-white">
       <PageHeader title="Recently Viewed" />
 
       {!loaded ? (

@@ -204,7 +204,7 @@ export default function CarsListClient() {
   ];
 
   return (
-    <div className="min-h-dvh bg-white">
+    <div className="bg-white">
       <PageHeader
         title="Cars"
         showBack={false}

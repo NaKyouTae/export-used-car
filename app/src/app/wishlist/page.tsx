@@ -57,7 +57,7 @@ export default function WishlistPage() {
 
   if (authLoading || (!isAuthenticated && !error)) {
     return (
-      <div className="min-h-dvh bg-white">
+      <div className="bg-white">
         <PageHeader title="Wishlist" showBack={false} />
         <div className="flex justify-center py-20">
           <div className="w-6 h-6 border-2 border-main-500 border-t-transparent rounded-full animate-spin" />
@@ -67,7 +67,7 @@ export default function WishlistPage() {
   }
 
   return (
-    <div className="min-h-dvh bg-white">
+    <div className="bg-white">
       <PageHeader title="Wishlist" showBack={false} />
 
       <div className="px-4">

@@ -51,21 +51,11 @@ export default async function HomePage() {
   ]);
 
   return (
-    <div className="min-h-dvh bg-white">
+    <div className="bg-white">
       <Header />
 
-      {/* Hero */}
-      <section className="bg-gradient-to-b from-gray-50 to-white px-4 pt-8 pb-6">
-        <h2 className="text-2xl font-bold text-gray-900 mb-1">
-          Find Your Perfect Car
-        </h2>
-        <p className="text-gray-500 text-sm">
-          Premium Korean used cars, shipped worldwide
-        </p>
-      </section>
-
       {/* Popular Cars */}
-      <section className="px-4 pb-4">
+      <section className="px-4 pt-4 pb-4">
         <h3 className="text-lg font-bold text-gray-900 mb-2">Popular Cars</h3>
 
         {Array.isArray(popularCars) && popularCars.length > 0 ? (

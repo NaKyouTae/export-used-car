@@ -65,7 +65,7 @@ export default function SellerCarsPage() {
 
   if (isLoading) {
     return (
-      <div className="min-h-dvh bg-white flex items-center justify-center">
+      <div className="flex-1 bg-white flex items-center justify-center">
         <div className="w-8 h-8 border-2 border-main-500 border-t-transparent rounded-full animate-spin" />
       </div>
     );
@@ -76,7 +76,7 @@ export default function SellerCarsPage() {
   const statuses = ["", "DRAFT", "ACTIVE", "RESERVED", "SOLD", "HIDDEN"];
 
   return (
-    <div className="min-h-dvh bg-white">
+    <div className="bg-white">
       <PageHeader title="My Cars" />
 
       <div className="">
@@ -104,7 +104,7 @@ export default function SellerCarsPage() {
               <div className="w-6 h-6 border-2 border-main-500 border-t-transparent rounded-full animate-spin" />
             </div>
           ) : cars.length > 0 ? (
-            <div className="space-y-3">
+            <div>
               {cars.map((car) => {
                 const thumb =
                   car.thumbnail ||
@@ -114,7 +114,7 @@ export default function SellerCarsPage() {
                   <Link
                     key={car.id}
                     href={`/seller/cars/${car.id}/edit`}
-                    className="flex gap-3 bg-white rounded-xl p-3 hover:shadow-sm transition-shadow"
+                    className="flex gap-3 bg-white py-3 border-b border-gray-100 hover:shadow-sm transition-shadow"
                   >
                     <div className="relative w-24 h-24 bg-gray-100 rounded-lg overflow-hidden flex-shrink-0">
                       {thumb ? (

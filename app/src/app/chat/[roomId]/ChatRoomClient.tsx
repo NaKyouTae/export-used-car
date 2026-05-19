@@ -213,7 +213,7 @@ export default function ChatRoomClient({ roomId }: { roomId: string }) {
 
   if (authLoading || loading) {
     return (
-      <div className="min-h-dvh bg-white">
+      <div className="flex-1 bg-white">
         <PageHeader title="Chat" backHref="/chat" />
         <div className="flex items-center justify-center py-20">
           <div className="w-6 h-6 border-2 border-main-500 border-t-transparent rounded-full animate-spin" />
