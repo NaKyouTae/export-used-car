@@ -136,8 +136,8 @@ export default function MyPage() {
         <div className="text-[11px] leading-relaxed text-gray-400 space-y-1">
           <p className="text-xs font-semibold text-gray-500">Dubai Trading Co., Ltd.</p>
           <p>CEO: Hae-gi Choi</p>
-          <p>Business Registration No.: 897-88-01852</p>
-          <p>Corporate Registration No.: 230111-0326346</p>
+          <p>Business Registration No : 897-88-01852</p>
+          <p>Corporate Registration No : 230111-0326346</p>
           <p>Established: February 21, 2020</p>
           <p>
             Address: #1127, Bldg. 1, 16 Jinjangyutong-ro, Buk-gu,
