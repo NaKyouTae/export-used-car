@@ -36,21 +36,21 @@ export default function CarCard({ car }: CarCardProps) {
 
   return (
     <Link href={`/cars/${car.id}`} className="block">
-      <article className="flex gap-3 py-3 border-b border-gray-100">
+      <article className="flex flex-col py-4 border-b border-gray-100">
         {/* Thumbnail */}
-        <div className="relative w-24 h-24 flex-shrink-0 rounded-lg overflow-hidden bg-gray-100">
+        <div className="relative w-full aspect-[3/2] rounded-lg overflow-hidden bg-gray-100">
           {thumbnailUrl ? (
             <Image
               src={thumbnailUrl}
               alt={car.title}
               fill
-              sizes="96px"
+              sizes="(max-width: 768px) 100vw, 768px"
               className="object-cover"
             />
           ) : (
             <div className="w-full h-full flex items-center justify-center text-gray-400">
               <svg
-                className="w-8 h-8"
+                className="w-12 h-12"
                 fill="none"
                 stroke="currentColor"
                 viewBox="0 0 24 24"
@@ -67,7 +67,7 @@ export default function CarCard({ car }: CarCardProps) {
         </div>
 
         {/* Info */}
-        <div className="flex-1 min-w-0">
+        <div className="mt-3 min-w-0">
           <h3 className="font-semibold text-gray-900 line-clamp-2 text-[15px] leading-snug">
             {car.title}
           </h3>
@@ -75,7 +75,7 @@ export default function CarCard({ car }: CarCardProps) {
             {car.year} · {formatMileage(car.mileage)} ·{" "}
             {FUEL_TYPE_LABELS[car.fuelType] || car.fuelType}
           </p>
-          <p className="font-semibold text-gray-900 mt-2 text-[13px] truncate">
+          <p className="font-semibold text-gray-900 mt-2 text-[15px] truncate">
             {formatPriceRange(car.priceMin, car.priceMax)}
           </p>
           <div className="flex items-center gap-3 mt-2 text-xs text-gray-400">
