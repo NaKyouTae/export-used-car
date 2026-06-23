@@ -15,6 +15,12 @@ interface Seller {
   _count?: { cars: number };
 }
 
+const STATUS_LABELS: Record<string, string> = {
+  PENDING: "승인대기",
+  ACTIVE: "활성",
+  SUSPENDED: "정지",
+};
+
 function StatusBadge({ status }: { status: string }) {
   const cls =
     status === "PENDING"
@@ -24,7 +30,7 @@ function StatusBadge({ status }: { status: string }) {
         : status === "SUSPENDED"
           ? "badge-suspended"
           : "badge-draft";
-  return <span className={cls}>{status}</span>;
+  return <span className={cls}>{STATUS_LABELS[status] ?? status}</span>;
 }
 
 function formatDate(s: string) {
@@ -63,7 +69,7 @@ export default function SellersPage() {
       }
       setNextCursor(data.nextCursor || null);
     } catch {
-      alert("Failed to load sellers");
+      alert("판매자를 불러오지 못했습니다");
     } finally {
       setLoading(false);
     }
@@ -88,7 +94,7 @@ export default function SellersPage() {
         prev.map((s) => (s.id === id ? { ...s, status: newStatus } : s))
       );
     } catch {
-      alert("Failed to update seller status");
+      alert("판매자 상태 변경에 실패했습니다");
     }
   };
 
@@ -100,31 +106,31 @@ export default function SellersPage() {
           onChange={(e) => setStatus(e.target.value)}
           className="border border-gray-300 rounded-lg px-3 py-2 text-sm"
         >
-          <option value="">All Status</option>
-          <option value="ACTIVE">ACTIVE</option>
-          <option value="SUSPENDED">SUSPENDED</option>
+          <option value="">전체 상태</option>
+          <option value="ACTIVE">활성</option>
+          <option value="SUSPENDED">정지</option>
         </select>
         <Link href="/users" className="btn btn-primary">
-          Promote a user →
+          사용자 전환하기 →
         </Link>
       </div>
 
       <div className="bg-white rounded-xl shadow-sm overflow-hidden">
         {loading ? (
-          <div className="p-8 text-center text-gray-400">Loading...</div>
+          <div className="p-8 text-center text-gray-400">불러오는 중...</div>
         ) : (
           <>
             <table className="admin-table">
               <thead>
                 <tr>
-                  <th>Company</th>
-                  <th>Contact</th>
-                  <th>Email</th>
-                  <th>Phone</th>
-                  <th>Status</th>
-                  <th>Cars</th>
-                  <th>Created</th>
-                  <th>Actions</th>
+                  <th>회사명</th>
+                  <th>담당자</th>
+                  <th>이메일</th>
+                  <th>연락처</th>
+                  <th>상태</th>
+                  <th>차량 수</th>
+                  <th>등록일</th>
+                  <th>관리</th>
                 </tr>
               </thead>
               <tbody>
@@ -146,7 +152,7 @@ export default function SellersPage() {
                           onClick={() => handleToggleStatus(s.id, s.status)}
                           className={`btn btn-sm ${s.status === "ACTIVE" ? "btn-danger" : "btn-primary"}`}
                         >
-                          {s.status === "ACTIVE" ? "Suspend" : "Activate"}
+                          {s.status === "ACTIVE" ? "정지" : "활성화"}
                         </button>
                       )}
                     </td>
@@ -155,11 +161,11 @@ export default function SellersPage() {
                 {sellers.length === 0 && (
                   <tr>
                     <td colSpan={8} className="text-center text-gray-400 py-8">
-                      No sellers found. Promote a user from the{" "}
+                      판매자가 없습니다.{" "}
                       <Link href="/users" className="text-blue-600 underline">
-                        Users
+                        사용자
                       </Link>{" "}
-                      page.
+                      페이지에서 전환해주세요.
                     </td>
                   </tr>
                 )}
@@ -171,7 +177,7 @@ export default function SellersPage() {
                   onClick={() => load(nextCursor)}
                   className="btn btn-secondary"
                 >
-                  Load More
+                  더 보기
                 </button>
               </div>
             )}

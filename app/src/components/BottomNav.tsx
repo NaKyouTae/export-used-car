@@ -3,6 +3,7 @@
 import { useState, useEffect, useRef } from "react";
 import Link from "next/link";
 import { usePathname } from "next/navigation";
+import { useTranslation } from "react-i18next";
 import { useAuth } from "@/hooks/useAuth";
 
 const NAV_ITEMS = [
@@ -18,6 +19,7 @@ const LEGAL_PATHS = ["/privacy", "/terms"];
 
 export default function BottomNav() {
   const pathname = usePathname();
+  const { t } = useTranslation();
   const { isAuthenticated, isLoading: isAuthLoading } = useAuth();
   const [unreadCount, setUnreadCount] = useState(0);
   const [isSheetOpen, setIsSheetOpen] = useState(false);
@@ -88,6 +90,7 @@ export default function BottomNav() {
   if (/^\/mypage\/.+/.test(pathname)) return null;
   if (pathname === "/seller/cars/new") return null;
   if (/^\/seller\/cars\/[^/]+\/edit$/.test(pathname)) return null;
+  if (/^\/seller\/cars\/[^/]+\/bump$/.test(pathname)) return null;
   if (isAuthLoading) return null;
   if (isSheetOpen) return null;
 
@@ -122,7 +125,7 @@ export default function BottomNav() {
                     isActive ? "text-main-600" : "text-gray-400"
                   }`}
                 >
-                  {item.label}
+                  {t(item.label)}
                 </span>
               </Link>
             );

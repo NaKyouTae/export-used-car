@@ -30,7 +30,7 @@ export default function TagsPage() {
       const data = await res.json();
       setTags(Array.isArray(data) ? data : data.data || []);
     } catch {
-      alert('Failed to load tags');
+      alert('태그를 불러오지 못했습니다');
     } finally {
       setLoading(false);
     }
@@ -76,20 +76,20 @@ export default function TagsPage() {
       closeModal();
       load();
     } catch {
-      alert(modalMode === 'edit' ? 'Failed to update tag' : 'Failed to add tag');
+      alert(modalMode === 'edit' ? '태그 수정에 실패했습니다' : '태그 추가에 실패했습니다');
     } finally {
       setSubmitting(false);
     }
   };
 
   const handleDelete = async (id: string) => {
-    if (!window.confirm('Delete this tag?')) return;
+    if (!window.confirm('이 태그를 삭제하시겠습니까?')) return;
     try {
       const res = await fetch(`/api/tags/${id}`, { method: 'DELETE' });
       if (!res.ok && res.status !== 204) throw new Error();
       load();
     } catch {
-      alert('Failed to delete tag');
+      alert('태그 삭제에 실패했습니다');
     }
   };
 
@@ -105,22 +105,22 @@ export default function TagsPage() {
       if (!res.ok) throw new Error();
     } catch {
       setTags(previous);
-      alert('Failed to reorder');
+      alert('순서 변경에 실패했습니다');
     }
   };
 
   return (
     <div className="space-y-4">
       <div className="flex items-center justify-between">
-        <p className="text-sm text-gray-500">{tags.length} tags · drag to reorder</p>
-        <button onClick={openCreate} className="btn btn-primary btn-sm">+ New</button>
+        <p className="text-sm text-gray-500">태그 {tags.length}개 · 드래그하여 순서 변경</p>
+        <button onClick={openCreate} className="btn btn-primary btn-sm">+ 추가</button>
       </div>
 
       <div className="bg-white rounded-xl shadow-sm overflow-hidden">
         {loading ? (
-          <div className="p-8 text-center text-gray-400">Loading...</div>
+          <div className="p-8 text-center text-gray-400">불러오는 중...</div>
         ) : tags.length === 0 ? (
-          <div className="p-8 text-center text-gray-400">No tags yet</div>
+          <div className="p-8 text-center text-gray-400">태그가 없습니다</div>
         ) : (
           <ul className="divide-y divide-gray-100">
             <SortableList
@@ -134,8 +134,8 @@ export default function TagsPage() {
                     {t.nameKo && <p className="text-xs text-gray-500 truncate">{t.nameKo}</p>}
                   </div>
                   <div className="flex gap-2 shrink-0">
-                    <button onClick={() => openEdit(t)} className="btn btn-secondary btn-sm">Edit</button>
-                    <button onClick={() => handleDelete(t.id)} className="btn btn-danger btn-sm">Delete</button>
+                    <button onClick={() => openEdit(t)} className="btn btn-secondary btn-sm">수정</button>
+                    <button onClick={() => handleDelete(t.id)} className="btn btn-danger btn-sm">삭제</button>
                   </div>
                 </li>
               )}
@@ -147,40 +147,40 @@ export default function TagsPage() {
       <Modal
         open={modalMode !== null}
         onClose={closeModal}
-        title={modalMode === 'edit' ? 'Edit Tag' : 'New Tag'}
+        title={modalMode === 'edit' ? '태그 수정' : '태그 추가'}
         footer={
           <>
-            <button type="button" onClick={closeModal} className="btn btn-secondary btn-sm">Cancel</button>
+            <button type="button" onClick={closeModal} className="btn btn-secondary btn-sm">취소</button>
             <button
               type="submit"
               form="tag-form"
               disabled={submitting}
               className="btn btn-primary btn-sm disabled:opacity-50"
             >
-              {submitting ? 'Saving...' : modalMode === 'edit' ? 'Save' : 'Create'}
+              {submitting ? '저장 중...' : modalMode === 'edit' ? '저장' : '추가'}
             </button>
           </>
         }
       >
         <form id="tag-form" onSubmit={handleSubmit} className="space-y-4">
           <div>
-            <label className="block text-xs text-gray-500 mb-1">Name</label>
+            <label className="block text-xs text-gray-500 mb-1">이름</label>
             <input
               value={name}
               onChange={(e) => setName(e.target.value)}
               required
               autoFocus
               className="border border-gray-300 rounded-lg px-3 py-2 text-sm w-full"
-              placeholder="Tag name"
+              placeholder="태그명 (영문)"
             />
           </div>
           <div>
-            <label className="block text-xs text-gray-500 mb-1">Korean Name</label>
+            <label className="block text-xs text-gray-500 mb-1">한글 이름</label>
             <input
               value={nameKo}
               onChange={(e) => setNameKo(e.target.value)}
               className="border border-gray-300 rounded-lg px-3 py-2 text-sm w-full"
-              placeholder="Korean name"
+              placeholder="태그명 (한글)"
             />
           </div>
         </form>

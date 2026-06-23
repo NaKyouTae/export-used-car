@@ -27,6 +27,7 @@ export class MakesService {
     return this.prisma.carModel.findMany({
       where: { makeId },
       orderBy: { displayOrder: "asc" },
+      include: { category: { select: { id: true, name: true } } },
     });
   }
 

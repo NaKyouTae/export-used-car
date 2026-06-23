@@ -5,14 +5,14 @@ import Link from 'next/link';
 import { usePathname, useRouter } from 'next/navigation';
 
 const NAV_ITEMS = [
-  { href: '/', label: 'Dashboard' },
-  { href: '/users', label: 'Users' },
-  { href: '/sellers', label: 'Sellers' },
-  { href: '/cars', label: 'Cars' },
-  { href: '/categories', label: 'Categories' },
-  { href: '/makes', label: 'Makes' },
-  { href: '/tags', label: 'Tags' },
-  { href: '/options', label: 'Options' },
+  { href: '/', label: '대시보드' },
+  { href: '/users', label: '사용자' },
+  { href: '/sellers', label: '판매자' },
+  { href: '/cars', label: '등록된 차량' },
+  { href: '/categories', label: '차종' },
+  { href: '/makes', label: '제조사' },
+  { href: '/tags', label: '태그' },
+  { href: '/options', label: '옵션' },
 ];
 
 export default function AdminLayout({ children }: { children: React.ReactNode }) {
@@ -28,7 +28,7 @@ export default function AdminLayout({ children }: { children: React.ReactNode })
   const currentTitle =
     NAV_ITEMS.find(
       (item) => item.href === pathname || (item.href !== '/' && pathname.startsWith(item.href))
-    )?.label || 'Dashboard';
+    )?.label || '대시보드';
 
   return (
     <div className="flex min-h-screen bg-gray-100">
@@ -48,7 +48,7 @@ export default function AdminLayout({ children }: { children: React.ReactNode })
       >
         <div className="p-6 border-b border-gray-700">
           <h1 className="text-xl font-bold">Ajucar</h1>
-          <p className="text-gray-400 text-sm mt-1">Admin Panel</p>
+          <p className="text-gray-400 text-sm mt-1">관리자 패널</p>
         </div>
         <nav className="p-4 space-y-1">
           {NAV_ITEMS.map((item) => {
@@ -90,7 +90,7 @@ export default function AdminLayout({ children }: { children: React.ReactNode })
             <h2 className="text-lg font-semibold text-gray-800">{currentTitle}</h2>
           </div>
           <button onClick={handleLogout} className="btn btn-secondary btn-sm">
-            Logout
+            로그아웃
           </button>
         </header>
 

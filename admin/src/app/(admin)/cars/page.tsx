@@ -16,6 +16,15 @@ interface Car {
   thumbnail?: string | null;
 }
 
+const STATUS_LABELS: Record<string, string> = {
+  DRAFT: "임시저장",
+  ACTIVE: "판매중",
+  DEALING: "거래중",
+  RESERVED: "예약중",
+  HIDDEN: "숨김",
+  SOLD: "거래완료",
+};
+
 function StatusBadge({ status }: { status: string }) {
   const cls =
     status === "ACTIVE"
@@ -26,10 +35,12 @@ function StatusBadge({ status }: { status: string }) {
           ? "badge-sold"
           : status === "DRAFT"
             ? "badge-draft"
-            : status === "RESERVED"
+            : status === "DEALING"
               ? "badge-sold"
-              : "badge-draft";
-  return <span className={cls}>{status}</span>;
+              : status === "RESERVED"
+                ? "badge-sold"
+                : "badge-draft";
+  return <span className={cls}>{STATUS_LABELS[status] ?? status}</span>;
 }
 
 function formatDate(s: string) {
@@ -85,7 +96,7 @@ export default function CarsPage() {
       }
       setNextCursor(data.nextCursor || null);
     } catch {
-      alert("Failed to load cars");
+      alert("차량을 불러오지 못했습니다");
     } finally {
       setLoading(false);
     }
@@ -111,7 +122,7 @@ export default function CarsPage() {
         prev.map((c) => (c.id === id ? { ...c, status: newStatus } : c))
       );
     } catch {
-      alert("Failed to update car status");
+      alert("차량 상태 변경에 실패했습니다");
     }
   };
 
@@ -123,31 +134,32 @@ export default function CarsPage() {
           onChange={(e) => setStatus(e.target.value)}
           className="border border-gray-300 rounded-lg px-3 py-2 text-sm"
         >
-          <option value="">All Status</option>
-          <option value="DRAFT">DRAFT</option>
-          <option value="ACTIVE">ACTIVE</option>
-          <option value="RESERVED">RESERVED</option>
-          <option value="HIDDEN">HIDDEN</option>
-          <option value="SOLD">SOLD</option>
+          <option value="">전체 상태</option>
+          <option value="DRAFT">임시저장</option>
+          <option value="ACTIVE">판매중</option>
+          <option value="DEALING">거래중</option>
+          <option value="RESERVED">예약중</option>
+          <option value="HIDDEN">숨김</option>
+          <option value="SOLD">거래완료</option>
         </select>
       </div>
 
       <div className="bg-white rounded-xl shadow-sm overflow-hidden">
         {loading ? (
-          <div className="p-8 text-center text-gray-400">Loading...</div>
+          <div className="p-8 text-center text-gray-400">불러오는 중...</div>
         ) : (
           <>
             <table className="admin-table">
               <thead>
                 <tr>
-                  <th>Title</th>
-                  <th>Make / Model</th>
-                  <th>Seller</th>
-                  <th>Price</th>
-                  <th>Views</th>
-                  <th>Status</th>
-                  <th>Created</th>
-                  <th>Actions</th>
+                  <th>제목</th>
+                  <th>제조사 / 모델</th>
+                  <th>판매자</th>
+                  <th>가격</th>
+                  <th>조회수</th>
+                  <th>상태</th>
+                  <th>등록일</th>
+                  <th>관리</th>
                 </tr>
               </thead>
               <tbody>
@@ -172,11 +184,12 @@ export default function CarsPage() {
                         }
                         className="border border-gray-300 rounded px-2 py-1 text-xs"
                       >
-                        <option value="DRAFT">DRAFT</option>
-                        <option value="ACTIVE">ACTIVE</option>
-                        <option value="RESERVED">RESERVED</option>
-                        <option value="HIDDEN">HIDDEN</option>
-                        <option value="SOLD">SOLD</option>
+                        <option value="DRAFT">임시저장</option>
+                        <option value="ACTIVE">판매중</option>
+                        <option value="DEALING">거래중</option>
+                        <option value="RESERVED">예약중</option>
+                        <option value="HIDDEN">숨김</option>
+                        <option value="SOLD">거래완료</option>
                       </select>
                     </td>
                   </tr>
@@ -184,7 +197,7 @@ export default function CarsPage() {
                 {cars.length === 0 && (
                   <tr>
                     <td colSpan={8} className="text-center text-gray-400 py-8">
-                      No cars found
+                      차량이 없습니다
                     </td>
                   </tr>
                 )}
@@ -196,7 +209,7 @@ export default function CarsPage() {
                   onClick={() => load(nextCursor)}
                   className="btn btn-secondary"
                 >
-                  Load More
+                  더 보기
                 </button>
               </div>
             )}

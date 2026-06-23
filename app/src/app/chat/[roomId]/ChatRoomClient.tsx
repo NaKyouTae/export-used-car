@@ -2,8 +2,9 @@
 
 import { useState, useEffect, useRef, useCallback } from "react";
 import { useRouter } from "next/navigation";
+import { useTranslation } from "react-i18next";
 import { useAuth } from "@/hooks/useAuth";
-import { formatPriceRange } from "@/lib/constants";
+import { formatPrice } from "@/lib/constants";
 import { notifyChatUpdate } from "@/lib/chat-events";
 import {
   formatTime,
@@ -11,6 +12,14 @@ import {
   getDateKey,
 } from "@/lib/datetime";
 import PageHeader from "@/components/PageHeader";
+import ImageViewer from "@/components/ImageViewer";
+
+// 이미지 메시지는 content가 이 prefix로 시작한다 (백엔드와 동일 규약).
+const IMAGE_MESSAGE_PREFIX = "[img]";
+const isImageMessage = (content: string) =>
+  content.startsWith(IMAGE_MESSAGE_PREFIX);
+const getImageUrl = (content: string) =>
+  content.slice(IMAGE_MESSAGE_PREFIX.length);
 
 interface ChatRoomInfo {
   id: string;
@@ -22,6 +31,7 @@ interface ChatRoomInfo {
   } | null;
   seller: { id: string; companyName: string; contactName: string };
   buyer: { id: string; name: string; email: string };
+  desiredPrice: number | string | null;
 }
 
 interface Message {
@@ -40,6 +50,7 @@ interface QuickPhrase {
 }
 
 export default function ChatRoomClient({ roomId }: { roomId: string }) {
+  const { t } = useTranslation();
   const { user, isAuthenticated, isLoading: authLoading } = useAuth();
   const router = useRouter();
 
@@ -51,9 +62,13 @@ export default function ChatRoomClient({ roomId }: { roomId: string }) {
   const [sending, setSending] = useState(false);
   const [loading, setLoading] = useState(true);
   const [quickPhrases, setQuickPhrases] = useState<QuickPhrase[]>([]);
+  const [savingPrice, setSavingPrice] = useState(false);
+  const [uploading, setUploading] = useState(false);
+  const [viewerUrl, setViewerUrl] = useState<string | null>(null);
   const messagesEndRef = useRef<HTMLDivElement>(null);
   const scrollContainerRef = useRef<HTMLDivElement>(null);
   const inputRef = useRef<HTMLTextAreaElement>(null);
+  const fileInputRef = useRef<HTMLInputElement>(null);
   const pollingRef = useRef<ReturnType<typeof setInterval>>(undefined);
 
   // Poll: fetch only new messages (after the last one we have)
@@ -204,6 +219,66 @@ export default function ChatRoomClient({ roomId }: { roomId: string }) {
     }
   };
 
+  const handlePickImage = () => {
+    if (uploading) return;
+    fileInputRef.current?.click();
+  };
+
+  const handleFileChange = async (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    e.target.value = ""; // 같은 파일 재선택 허용
+    if (!file) return;
+    if (!file.type.startsWith("image/")) return;
+
+    setUploading(true);
+    try {
+      const formData = new FormData();
+      formData.append("file", file);
+      const res = await fetch(`/api/chat/rooms/${roomId}/images`, {
+        method: "POST",
+        credentials: "include",
+        body: formData,
+      });
+      if (res.ok) {
+        const newMsg = await res.json();
+        setMessages((prev) => [...prev, newMsg]);
+        notifyChatUpdate();
+        requestAnimationFrame(() => {
+          messagesEndRef.current?.scrollIntoView({ behavior: "smooth" });
+        });
+      }
+    } catch {
+      // ignore
+    } finally {
+      setUploading(false);
+    }
+  };
+
+  const handleSaveDesiredPrice = async (price: number) => {
+    if (savingPrice) return false;
+    setSavingPrice(true);
+    try {
+      const res = await fetch(
+        `/api/chat/rooms/${roomId}/desired-price`,
+        {
+          method: "PATCH",
+          credentials: "include",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ desiredPrice: price }),
+        }
+      );
+      if (res.ok) {
+        setRoom((prev) => (prev ? { ...prev, desiredPrice: price } : prev));
+        return true;
+      }
+      return false;
+    } catch {
+      return false;
+    } finally {
+      setSavingPrice(false);
+    }
+  };
+
   const handleKeyDown = (e: React.KeyboardEvent) => {
     if (e.key === "Enter" && !e.shiftKey && !e.nativeEvent.isComposing) {
       e.preventDefault();
@@ -214,7 +289,7 @@ export default function ChatRoomClient({ roomId }: { roomId: string }) {
   if (authLoading || loading) {
     return (
       <div className="flex-1 bg-white">
-        <PageHeader title="Chat" backHref="/chat" />
+        <PageHeader title={t("Chat")} backHref="/chat" />
         <div className="flex items-center justify-center py-20">
           <div className="w-6 h-6 border-2 border-main-500 border-t-transparent rounded-full animate-spin" />
         </div>
@@ -224,10 +299,18 @@ export default function ChatRoomClient({ roomId }: { roomId: string }) {
 
   if (!room) return null;
 
-  const otherName =
-    user?.role === "BUYER"
-      ? room.seller.companyName
-      : room.buyer.name || room.buyer.email;
+  // 방 안에서의 입장은 역할이 아니라 본인 id 기준으로 판단
+  const amSeller = user?.id === room.seller.id;
+  const otherName = amSeller
+    ? room.buyer.name || room.buyer.email
+    : room.seller.companyName;
+
+  const desiredPriceNum =
+    room.desiredPrice === null || room.desiredPrice === undefined
+      ? null
+      : Number(room.desiredPrice);
+  // 구매자가 아직 구매 희망 가격을 입력하지 않았으면 강제로 팝업을 띄움
+  const needsDesiredPrice = !amSeller && desiredPriceNum === null;
 
   return (
     <div className="flex flex-col h-dvh bg-white">
@@ -241,7 +324,7 @@ export default function ChatRoomClient({ roomId }: { roomId: string }) {
               onClick={() => router.push(`/cars/${room.car!.id}`)}
               className="text-xs text-main-500 font-medium"
             >
-              View Car
+              {t("View Car")}
             </button>
           ) : undefined
         }
@@ -253,9 +336,11 @@ export default function ChatRoomClient({ roomId }: { roomId: string }) {
           <p className="text-xs text-gray-700 font-medium truncate">
             {room.car.title}
           </p>
-          <p className="text-xs text-main-500 font-semibold">
-            {formatPriceRange(room.car.priceMin, room.car.priceMax)}
-          </p>
+          {desiredPriceNum !== null && (
+            <span className="inline-block mt-1 text-[11px] font-semibold text-emerald-700 bg-emerald-50 px-2 py-0.5 rounded-full">
+              {t("Desired price")} {formatPrice(desiredPriceNum)}
+            </span>
+          )}
         </div>
       )}
 
@@ -276,9 +361,8 @@ export default function ChatRoomClient({ roomId }: { roomId: string }) {
             i > 0 ? getDateKey(messages[i - 1].createdAt) : null;
           const showDate = dateKey !== prevDateKey;
 
-          const isMe =
-            (user?.role === "BUYER" && msg.senderType === "BUYER") ||
-            (user?.role === "SELLER" && msg.senderType === "SELLER");
+          const isMe = msg.senderId === user?.id;
+          const isImg = isImageMessage(msg.content);
 
           return (
             <div key={msg.id}>
@@ -292,24 +376,48 @@ export default function ChatRoomClient({ roomId }: { roomId: string }) {
               <div
                 className={`flex mb-2 ${isMe ? "justify-end" : "justify-start"}`}
               >
-                <div
-                  className={`max-w-[75%] px-3.5 py-2.5 rounded-2xl ${
-                    isMe
-                      ? "bg-main-500 text-white rounded-br-md"
-                      : "bg-gray-100 text-gray-900 rounded-bl-md border border-gray-200"
-                  }`}
-                >
-                  <p className="text-sm whitespace-pre-wrap break-words leading-relaxed">
-                    {msg.content}
-                  </p>
-                  <p
-                    className={`text-[10px] mt-1 ${
-                      isMe ? "text-white/60" : "text-gray-500"
+                {isImg ? (
+                  <div className="max-w-[75%]">
+                    <button
+                      type="button"
+                      onClick={() => setViewerUrl(getImageUrl(msg.content))}
+                      className="block overflow-hidden rounded-2xl border border-gray-200"
+                    >
+                      {/* eslint-disable-next-line @next/next/no-img-element */}
+                      <img
+                        src={getImageUrl(msg.content)}
+                        alt={t("Photo")}
+                        className="max-h-60 w-auto object-cover"
+                      />
+                    </button>
+                    <p
+                      className={`text-[10px] mt-1 ${
+                        isMe ? "text-right text-gray-500" : "text-gray-500"
+                      }`}
+                    >
+                      {formatTime(msg.createdAt)}
+                    </p>
+                  </div>
+                ) : (
+                  <div
+                    className={`max-w-[75%] px-3.5 py-2.5 rounded-2xl ${
+                      isMe
+                        ? "bg-main-500 text-white rounded-br-md"
+                        : "bg-gray-100 text-gray-900 rounded-bl-md border border-gray-200"
                     }`}
                   >
-                    {formatTime(msg.createdAt)}
-                  </p>
-                </div>
+                    <p className="text-sm whitespace-pre-wrap break-words leading-relaxed">
+                      {msg.content}
+                    </p>
+                    <p
+                      className={`text-[10px] mt-1 ${
+                        isMe ? "text-white/60" : "text-gray-500"
+                      }`}
+                    >
+                      {formatTime(msg.createdAt)}
+                    </p>
+                  </div>
+                )}
               </div>
             </div>
           );
@@ -328,12 +436,44 @@ export default function ChatRoomClient({ roomId }: { roomId: string }) {
       {/* Input */}
       <div className="bg-white border-t border-gray-200 px-4 pt-3 pb-[max(8px,env(safe-area-inset-bottom))]">
         <div className="flex items-end gap-2">
+          <input
+            ref={fileInputRef}
+            type="file"
+            accept="image/*"
+            className="hidden"
+            onChange={handleFileChange}
+          />
+          <button
+            type="button"
+            onClick={handlePickImage}
+            disabled={uploading}
+            aria-label={t("Attach image")}
+            className="flex-shrink-0 w-10 h-10 bg-gray-100 text-gray-600 rounded-full flex items-center justify-center hover:bg-gray-200 transition-colors disabled:opacity-40"
+          >
+            {uploading ? (
+              <div className="w-5 h-5 border-2 border-gray-400 border-t-transparent rounded-full animate-spin" />
+            ) : (
+              <svg
+                className="w-6 h-6"
+                fill="none"
+                stroke="currentColor"
+                viewBox="0 0 24 24"
+              >
+                <path
+                  strokeLinecap="round"
+                  strokeLinejoin="round"
+                  strokeWidth={2}
+                  d="M12 4v16m8-8H4"
+                />
+              </svg>
+            )}
+          </button>
           <textarea
             ref={inputRef}
             value={input}
             onChange={(e) => setInput(e.target.value)}
             onKeyDown={handleKeyDown}
-            placeholder="Type a message..."
+            placeholder={t("Type a message...")}
             rows={1}
             className="flex-1 resize-none bg-gray-100 rounded-2xl px-4 py-2.5 text-sm text-gray-900 placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-main-500/30 max-h-[100px]"
             style={{ minHeight: "40px" }}
@@ -358,6 +498,95 @@ export default function ChatRoomClient({ roomId }: { roomId: string }) {
             </svg>
           </button>
         </div>
+      </div>
+
+      {/* 구매 희망 가격 입력 팝업 (구매자가 입력할 때까지 닫히지 않음) */}
+      {needsDesiredPrice && (
+        <DesiredPriceModal
+          saving={savingPrice}
+          onSubmit={handleSaveDesiredPrice}
+        />
+      )}
+
+      {/* 이미지 상세 보기 (다운로드 가능) */}
+      {viewerUrl && (
+        <ImageViewer
+          images={[viewerUrl]}
+          initialIndex={0}
+          onClose={() => setViewerUrl(null)}
+        />
+      )}
+    </div>
+  );
+}
+
+function DesiredPriceModal({
+  saving,
+  onSubmit,
+}: {
+  saving: boolean;
+  onSubmit: (price: number) => Promise<boolean>;
+}) {
+  const { t } = useTranslation();
+  const [value, setValue] = useState("");
+  const [error, setError] = useState("");
+
+  const parsed = Number(value.replace(/[^0-9]/g, ""));
+  const valid = value.trim().length > 0 && parsed > 0;
+
+  const submit = async () => {
+    if (!valid) {
+      setError(t("Please enter a valid purchase price."));
+      return;
+    }
+    const ok = await onSubmit(parsed);
+    if (!ok) setError(t("Failed to save. Please try again."));
+  };
+
+  return (
+    <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50 px-6">
+      <div className="w-full max-w-sm rounded-2xl bg-white p-5 shadow-xl">
+        <h2 className="text-base font-bold text-gray-900">
+          {t("Enter your desired purchase price")}
+        </h2>
+        <p className="mt-1.5 text-xs text-gray-500 leading-relaxed">
+          {t(
+            "Please enter your desired purchase price before chatting with the seller."
+          )}
+        </p>
+
+        <div className="mt-4 flex items-center gap-2 rounded-xl bg-gray-100 px-3.5 py-2.5 focus-within:ring-2 focus-within:ring-main-500/30">
+          <span className="text-sm font-semibold text-gray-500">₩</span>
+          <input
+            type="text"
+            inputMode="numeric"
+            autoFocus
+            value={value}
+            onChange={(e) => {
+              const digits = e.target.value.replace(/[^0-9]/g, "");
+              setValue(digits ? Number(digits).toLocaleString("ko-KR") : "");
+              if (error) setError("");
+            }}
+            onKeyDown={(e) => {
+              if (e.key === "Enter") {
+                e.preventDefault();
+                submit();
+              }
+            }}
+            placeholder={t("e.g. 15,000,000")}
+            className="flex-1 bg-transparent text-sm text-gray-900 placeholder-gray-400 focus:outline-none"
+          />
+        </div>
+
+        {error && <p className="mt-2 text-xs text-red-500">{error}</p>}
+
+        <button
+          onClick={submit}
+          disabled={!valid || saving}
+          className="mt-4 w-full rounded-xl bg-main-500 py-3 text-sm font-semibold text-white transition-colors hover:bg-main-600 disabled:opacity-40 disabled:hover:bg-main-500"
+        >
+          {saving ? t("Saving...") : t("Confirm")}
+        </button>
       </div>
     </div>
   );

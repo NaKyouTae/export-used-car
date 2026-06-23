@@ -2,9 +2,9 @@
 
 import { useState, useEffect, useCallback, useRef } from "react";
 import { useRouter } from "next/navigation";
+import { useTranslation } from "react-i18next";
 import Image from "next/image";
 import {
-  formatPriceRange,
   formatMileage,
   FUEL_TYPE_LABELS,
   TRANSMISSION_LABELS,
@@ -27,6 +27,7 @@ interface CarDetail {
   transmission: string;
   drivetrain?: string;
   displacement?: number;
+  seats?: number;
   color?: string;
   priceMin: number | string;
   priceMax: number | string;
@@ -54,6 +55,7 @@ interface CarDetail {
 export default function CarDetailClient({ car }: { car: CarDetail }) {
   const { user, isAuthenticated, isLoading: authLoading } = useAuth();
   const router = useRouter();
+  const { t } = useTranslation();
   const [wishlisted, setWishlisted] = useState(false);
   const [wishlistCount, setWishlistCount] = useState(car.wishlistCount);
   const [togglingWishlist, setTogglingWishlist] = useState(false);
@@ -71,8 +73,12 @@ export default function CarDetailClient({ car }: { car: CarDetail }) {
       id: car.id,
       title: car.title,
       year: car.year,
+      registrationDate: car.registrationDate,
       mileage: car.mileage,
       fuelType: car.fuelType,
+      transmission: car.transmission,
+      drivetrain: car.drivetrain,
+      seats: car.seats,
       priceMin: car.priceMin,
       priceMax: car.priceMax,
       viewCount: car.viewCount,
@@ -80,6 +86,7 @@ export default function CarDetailClient({ car }: { car: CarDetail }) {
       chatCount: car.chatCount,
       createdAt: car.createdAt,
       thumbnail,
+      seller: car.seller ? { companyName: car.seller.companyName } : undefined,
     });
   }, [car]);
 
@@ -117,7 +124,9 @@ export default function CarDetailClient({ car }: { car: CarDetail }) {
     }
   }, [car.id, togglingWishlist, isAuthenticated, router]);
 
-  const isSeller = user?.role === "SELLER";
+  // 이 차량을 본인이 등록했는지 (소유자) 여부
+  const isOwner =
+    isAuthenticated && !!car.seller?.id && user?.id === car.seller.id;
 
   const handleChatAction = useCallback(async () => {
     if (!isAuthenticated) {
@@ -126,13 +135,13 @@ export default function CarDetailClient({ car }: { car: CarDetail }) {
     }
     if (startingChat) return;
 
-    // Seller: go to chat list filtered by this car
-    if (isSeller) {
+    // 본인 차량: 이 차량으로 필터된 채팅 목록으로 이동
+    if (isOwner) {
       router.push(`/chat?carId=${car.id}`);
       return;
     }
 
-    // Buyer: create or get chat room, then navigate to it
+    // 그 외 사용자: 채팅방 생성/조회 후 이동
     setStartingChat(true);
     try {
       const res = await fetch("/api/chat/rooms", {
@@ -150,7 +159,7 @@ export default function CarDetailClient({ car }: { car: CarDetail }) {
     } finally {
       setStartingChat(false);
     }
-  }, [car.id, isAuthenticated, isSeller, router, startingChat]);
+  }, [car.id, isAuthenticated, isOwner, router, startingChat]);
 
   const sortedImages = [...(car.images || [])].sort((a, b) => a.order - b.order);
   const imageCount = sortedImages.length;
@@ -171,28 +180,28 @@ export default function CarDetailClient({ car }: { car: CarDetail }) {
   });
 
   const specRows = [
-    { label: "Category", value: car.category?.name },
-    { label: "Make", value: car.make?.name },
-    { label: "Model", value: car.carModel?.name },
-    { label: "Trim", value: [car.trim, car.subTrim].filter(Boolean).join(" ") || undefined },
-    { label: "Year", value: car.year?.toString() },
-    { label: "Registration", value: car.registrationDate },
+    { label: t("Category"), value: car.category?.name },
+    { label: t("Make"), value: car.make?.name },
+    { label: t("Model"), value: car.carModel?.name },
+    { label: t("Trim"), value: [car.trim, car.subTrim].filter(Boolean).join(" ") || undefined },
+    { label: t("Year"), value: car.year?.toString() },
+    { label: t("Registration"), value: car.registrationDate },
     {
-      label: "Displacement",
+      label: t("Displacement"),
       value: car.displacement ? `${car.displacement.toLocaleString()}cc` : undefined,
     },
-    { label: "Fuel", value: FUEL_TYPE_LABELS[car.fuelType] },
-    { label: "Transmission", value: TRANSMISSION_LABELS[car.transmission] },
+    { label: t("Fuel"), value: FUEL_TYPE_LABELS[car.fuelType] },
+    { label: t("Transmission"), value: TRANSMISSION_LABELS[car.transmission] },
     {
-      label: "Drivetrain",
+      label: t("Drivetrain"),
       value: car.drivetrain ? DRIVETRAIN_LABELS[car.drivetrain] : undefined,
     },
-    { label: "Color", value: car.color },
+    { label: t("Color"), value: car.color },
   ].filter((row) => row.value);
 
   return (
     <div className="bg-white pb-[72px]">
-      <PageHeader title="Car Details" />
+      <PageHeader title={t("Car Details")} />
 
       {/* Image Gallery */}
       <div className="relative bg-gray-100 aspect-[4/3] max-h-[400px] w-full">
@@ -207,7 +216,7 @@ export default function CarDetailClient({ car }: { car: CarDetail }) {
                 key={img.id}
                 type="button"
                 onClick={() => setViewerIndex(idx)}
-                aria-label={`View photo ${idx + 1} fullscreen`}
+                aria-label={t("View photo {{number}} fullscreen", { number: idx + 1 })}
                 className="relative flex-shrink-0 w-full h-full snap-center snap-always"
               >
                 <Image
@@ -259,13 +268,6 @@ export default function CarDetailClient({ car }: { car: CarDetail }) {
           </p>
         </div>
 
-        {/* Price */}
-        <div className="pb-2">
-          <p className="text-2xl font-bold text-gray-900">
-            {formatPriceRange(car.priceMin, car.priceMax)}
-          </p>
-        </div>
-
         {/* Stats */}
         <div className="flex items-center gap-4 pb-4 text-xs text-gray-400">
           <span className="flex items-center gap-1">
@@ -292,7 +294,7 @@ export default function CarDetailClient({ car }: { car: CarDetail }) {
         {/* Description */}
         {car.description && (
           <div className="py-4 border-t border-gray-100">
-            <h2 className="font-semibold text-gray-900 mb-2">Description</h2>
+            <h2 className="font-semibold text-gray-900 mb-2">{t("Description")}</h2>
             <p className="text-sm text-gray-600 whitespace-pre-line leading-relaxed">
               {car.description}
             </p>
@@ -302,7 +304,7 @@ export default function CarDetailClient({ car }: { car: CarDetail }) {
         {/* Tags */}
         {car.tags && car.tags.length > 0 && (
           <div className="py-4 border-t border-gray-100">
-            <h2 className="font-semibold text-gray-900 mb-2">Additional Info</h2>
+            <h2 className="font-semibold text-gray-900 mb-2">{t("Additional Info")}</h2>
             <div className="flex flex-wrap gap-2">
               {car.tags.map((t) => (
                 <span
@@ -318,7 +320,7 @@ export default function CarDetailClient({ car }: { car: CarDetail }) {
 
         {/* Specs Table */}
         <div className="py-4 border-t border-gray-100">
-          <h2 className="font-semibold text-gray-900 mb-3">Specifications</h2>
+          <h2 className="font-semibold text-gray-900 mb-3">{t("Specifications")}</h2>
           <div className="space-y-0">
             {specRows.map((row) => (
               <div
@@ -335,7 +337,7 @@ export default function CarDetailClient({ car }: { car: CarDetail }) {
         {/* Options */}
         {Object.keys(optionsByCategory).length > 0 && (
           <div className="py-4 border-t border-gray-100">
-            <h2 className="font-semibold text-gray-900 mb-3">Options</h2>
+            <h2 className="font-semibold text-gray-900 mb-3">{t("Options")}</h2>
             <div className="space-y-3">
               {Object.entries(optionsByCategory).map(([category, items]) => (
                 <div key={category}>
@@ -385,10 +387,10 @@ export default function CarDetailClient({ car }: { car: CarDetail }) {
             className="flex-1 py-3 bg-main-500 text-white font-semibold rounded-xl hover:bg-main-600 transition-colors disabled:opacity-60"
           >
             {startingChat
-              ? "Opening Chat..."
-              : isSeller
-                ? `View Chats (${car.chatCount})`
-                : "Chat with Seller"}
+              ? t("Opening Chat...")
+              : isOwner
+                ? t("View Chats ({{count}})", { count: car.chatCount })
+                : t("Chat with Seller")}
           </button>
         </div>
       </div>

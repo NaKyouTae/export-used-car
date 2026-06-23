@@ -72,7 +72,7 @@ export async function generateMetadata({
   if (!car) return { title: "Car Not Found" };
   return {
     title: `${car.title} - Ajucar`,
-    description: `${car.year} ${car.make?.name || ""} ${car.carModel?.name || ""} - ${Number(car.priceMin).toLocaleString()}원`,
+    description: `${car.year} ${car.make?.name || ""} ${car.carModel?.name || ""} - ${Number(car.priceMin).toLocaleString()} KRW`,
   };
 }
 

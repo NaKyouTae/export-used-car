@@ -59,6 +59,12 @@ export class UpdateCarDto {
   @IsOptional()
   displacement?: number;
 
+  @Type(() => Number)
+  @IsInt()
+  @Min(1)
+  @IsOptional()
+  seats?: number;
+
   @IsString()
   @IsOptional()
   color?: string;

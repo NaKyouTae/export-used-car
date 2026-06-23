@@ -4,6 +4,7 @@ import { useEffect, useState, useCallback } from "react";
 import { useRouter } from "next/navigation";
 import { useAuth } from "@/hooks/useAuth";
 import PageHeader from "@/components/PageHeader";
+import { useTranslation } from "react-i18next";
 
 interface QuickPhrase {
   id: string;
@@ -24,6 +25,7 @@ interface EditorState {
 export default function QuickPhrasesPage() {
   const router = useRouter();
   const { isAuthenticated, isLoading: authLoading } = useAuth();
+  const { t } = useTranslation();
 
   const [phrases, setPhrases] = useState<QuickPhrase[]>([]);
   const [loading, setLoading] = useState(true);
@@ -75,7 +77,7 @@ export default function QuickPhrasesPage() {
     if (!editor) return;
     const content = editor.content.trim();
     if (!content) {
-      setError("Please enter a phrase.");
+      setError(t("Please enter a phrase."));
       return;
     }
     setSaving(true);
@@ -104,14 +106,14 @@ export default function QuickPhrasesPage() {
       await fetchPhrases();
       setEditor(null);
     } catch {
-      setError("Failed to save. Please try again.");
+      setError(t("Failed to save. Please try again."));
     } finally {
       setSaving(false);
     }
   };
 
   const handleDelete = async (id: string) => {
-    if (!confirm("Delete this phrase?")) return;
+    if (!confirm(t("Delete this phrase?"))) return;
     const res = await fetch(`/api/quick-phrases/${id}`, {
       method: "DELETE",
       credentials: "include",
@@ -124,7 +126,7 @@ export default function QuickPhrasesPage() {
   if (authLoading || loading) {
     return (
       <div className="bg-white">
-        <PageHeader title="Quick Phrases" />
+        <PageHeader title={t("Quick Phrases")} />
         <div className="flex items-center justify-center py-20">
           <div className="w-6 h-6 border-2 border-main-500 border-t-transparent rounded-full animate-spin" />
         </div>
@@ -137,7 +139,7 @@ export default function QuickPhrasesPage() {
 
   return (
     <div className="bg-white pb-[88px]">
-      <PageHeader title="Quick Phrases" />
+      <PageHeader title={t("Quick Phrases")} />
 
       {phrases.length === 0 ? (
         <div className="px-6 pt-20 text-center">
@@ -155,10 +157,10 @@ export default function QuickPhrasesPage() {
             </svg>
           </div>
           <h2 className="text-base font-semibold text-gray-900 mb-1">
-            No quick phrases yet
+            {t("No quick phrases yet")}
           </h2>
           <p className="text-sm text-gray-500">
-            Save phrases you use often in chats.
+            {t("Save phrases you use often in chats.")}
           </p>
         </div>
       ) : (
@@ -187,7 +189,7 @@ export default function QuickPhrasesPage() {
                     </button>
                     <button
                       onClick={() => handleDelete(p.id)}
-                      aria-label="Delete"
+                      aria-label={t("Delete")}
                       className="flex-shrink-0 p-1.5 text-gray-300 active:text-red-500"
                     >
                       <svg
@@ -216,7 +218,7 @@ export default function QuickPhrasesPage() {
           onClick={openCreate}
           className="w-full py-3 bg-main-600 text-white text-sm font-semibold rounded-xl active:bg-main-700"
         >
-          + Add Phrase
+          + {t("Add Phrase")}
         </button>
       </div>
 
@@ -259,6 +261,7 @@ function PhraseEditor({
   onClose: () => void;
   onSave: () => void;
 }) {
+  const { t } = useTranslation();
   return (
     <div
       className="fixed inset-0 z-50 flex items-end justify-center bg-black/40"
@@ -275,21 +278,21 @@ function PhraseEditor({
         </div>
         <div className="flex items-center justify-between mb-3">
           <h3 className="text-base font-semibold text-gray-900">
-            {state.mode === "create" ? "New Phrase" : "Edit Phrase"}
+            {state.mode === "create" ? t("New Phrase") : t("Edit Phrase")}
           </h3>
           <button
             onClick={onClose}
             disabled={saving}
             className="text-sm text-gray-400"
           >
-            Cancel
+            {t("Cancel")}
           </button>
         </div>
 
         <div className="space-y-3 pb-3">
           <div>
             <label className="block text-xs font-medium text-gray-500 mb-1.5">
-              Category
+              {t("Category")}
             </label>
             <input
               type="text"
@@ -297,21 +300,21 @@ function PhraseEditor({
               onChange={(e) =>
                 onChange({ ...state, category: e.target.value })
               }
-              placeholder="General"
+              placeholder={t("General")}
               maxLength={50}
               className="w-full px-4 py-3 bg-gray-50 border border-gray-200 rounded-xl text-sm text-gray-900 focus:outline-none focus:border-main-500 focus:ring-1 focus:ring-main-500"
             />
           </div>
           <div>
             <label className="block text-xs font-medium text-gray-500 mb-1.5">
-              Phrase
+              {t("Phrase")}
             </label>
             <textarea
               value={state.content}
               onChange={(e) =>
                 onChange({ ...state, content: e.target.value })
               }
-              placeholder="Type a phrase you use often..."
+              placeholder={t("Type a phrase you use often...")}
               rows={3}
               maxLength={500}
               className="w-full px-4 py-3 bg-gray-50 border border-gray-200 rounded-xl text-sm text-gray-900 resize-none focus:outline-none focus:border-main-500 focus:ring-1 focus:ring-main-500"
@@ -328,7 +331,7 @@ function PhraseEditor({
           disabled={saving}
           className="w-full py-3 bg-main-600 text-white text-sm font-semibold rounded-xl disabled:opacity-50"
         >
-          {saving ? "Saving..." : "Save"}
+          {saving ? t("Saving...") : t("Save")}
         </button>
       </div>
     </div>

@@ -43,7 +43,7 @@ export default function OptionsPage() {
       const data = await res.json();
       setCategories(Array.isArray(data) ? data : data.data || []);
     } catch {
-      alert('Failed to load option categories');
+      alert('옵션 카테고리를 불러오지 못했습니다');
     } finally {
       setLoading(false);
     }
@@ -89,20 +89,20 @@ export default function OptionsPage() {
       closeCatModal();
       load();
     } catch {
-      alert(catModalMode === 'edit' ? 'Failed to update option category' : 'Failed to add option category');
+      alert(catModalMode === 'edit' ? '옵션 카테고리 수정에 실패했습니다' : '옵션 카테고리 추가에 실패했습니다');
     } finally {
       setSubmitting(false);
     }
   };
 
   const handleDeleteCategory = async (id: string) => {
-    if (!window.confirm('Delete this option category and all its items?')) return;
+    if (!window.confirm('이 옵션 카테고리와 모든 항목을 삭제하시겠습니까?')) return;
     try {
       const res = await fetch(`/api/options/${id}`, { method: 'DELETE' });
       if (!res.ok && res.status !== 204) throw new Error();
       load();
     } catch {
-      alert('Failed to delete option category');
+      alert('옵션 카테고리 삭제에 실패했습니다');
     }
   };
 
@@ -128,20 +128,20 @@ export default function OptionsPage() {
       closeItemModal();
       load();
     } catch {
-      alert('Failed to add option item');
+      alert('옵션 항목 추가에 실패했습니다');
     } finally {
       setSubmitting(false);
     }
   };
 
   const handleDeleteItem = async (id: string) => {
-    if (!window.confirm('Delete this option item?')) return;
+    if (!window.confirm('이 옵션 항목을 삭제하시겠습니까?')) return;
     try {
       const res = await fetch(`/api/option-items/${id}`, { method: 'DELETE' });
       if (!res.ok && res.status !== 204) throw new Error();
       load();
     } catch {
-      alert('Failed to delete option item');
+      alert('옵션 항목 삭제에 실패했습니다');
     }
   };
 
@@ -157,7 +157,7 @@ export default function OptionsPage() {
       if (!res.ok) throw new Error();
     } catch {
       setCategories(previous);
-      alert('Failed to reorder categories');
+      alert('카테고리 순서 변경에 실패했습니다');
     }
   };
 
@@ -175,22 +175,22 @@ export default function OptionsPage() {
       if (!res.ok) throw new Error();
     } catch {
       setCategories(previous);
-      alert('Failed to reorder items');
+      alert('항목 순서 변경에 실패했습니다');
     }
   };
 
   return (
     <div className="space-y-4">
       <div className="flex items-center justify-between">
-        <p className="text-sm text-gray-500">{categories.length} option categories · drag to reorder</p>
-        <button onClick={openCreateCategory} className="btn btn-primary btn-sm">+ New Category</button>
+        <p className="text-sm text-gray-500">옵션 카테고리 {categories.length}개 · 드래그하여 순서 변경</p>
+        <button onClick={openCreateCategory} className="btn btn-primary btn-sm">+ 카테고리 추가</button>
       </div>
 
       <div className="bg-white rounded-xl shadow-sm overflow-hidden">
         {loading ? (
-          <div className="p-8 text-center text-gray-400">Loading...</div>
+          <div className="p-8 text-center text-gray-400">불러오는 중...</div>
         ) : categories.length === 0 ? (
-          <div className="p-8 text-center text-gray-400">No option categories yet</div>
+          <div className="p-8 text-center text-gray-400">옵션 카테고리가 없습니다</div>
         ) : (
           <ul className="divide-y divide-gray-100">
             <SortableList
@@ -212,12 +212,12 @@ export default function OptionsPage() {
                         <p className="text-xs text-gray-500 truncate">{c.slug}</p>
                       </div>
                       <span className="shrink-0 text-xs text-gray-400">
-                        {c.items?.length ?? 0} items
+                        항목 {c.items?.length ?? 0}개
                       </span>
                     </button>
                     <div className="flex gap-2 shrink-0">
-                      <button onClick={() => openEditCategory(c)} className="btn btn-secondary btn-sm">Edit</button>
-                      <button onClick={() => handleDeleteCategory(c.id)} className="btn btn-danger btn-sm">Delete</button>
+                      <button onClick={() => openEditCategory(c)} className="btn btn-secondary btn-sm">수정</button>
+                      <button onClick={() => handleDeleteCategory(c.id)} className="btn btn-danger btn-sm">삭제</button>
                     </div>
                   </div>
 
@@ -242,35 +242,35 @@ export default function OptionsPage() {
       <Modal
         open={catModalMode !== null}
         onClose={closeCatModal}
-        title={catModalMode === 'edit' ? 'Edit Option Category' : 'New Option Category'}
+        title={catModalMode === 'edit' ? '옵션 카테고리 수정' : '옵션 카테고리 추가'}
         footer={
           <>
-            <button type="button" onClick={closeCatModal} className="btn btn-secondary btn-sm">Cancel</button>
+            <button type="button" onClick={closeCatModal} className="btn btn-secondary btn-sm">취소</button>
             <button
               type="submit"
               form="option-cat-form"
               disabled={submitting}
               className="btn btn-primary btn-sm disabled:opacity-50"
             >
-              {submitting ? 'Saving...' : catModalMode === 'edit' ? 'Save' : 'Create'}
+              {submitting ? '저장 중...' : catModalMode === 'edit' ? '저장' : '추가'}
             </button>
           </>
         }
       >
         <form id="option-cat-form" onSubmit={handleSubmitCategory} className="space-y-4">
           <div>
-            <label className="block text-xs text-gray-500 mb-1">Name</label>
+            <label className="block text-xs text-gray-500 mb-1">이름</label>
             <input
               value={catName}
               onChange={(e) => setCatName(e.target.value)}
               required
               autoFocus
               className="border border-gray-300 rounded-lg px-3 py-2 text-sm w-full"
-              placeholder="Category name"
+              placeholder="카테고리명"
             />
           </div>
           <div>
-            <label className="block text-xs text-gray-500 mb-1">Slug</label>
+            <label className="block text-xs text-gray-500 mb-1">식별자(slug)</label>
             <input
               value={catSlug}
               onChange={(e) => setCatSlug(e.target.value)}
@@ -286,40 +286,40 @@ export default function OptionsPage() {
       <Modal
         open={itemModal !== null}
         onClose={closeItemModal}
-        title={itemModal ? `New Item — ${itemModal.categoryName}` : 'New Item'}
+        title={itemModal ? `항목 추가 — ${itemModal.categoryName}` : '항목 추가'}
         footer={
           <>
-            <button type="button" onClick={closeItemModal} className="btn btn-secondary btn-sm">Cancel</button>
+            <button type="button" onClick={closeItemModal} className="btn btn-secondary btn-sm">취소</button>
             <button
               type="submit"
               form="option-item-form"
               disabled={submitting}
               className="btn btn-primary btn-sm disabled:opacity-50"
             >
-              {submitting ? 'Saving...' : 'Create'}
+              {submitting ? '저장 중...' : '추가'}
             </button>
           </>
         }
       >
         <form id="option-item-form" onSubmit={handleAddItem} className="space-y-4">
           <div>
-            <label className="block text-xs text-gray-500 mb-1">Name</label>
+            <label className="block text-xs text-gray-500 mb-1">이름</label>
             <input
               value={itemName}
               onChange={(e) => setItemName(e.target.value)}
               required
               autoFocus
               className="border border-gray-300 rounded-lg px-3 py-2 text-sm w-full"
-              placeholder="Item name"
+              placeholder="항목명 (영문)"
             />
           </div>
           <div>
-            <label className="block text-xs text-gray-500 mb-1">Korean Name</label>
+            <label className="block text-xs text-gray-500 mb-1">한글 이름</label>
             <input
               value={itemNameKo}
               onChange={(e) => setItemNameKo(e.target.value)}
               className="border border-gray-300 rounded-lg px-3 py-2 text-sm w-full"
-              placeholder="Korean name"
+              placeholder="항목명 (한글)"
             />
           </div>
         </form>
@@ -343,8 +343,8 @@ function ItemsPanel({
   return (
     <div className="space-y-3">
       <div className="flex items-center justify-between">
-        <h4 className="text-sm font-semibold text-gray-600">Items in {category.name}</h4>
-        <button onClick={onAdd} className="btn btn-primary btn-sm">+ Add Item</button>
+        <h4 className="text-sm font-semibold text-gray-600">{category.name} 항목</h4>
+        <button onClick={onAdd} className="btn btn-primary btn-sm">+ 항목 추가</button>
       </div>
       <div className="bg-white rounded-lg overflow-hidden">
         {items.length > 0 ? (
@@ -363,14 +363,14 @@ function ItemsPanel({
                     onClick={() => onDelete(item.id)}
                     className="text-red-500 hover:text-red-700 text-xs shrink-0"
                   >
-                    Delete
+                    삭제
                   </button>
                 </li>
               )}
             />
           </ul>
         ) : (
-          <p className="text-gray-400 text-sm px-3 py-2">No items yet</p>
+          <p className="text-gray-400 text-sm px-3 py-2">항목이 없습니다</p>
         )}
       </div>
     </div>

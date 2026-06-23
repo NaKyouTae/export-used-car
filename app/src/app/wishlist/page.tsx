@@ -2,6 +2,7 @@
 
 import { useState, useEffect } from "react";
 import { useRouter } from "next/navigation";
+import { useTranslation } from "react-i18next";
 import CarCard from "@/components/CarCard";
 import PageHeader from "@/components/PageHeader";
 import { useAuth } from "@/hooks/useAuth";
@@ -25,6 +26,7 @@ interface Car {
 export default function WishlistPage() {
   const { isAuthenticated, isLoading: authLoading } = useAuth();
   const router = useRouter();
+  const { t } = useTranslation();
   const [cars, setCars] = useState<Car[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(false);
@@ -58,7 +60,7 @@ export default function WishlistPage() {
   if (authLoading || (!isAuthenticated && !error)) {
     return (
       <div className="bg-white">
-        <PageHeader title="Wishlist" showBack={false} />
+        <PageHeader title={t("Wishlist")} showBack={false} />
         <div className="flex justify-center py-20">
           <div className="w-6 h-6 border-2 border-main-500 border-t-transparent rounded-full animate-spin" />
         </div>
@@ -68,7 +70,7 @@ export default function WishlistPage() {
 
   return (
     <div className="bg-white">
-      <PageHeader title="Wishlist" showBack={false} />
+      <PageHeader title={t("Wishlist")} showBack={false} />
 
       <div className="px-4">
         {loading ? (
@@ -77,13 +79,13 @@ export default function WishlistPage() {
           </div>
         ) : error ? (
           <div className="text-center py-20 text-gray-400">
-            <p className="text-sm">Failed to load wishlist</p>
-            <p className="text-xs mt-1 mb-4">Please check your connection and try again</p>
+            <p className="text-sm">{t("Failed to load wishlist")}</p>
+            <p className="text-xs mt-1 mb-4">{t("Please check your connection and try again")}</p>
             <button
               onClick={() => window.location.reload()}
               className="px-6 py-2 bg-main-500 text-white text-sm font-semibold rounded-xl hover:bg-main-600 transition-colors"
             >
-              Refresh
+              {t("Refresh")}
             </button>
           </div>
         ) : cars.length > 0 ? (
@@ -107,9 +109,9 @@ export default function WishlistPage() {
                 d="M4.318 6.318a4.5 4.5 0 000 6.364L12 20.364l7.682-7.682a4.5 4.5 0 00-6.364-6.364L12 7.636l-1.318-1.318a4.5 4.5 0 00-6.364 0z"
               />
             </svg>
-            <p className="text-sm">No wishlisted cars yet</p>
+            <p className="text-sm">{t("No wishlisted cars yet")}</p>
             <p className="text-xs mt-1 text-gray-300">
-              Tap the heart icon on a car to save it here
+              {t("Tap the heart icon on a car to save it here")}
             </p>
           </div>
         )}

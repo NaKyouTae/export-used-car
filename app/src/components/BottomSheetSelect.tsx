@@ -2,6 +2,7 @@
 
 import { ReactNode, useEffect, useMemo, useRef, useState } from "react";
 import { createPortal } from "react-dom";
+import { useTranslation } from "react-i18next";
 
 const canUseDOM = typeof window !== "undefined";
 
@@ -29,7 +30,7 @@ export default function BottomSheetSelect({
   value,
   onChange,
   options,
-  placeholder = "Select",
+  placeholder,
   title,
   id,
   required,
@@ -37,6 +38,8 @@ export default function BottomSheetSelect({
   searchable,
   className,
 }: Props) {
+  const { t } = useTranslation();
+  const placeholderText = placeholder ?? t("Select");
   const [open, setOpen] = useState(false);
   const [closing, setClosing] = useState(false);
   const [query, setQuery] = useState("");
@@ -106,7 +109,7 @@ export default function BottomSheetSelect({
             <span className="truncate">{selected.label}</span>
           </span>
         ) : (
-          <span className="text-gray-400 truncate">{placeholder}</span>
+          <span className="text-gray-400 truncate">{placeholderText}</span>
         )}
         <svg
           className="w-4 h-4 text-gray-400 shrink-0"
@@ -142,7 +145,7 @@ export default function BottomSheetSelect({
           <div
             role="dialog"
             aria-modal="true"
-            aria-label={title || placeholder}
+            aria-label={title || placeholderText}
             className="fixed inset-0 z-[100]"
           >
             <div
@@ -168,13 +171,13 @@ export default function BottomSheetSelect({
 
                 <div className="flex items-center justify-between px-4 pt-1 pb-3">
                   <h3 className="text-base font-semibold text-gray-900">
-                    {title || placeholder}
+                    {title || placeholderText}
                   </h3>
                   <button
                     type="button"
                     onClick={close}
                     className="p-1 text-gray-400 hover:text-gray-600"
-                    aria-label="Close"
+                    aria-label={t("Close")}
                   >
                     <svg
                       className="w-5 h-5"
@@ -199,7 +202,7 @@ export default function BottomSheetSelect({
                       type="text"
                       value={query}
                       onChange={(e) => setQuery(e.target.value)}
-                      placeholder="Search"
+                      placeholder={t("Search")}
                       className="w-full px-3 py-2.5 text-sm border border-gray-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-main-500 focus:border-transparent"
                     />
                   </div>
@@ -211,7 +214,7 @@ export default function BottomSheetSelect({
                 >
                   {filtered.length === 0 ? (
                     <li className="px-4 py-8 text-sm text-gray-400 text-center">
-                      No results
+                      {t("No results")}
                     </li>
                   ) : (
                     filtered.map((o) => {

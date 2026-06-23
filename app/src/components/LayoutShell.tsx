@@ -6,7 +6,7 @@ import BottomNav from "./BottomNav";
 import SellerFAB from "./SellerFAB";
 
 const FULL_SCREEN_PATHS = ["/chat/"];
-const NO_BOTTOM_PADDING_PATHS = ["/privacy", "/terms", "/register", "/login"];
+const NO_BOTTOM_PADDING_PATHS = ["/privacy", "/terms", "/register", "/login", "/cars/filter"];
 
 export default function LayoutShell({ children }: { children: React.ReactNode }) {
   const pathname = usePathname();

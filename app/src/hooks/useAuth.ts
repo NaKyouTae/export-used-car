@@ -7,6 +7,7 @@ interface User {
   id: string;
   email: string;
   role: "SELLER" | "BUYER";
+  language?: "EN" | "KO";
   name?: string;
   companyName?: string;
   phone?: string;

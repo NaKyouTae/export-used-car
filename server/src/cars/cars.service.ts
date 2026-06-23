@@ -85,16 +85,21 @@ export class CarsService {
         id: true,
         title: true,
         year: true,
+        registrationDate: true,
         mileage: true,
         fuelType: true,
         transmission: true,
+        drivetrain: true,
+        seats: true,
         priceMin: true,
         priceMax: true,
         status: true,
         viewCount: true,
         wishlistCount: true,
         chatCount: true,
+        bumpedAt: true,
         createdAt: true,
+        seller: { select: { companyName: true } },
         category: { select: { id: true, name: true } },
         make: { select: { id: true, name: true, nameKo: true } },
         carModel: { select: { id: true, name: true, nameKo: true } },
@@ -139,7 +144,7 @@ export class CarsService {
     const car = await this.prisma.car.findUnique({
       where: { id },
       include: {
-        seller: { select: { companyName: true, contactName: true } },
+        seller: { select: { id: true, companyName: true, contactName: true } },
         category: { select: { id: true, name: true } },
         make: { select: { id: true, name: true, nameKo: true } },
         carModel: { select: { id: true, name: true, nameKo: true } },
@@ -190,19 +195,33 @@ export class CarsService {
   }
 
   async create(dto: CreateCarDto, sellerId: string) {
+    // 최초 등록 시 bumpedAt을 createdAt과 동일한 값으로 기입한다(끌어올리기 전까지 등록일 기준 정렬).
+    const now = new Date();
     return this.prisma.car.create({
       data: {
         ...dto,
         sellerId,
+        createdAt: now,
+        bumpedAt: now,
       },
     });
   }
 
   async update(id: string, dto: UpdateCarDto, sellerId: string) {
     await this.ensureOwnership(id, sellerId);
+    // 정렬 기준은 전용 bumpedAt이므로, 일반 수정·상태 변경은 목록 위치에 영향을 주지 않는다.
     return this.prisma.car.update({
       where: { id },
       data: dto,
+    });
+  }
+
+  // 끌어올리기: bumpedAt을 현재 시각으로 갱신해 최신순 목록 맨 위로 올린다.
+  async bump(id: string, sellerId: string) {
+    await this.ensureOwnership(id, sellerId);
+    return this.prisma.car.update({
+      where: { id },
+      data: { bumpedAt: new Date() },
     });
   }
 
@@ -273,9 +292,9 @@ export class CarsService {
       where.AND = [
         {
           OR: [
-            { createdAt: { lt: new Date(decoded.createdAt) } },
+            { bumpedAt: { lt: new Date(decoded.bumpedAt) } },
             {
-              createdAt: new Date(decoded.createdAt),
+              bumpedAt: new Date(decoded.bumpedAt),
               id: { lt: decoded.id },
             },
           ],
@@ -285,22 +304,27 @@ export class CarsService {
 
     const cars = await this.prisma.car.findMany({
       where,
-      orderBy: [{ createdAt: "desc" }, { id: "desc" }],
+      orderBy: [{ bumpedAt: "desc" }, { id: "desc" }],
       take: limit + 1,
       select: {
         id: true,
         title: true,
         year: true,
+        registrationDate: true,
         mileage: true,
         fuelType: true,
         transmission: true,
+        drivetrain: true,
+        seats: true,
         priceMin: true,
         priceMax: true,
         status: true,
         viewCount: true,
         wishlistCount: true,
         chatCount: true,
+        bumpedAt: true,
         createdAt: true,
+        seller: { select: { companyName: true } },
         category: { select: { id: true, name: true } },
         make: { select: { id: true, name: true, nameKo: true } },
         carModel: { select: { id: true, name: true, nameKo: true } },
@@ -337,7 +361,7 @@ export class CarsService {
       const last = data[data.length - 1];
       nextCursor = Buffer.from(
         JSON.stringify({
-          createdAt: last.createdAt.toISOString(),
+          bumpedAt: last.bumpedAt.toISOString(),
           id: last.id,
         }),
       ).toString("base64");
@@ -418,9 +442,9 @@ export class CarsService {
         return [
           {
             OR: [
-              { createdAt: { lt: new Date(decoded.createdAt) } },
+              { bumpedAt: { lt: new Date(decoded.bumpedAt) } },
               {
-                createdAt: new Date(decoded.createdAt),
+                bumpedAt: new Date(decoded.bumpedAt),
                 id: { lt: decoded.id },
               },
             ],
@@ -445,7 +469,7 @@ export class CarsService {
         return [{ wishlistCount: "desc" }, { id: "desc" }];
       case CarSort.NEWEST:
       default:
-        return [{ createdAt: "desc" }, { id: "desc" }];
+        return [{ bumpedAt: "desc" }, { id: "desc" }];
     }
   }
 
@@ -471,7 +495,7 @@ export class CarsService {
       case CarSort.NEWEST:
       default:
         payload = {
-          createdAt: last.createdAt.toISOString(),
+          bumpedAt: last.bumpedAt.toISOString(),
           id: last.id,
         };
         break;

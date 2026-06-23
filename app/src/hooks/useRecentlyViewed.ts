@@ -7,8 +7,12 @@ export interface RecentCar {
   id: string;
   title: string;
   year: number;
+  registrationDate?: string | null;
   mileage: number;
   fuelType: string;
+  transmission?: string;
+  drivetrain?: string | null;
+  seats?: number | null;
   priceMin: number | string;
   priceMax: number | string;
   viewCount: number;
@@ -16,6 +20,7 @@ export interface RecentCar {
   chatCount: number;
   createdAt: string;
   thumbnail?: string | null;
+  seller?: { companyName?: string | null };
   viewedAt: number;
 }
 

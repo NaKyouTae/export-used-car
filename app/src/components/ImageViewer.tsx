@@ -1,6 +1,7 @@
 "use client";
 
 import { useCallback, useEffect, useLayoutEffect, useRef, useState } from "react";
+import { useTranslation } from "react-i18next";
 
 interface ImageViewerProps {
   images: string[];
@@ -13,8 +14,10 @@ export default function ImageViewer({
   images,
   initialIndex,
   onClose,
-  alt = "Photo",
+  alt,
 }: ImageViewerProps) {
+  const { t } = useTranslation();
+  const altText = alt ?? t("Photo");
   const total = images.length;
   const safeInitial =
     initialIndex >= 0 && initialIndex < total ? initialIndex : 0;
@@ -42,6 +45,27 @@ export default function ImageViewer({
     scrollToIndex(safeInitial, "auto");
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
+
+  const handleDownload = useCallback(async () => {
+    const url = images[currentIndex];
+    if (!url) return;
+    const filename = url.split("/").pop()?.split("?")[0] || "image.jpg";
+    try {
+      const res = await fetch(url, { mode: "cors" });
+      const blob = await res.blob();
+      const objectUrl = URL.createObjectURL(blob);
+      const a = document.createElement("a");
+      a.href = objectUrl;
+      a.download = filename;
+      document.body.appendChild(a);
+      a.click();
+      a.remove();
+      URL.revokeObjectURL(objectUrl);
+    } catch {
+      // CORS 등으로 blob 다운로드 실패 시 새 탭으로 열기
+      window.open(url, "_blank", "noopener,noreferrer");
+    }
+  }, [images, currentIndex]);
 
   const handleScroll = useCallback(() => {
     if (programmaticScrollRef.current) return;
@@ -101,7 +125,7 @@ export default function ImageViewer({
             {/* eslint-disable-next-line @next/next/no-img-element */}
             <img
               src={url}
-              alt={`${alt} ${idx + 1}`}
+              alt={`${altText} ${idx + 1}`}
               className="max-w-full max-h-full object-contain"
               draggable={false}
               onClick={(e) => e.stopPropagation()}
@@ -110,11 +134,36 @@ export default function ImageViewer({
         ))}
       </div>
 
+      {/* Download */}
+      <button
+        type="button"
+        onClick={(e) => {
+          e.stopPropagation();
+          handleDownload();
+        }}
+        aria-label={t("Download photo")}
+        className="absolute top-4 right-16 w-10 h-10 bg-white/15 hover:bg-white/25 backdrop-blur-sm rounded-full flex items-center justify-center text-white"
+      >
+        <svg
+          className="w-5 h-5"
+          fill="none"
+          stroke="currentColor"
+          viewBox="0 0 24 24"
+        >
+          <path
+            strokeLinecap="round"
+            strokeLinejoin="round"
+            strokeWidth={2}
+            d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-4l-4 4m0 0l-4-4m4 4V4"
+          />
+        </svg>
+      </button>
+
       {/* Close */}
       <button
         type="button"
         onClick={onClose}
-        aria-label="Close viewer"
+        aria-label={t("Close viewer")}
         className="absolute top-4 right-4 w-10 h-10 bg-white/15 hover:bg-white/25 backdrop-blur-sm rounded-full flex items-center justify-center text-white"
       >
         <svg
@@ -140,7 +189,7 @@ export default function ImageViewer({
             e.stopPropagation();
             scrollToIndex(currentIndex - 1);
           }}
-          aria-label="Previous photo"
+          aria-label={t("Previous photo")}
           className="absolute left-3 top-1/2 -translate-y-1/2 w-10 h-10 bg-white/15 hover:bg-white/25 backdrop-blur-sm rounded-full flex items-center justify-center text-white"
         >
           <svg
@@ -167,7 +216,7 @@ export default function ImageViewer({
             e.stopPropagation();
             scrollToIndex(currentIndex + 1);
           }}
-          aria-label="Next photo"
+          aria-label={t("Next photo")}
           className="absolute right-3 top-1/2 -translate-y-1/2 w-10 h-10 bg-white/15 hover:bg-white/25 backdrop-blur-sm rounded-full flex items-center justify-center text-white"
         >
           <svg

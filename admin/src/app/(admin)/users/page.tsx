@@ -72,7 +72,7 @@ export default function UsersPage() {
       }
       setNextCursor(data.nextCursor || null);
     } catch {
-      alert("Failed to load users");
+      alert("사용자를 불러오지 못했습니다");
     } finally {
       setLoading(false);
     }
@@ -96,7 +96,7 @@ export default function UsersPage() {
   const handlePromote = async () => {
     if (!promoteTarget) return;
     if (!form.companyName || !form.contactName || !form.phone) {
-      alert("Please fill in Company / Contact / Phone");
+      alert("회사명 / 담당자 / 연락처를 입력해주세요");
       return;
     }
     setPromoting(true);
@@ -119,13 +119,13 @@ export default function UsersPage() {
       );
       if (!res.ok) {
         const err = await res.json().catch(() => null);
-        throw new Error(err?.message || "Failed to promote user");
+        throw new Error(err?.message || "판매자 전환에 실패했습니다");
       }
       setPromoteTarget(null);
       setForm(initialForm);
       await load(null, true);
     } catch (e) {
-      alert(e instanceof Error ? e.message : "Failed to promote user");
+      alert(e instanceof Error ? e.message : "판매자 전환에 실패했습니다");
     } finally {
       setPromoting(false);
     }
@@ -140,9 +140,9 @@ export default function UsersPage() {
             onChange={(e) => setRole(e.target.value)}
             className="border border-gray-300 rounded-lg px-3 py-2 text-sm"
           >
-            <option value="">All Roles</option>
-            <option value="BUYER">Buyer</option>
-            <option value="SELLER">Seller</option>
+            <option value="">전체 역할</option>
+            <option value="BUYER">구매자</option>
+            <option value="SELLER">판매자</option>
           </select>
           <form
             onSubmit={(e) => {
@@ -155,11 +155,11 @@ export default function UsersPage() {
               type="text"
               value={searchInput}
               onChange={(e) => setSearchInput(e.target.value)}
-              placeholder="Search email / name / company"
+              placeholder="이메일 / 이름 / 회사명 검색"
               className="border border-gray-300 rounded-lg px-3 py-2 text-sm w-64"
             />
             <button type="submit" className="btn btn-secondary btn-sm">
-              Search
+              검색
             </button>
             {search && (
               <button
@@ -170,7 +170,7 @@ export default function UsersPage() {
                 }}
                 className="btn btn-sm"
               >
-                Clear
+                초기화
               </button>
             )}
           </form>
@@ -179,19 +179,19 @@ export default function UsersPage() {
 
       <div className="bg-white rounded-xl shadow-sm overflow-hidden">
         {loading ? (
-          <div className="p-8 text-center text-gray-400">Loading...</div>
+          <div className="p-8 text-center text-gray-400">불러오는 중...</div>
         ) : (
           <>
             <table className="admin-table">
               <thead>
                 <tr>
-                  <th>Email</th>
-                  <th>Name</th>
-                  <th>Country</th>
-                  <th>Phone</th>
-                  <th>Role</th>
-                  <th>Created</th>
-                  <th>Actions</th>
+                  <th>이메일</th>
+                  <th>이름</th>
+                  <th>국가</th>
+                  <th>연락처</th>
+                  <th>역할</th>
+                  <th>가입일</th>
+                  <th>관리</th>
                 </tr>
               </thead>
               <tbody>
@@ -203,9 +203,9 @@ export default function UsersPage() {
                     <td>{u.phone || "-"}</td>
                     <td>
                       {u.role === "SELLER" ? (
-                        <span className="badge-active">SELLER</span>
+                        <span className="badge-active">판매자</span>
                       ) : (
-                        <span className="badge-draft">BUYER</span>
+                        <span className="badge-draft">구매자</span>
                       )}
                     </td>
                     <td>{formatDate(u.createdAt)}</td>
@@ -215,10 +215,10 @@ export default function UsersPage() {
                           onClick={() => openPromoteModal(u)}
                           className="btn btn-primary btn-sm"
                         >
-                          Promote to Seller
+                          판매자로 전환
                         </button>
                       ) : (
-                        <span className="text-gray-400 text-xs">Seller</span>
+                        <span className="text-gray-400 text-xs">판매자</span>
                       )}
                     </td>
                   </tr>
@@ -226,7 +226,7 @@ export default function UsersPage() {
                 {users.length === 0 && (
                   <tr>
                     <td colSpan={7} className="text-center text-gray-400 py-8">
-                      No users found
+                      사용자가 없습니다
                     </td>
                   </tr>
                 )}
@@ -238,7 +238,7 @@ export default function UsersPage() {
                   onClick={() => load(nextCursor)}
                   className="btn btn-secondary"
                 >
-                  Load More
+                  더 보기
                 </button>
               </div>
             )}
@@ -249,14 +249,14 @@ export default function UsersPage() {
       {promoteTarget && (
         <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/40">
           <div className="bg-white rounded-xl shadow-lg w-full max-w-md mx-4 p-6">
-            <h2 className="text-lg font-semibold mb-1">Promote to Seller</h2>
+            <h2 className="text-lg font-semibold mb-1">판매자로 전환</h2>
             <p className="text-sm text-gray-500 mb-4">
               {promoteTarget.email}
             </p>
             <div className="space-y-3">
               <div>
                 <label className="block text-sm font-medium text-gray-700 mb-1">
-                  Company Name <span className="text-red-500">*</span>
+                  회사명 <span className="text-red-500">*</span>
                 </label>
                 <input
                   type="text"
@@ -269,7 +269,7 @@ export default function UsersPage() {
               </div>
               <div>
                 <label className="block text-sm font-medium text-gray-700 mb-1">
-                  Contact Name <span className="text-red-500">*</span>
+                  담당자 <span className="text-red-500">*</span>
                 </label>
                 <input
                   type="text"
@@ -282,7 +282,7 @@ export default function UsersPage() {
               </div>
               <div>
                 <label className="block text-sm font-medium text-gray-700 mb-1">
-                  Phone <span className="text-red-500">*</span>
+                  연락처 <span className="text-red-500">*</span>
                 </label>
                 <input
                   type="text"
@@ -295,7 +295,7 @@ export default function UsersPage() {
               </div>
               <div>
                 <label className="block text-sm font-medium text-gray-700 mb-1">
-                  Business Number
+                  사업자등록번호
                 </label>
                 <input
                   type="text"
@@ -311,7 +311,7 @@ export default function UsersPage() {
               </div>
               <div>
                 <label className="block text-sm font-medium text-gray-700 mb-1">
-                  Address
+                  주소
                 </label>
                 <input
                   type="text"
@@ -332,14 +332,14 @@ export default function UsersPage() {
                 className="btn btn-secondary"
                 disabled={promoting}
               >
-                Cancel
+                취소
               </button>
               <button
                 onClick={handlePromote}
                 className="btn btn-primary"
                 disabled={promoting}
               >
-                {promoting ? "Promoting..." : "Promote"}
+                {promoting ? "전환 중..." : "전환"}
               </button>
             </div>
           </div>

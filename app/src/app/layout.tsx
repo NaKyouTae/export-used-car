@@ -1,6 +1,13 @@
 import type { Metadata, Viewport } from "next";
+import { cookies } from "next/headers";
 import "./globals.css";
 import LayoutShell from "@/components/LayoutShell";
+import I18nProvider from "@/lib/i18n/I18nProvider";
+import {
+  LANGUAGE_COOKIE,
+  LANGUAGE_I18N_CODE,
+  normalizeLanguage,
+} from "@/lib/i18n/config";
 
 export const metadata: Metadata = {
   title: "Ajucar",
@@ -17,15 +24,22 @@ export const viewport: Viewport = {
   themeColor: "#ffffff",
 };
 
-export default function RootLayout({
+export default async function RootLayout({
   children,
 }: Readonly<{
   children: React.ReactNode;
 }>) {
+  const cookieStore = await cookies();
+  const initialLanguage = normalizeLanguage(
+    cookieStore.get(LANGUAGE_COOKIE)?.value
+  );
+
   return (
-    <html lang="en">
+    <html lang={LANGUAGE_I18N_CODE[initialLanguage]}>
       <body className="bg-white text-gray-900 antialiased">
-        <LayoutShell>{children}</LayoutShell>
+        <I18nProvider initialLanguage={initialLanguage}>
+          <LayoutShell>{children}</LayoutShell>
+        </I18nProvider>
       </body>
     </html>
   );

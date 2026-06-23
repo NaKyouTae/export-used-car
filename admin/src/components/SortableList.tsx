@@ -91,7 +91,7 @@ function SortableRow({
   const handle = (
     <button
       type="button"
-      aria-label="Drag to reorder"
+      aria-label="드래그하여 순서 변경"
       {...attributes}
       {...listeners}
       className="touch-none cursor-grab active:cursor-grabbing text-gray-400 hover:text-gray-600 select-none shrink-0 px-1"

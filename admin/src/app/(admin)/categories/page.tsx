@@ -29,7 +29,7 @@ export default function CategoriesPage() {
       const data = await res.json();
       setCategories(Array.isArray(data) ? data : data.data || []);
     } catch {
-      alert('Failed to load categories');
+      alert('차종을 불러오지 못했습니다');
     } finally {
       setLoading(false);
     }
@@ -73,20 +73,20 @@ export default function CategoriesPage() {
       closeModal();
       load();
     } catch {
-      alert(modalMode === 'edit' ? 'Failed to update category' : 'Failed to add category');
+      alert(modalMode === 'edit' ? '차종 수정에 실패했습니다' : '차종 추가에 실패했습니다');
     } finally {
       setSubmitting(false);
     }
   };
 
   const handleDelete = async (id: string) => {
-    if (!window.confirm('Delete this category?')) return;
+    if (!window.confirm('이 차종을 삭제하시겠습니까?')) return;
     try {
       const res = await fetch(`/api/categories/${id}`, { method: 'DELETE' });
       if (!res.ok && res.status !== 204) throw new Error();
       load();
     } catch {
-      alert('Failed to delete category');
+      alert('차종 삭제에 실패했습니다');
     }
   };
 
@@ -102,22 +102,22 @@ export default function CategoriesPage() {
       if (!res.ok) throw new Error();
     } catch {
       setCategories(previous);
-      alert('Failed to reorder');
+      alert('순서 변경에 실패했습니다');
     }
   };
 
   return (
     <div className="space-y-4">
       <div className="flex items-center justify-between">
-        <p className="text-sm text-gray-500">{categories.length} categories · drag to reorder</p>
-        <button onClick={openCreate} className="btn btn-primary btn-sm">+ New</button>
+        <p className="text-sm text-gray-500">차종 {categories.length}개 · 드래그하여 순서 변경</p>
+        <button onClick={openCreate} className="btn btn-primary btn-sm">+ 추가</button>
       </div>
 
       <div className="bg-white rounded-xl shadow-sm overflow-hidden">
         {loading ? (
-          <div className="p-8 text-center text-gray-400">Loading...</div>
+          <div className="p-8 text-center text-gray-400">불러오는 중...</div>
         ) : categories.length === 0 ? (
-          <div className="p-8 text-center text-gray-400">No categories yet</div>
+          <div className="p-8 text-center text-gray-400">차종이 없습니다</div>
         ) : (
           <ul className="divide-y divide-gray-100">
             <SortableList
@@ -131,8 +131,8 @@ export default function CategoriesPage() {
                     <p className="text-xs text-gray-500 truncate">{c.slug}</p>
                   </div>
                   <div className="flex gap-2 shrink-0">
-                    <button onClick={() => openEdit(c)} className="btn btn-secondary btn-sm">Edit</button>
-                    <button onClick={() => handleDelete(c.id)} className="btn btn-danger btn-sm">Delete</button>
+                    <button onClick={() => openEdit(c)} className="btn btn-secondary btn-sm">수정</button>
+                    <button onClick={() => handleDelete(c.id)} className="btn btn-danger btn-sm">삭제</button>
                   </div>
                 </li>
               )}
@@ -144,24 +144,24 @@ export default function CategoriesPage() {
       <Modal
         open={modalMode !== null}
         onClose={closeModal}
-        title={modalMode === 'edit' ? 'Edit Category' : 'New Category'}
+        title={modalMode === 'edit' ? '차종 수정' : '차종 추가'}
         footer={
           <>
-            <button type="button" onClick={closeModal} className="btn btn-secondary btn-sm">Cancel</button>
+            <button type="button" onClick={closeModal} className="btn btn-secondary btn-sm">취소</button>
             <button
               type="submit"
               form="category-form"
               disabled={submitting}
               className="btn btn-primary btn-sm disabled:opacity-50"
             >
-              {submitting ? 'Saving...' : modalMode === 'edit' ? 'Save' : 'Create'}
+              {submitting ? '저장 중...' : modalMode === 'edit' ? '저장' : '추가'}
             </button>
           </>
         }
       >
         <form id="category-form" onSubmit={handleSubmit} className="space-y-4">
           <div>
-            <label className="block text-xs text-gray-500 mb-1">Name</label>
+            <label className="block text-xs text-gray-500 mb-1">이름</label>
             <input
               value={name}
               onChange={(e) => setName(e.target.value)}

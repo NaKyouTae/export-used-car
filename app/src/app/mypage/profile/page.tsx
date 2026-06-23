@@ -5,6 +5,7 @@ import { useRouter } from "next/navigation";
 import { useAuth } from "@/hooks/useAuth";
 import PageHeader from "@/components/PageHeader";
 import CountrySelect from "@/components/CountrySelect";
+import { useTranslation } from "react-i18next";
 
 type AuthUser = NonNullable<ReturnType<typeof useAuth>["user"]>;
 
@@ -36,6 +37,7 @@ function ProfileForm({
   user: AuthUser;
   reloadUser: () => Promise<unknown>;
 }) {
+  const { t } = useTranslation();
   const isSeller = user.role === "SELLER";
 
   const [name, setName] = useState(() => user.name || "");
@@ -88,12 +90,12 @@ function ProfileForm({
 
       if (res.ok) {
         await reloadUser();
-        setMessage({ type: "success", text: "Profile updated successfully." });
+        setMessage({ type: "success", text: t("Profile updated successfully.") });
       } else {
-        setMessage({ type: "error", text: "Failed to update profile." });
+        setMessage({ type: "error", text: t("Failed to update profile.") });
       }
     } catch {
-      setMessage({ type: "error", text: "An error occurred." });
+      setMessage({ type: "error", text: t("An error occurred.") });
     } finally {
       setSaving(false);
     }
@@ -104,12 +106,12 @@ function ProfileForm({
 
   return (
     <div className="bg-white pb-[60px]">
-      <PageHeader title="Edit Profile" />
+      <PageHeader title={t("Edit Profile")} />
 
       <div className="px-4 py-4 space-y-5">
         {/* Email (read-only) */}
         <div>
-          <label className="block text-sm font-medium text-gray-500 mb-1.5">Email</label>
+          <label className="block text-sm font-medium text-gray-500 mb-1.5">{t("Email")}</label>
           <div className="w-full px-4 py-3 bg-gray-100 rounded-xl text-sm text-gray-400">
             {user.email}
           </div>
@@ -117,9 +119,9 @@ function ProfileForm({
 
         {/* Account Type (read-only) */}
         <div>
-          <label className="block text-sm font-medium text-gray-500 mb-1.5">Account Type</label>
+          <label className="block text-sm font-medium text-gray-500 mb-1.5">{t("Account Type")}</label>
           <div className="w-full px-4 py-3 bg-gray-100 rounded-xl text-sm text-gray-400">
-            {isSeller ? "Seller" : "User"}
+            {isSeller ? t("Seller") : t("User")}
           </div>
         </div>
 
@@ -127,29 +129,29 @@ function ProfileForm({
           <>
             {/* Seller fields */}
             <div>
-              <label className="block text-sm font-medium text-gray-700 mb-1.5">Company Name</label>
+              <label className="block text-sm font-medium text-gray-700 mb-1.5">{t("Company Name")}</label>
               <input
                 type="text"
                 value={companyName}
                 onChange={(e) => setCompanyName(e.target.value)}
                 className={inputClass}
-                placeholder="Your Company Ltd."
+                placeholder={t("Your Company Ltd.")}
               />
             </div>
 
             <div>
-              <label className="block text-sm font-medium text-gray-700 mb-1.5">Contact Name</label>
+              <label className="block text-sm font-medium text-gray-700 mb-1.5">{t("Contact Name")}</label>
               <input
                 type="text"
                 value={contactName}
                 onChange={(e) => setContactName(e.target.value)}
                 className={inputClass}
-                placeholder="John Kim"
+                placeholder={t("John Kim")}
               />
             </div>
 
             <div>
-              <label className="block text-sm font-medium text-gray-700 mb-1.5">Phone</label>
+              <label className="block text-sm font-medium text-gray-700 mb-1.5">{t("Phone")}</label>
               <input
                 type="tel"
                 value={phone}
@@ -161,7 +163,7 @@ function ProfileForm({
 
             <div>
               <label className="block text-sm font-medium text-gray-700 mb-1.5">
-                Business Number <span className="text-gray-400">(optional)</span>
+                {t("Business Number")} <span className="text-gray-400">({t("optional")})</span>
               </label>
               <input
                 type="text"
@@ -174,14 +176,14 @@ function ProfileForm({
 
             <div>
               <label className="block text-sm font-medium text-gray-700 mb-1.5">
-                Address <span className="text-gray-400">(optional)</span>
+                {t("Address")} <span className="text-gray-400">({t("optional")})</span>
               </label>
               <input
                 type="text"
                 value={address}
                 onChange={(e) => setAddress(e.target.value)}
                 className={inputClass}
-                placeholder="Seoul, South Korea"
+                placeholder={t("Seoul, South Korea")}
               />
             </div>
           </>
@@ -189,37 +191,37 @@ function ProfileForm({
           <>
             {/* Buyer fields */}
             <div>
-              <label className="block text-sm font-medium text-gray-700 mb-1.5">Name</label>
+              <label className="block text-sm font-medium text-gray-700 mb-1.5">{t("Name")}</label>
               <input
                 type="text"
                 value={name}
                 onChange={(e) => setName(e.target.value)}
                 className={inputClass}
-                placeholder="John Doe"
+                placeholder={t("John Doe")}
               />
             </div>
 
             <div>
-              <label className="block text-sm font-medium text-gray-700 mb-1.5">Country</label>
+              <label className="block text-sm font-medium text-gray-700 mb-1.5">{t("Country")}</label>
               <CountrySelect value={country} onChange={setCountry} />
             </div>
 
             <div>
               <label className="block text-sm font-medium text-gray-700 mb-1.5">
-                Company <span className="text-gray-400">(optional)</span>
+                {t("Company")} <span className="text-gray-400">({t("optional")})</span>
               </label>
               <input
                 type="text"
                 value={company}
                 onChange={(e) => setCompany(e.target.value)}
                 className={inputClass}
-                placeholder="Your company name"
+                placeholder={t("Your company name")}
               />
             </div>
 
             <div>
               <label className="block text-sm font-medium text-gray-700 mb-1.5">
-                Phone <span className="text-gray-400">(optional)</span>
+                {t("Phone")} <span className="text-gray-400">({t("optional")})</span>
               </label>
               <input
                 type="tel"
@@ -247,7 +249,7 @@ function ProfileForm({
           disabled={saving}
           className="w-full py-3 bg-main-600 text-white text-sm font-semibold rounded-xl disabled:opacity-50"
         >
-          {saving ? "Saving..." : "Save"}
+          {saving ? t("Saving...") : t("Save")}
         </button>
       </div>
     </div>

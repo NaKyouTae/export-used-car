@@ -24,13 +24,13 @@ export default function LoginPage() {
 
       if (!res.ok) {
         const data = await res.json();
-        setError(data.error || "Login failed");
+        setError(data.error || "로그인에 실패했습니다");
         return;
       }
 
       router.push("/");
     } catch {
-      setError("Network error");
+      setError("네트워크 오류가 발생했습니다");
     } finally {
       setLoading(false);
     }
@@ -42,14 +42,14 @@ export default function LoginPage() {
         onSubmit={handleLogin}
         className="bg-white p-8 rounded-xl shadow-md w-full max-w-sm"
       >
-        <h1 className="text-2xl font-bold text-center mb-6">Admin Login</h1>
+        <h1 className="text-2xl font-bold text-center mb-6">관리자 로그인</h1>
 
         <div className="mb-4">
           <label
             htmlFor="username"
             className="block text-sm font-medium text-gray-700 mb-1"
           >
-            Username
+            아이디
           </label>
           <input
             id="username"
@@ -67,12 +67,12 @@ export default function LoginPage() {
             htmlFor="password"
             className="block text-sm font-medium text-gray-700 mb-1"
           >
-            Password
+            비밀번호
           </label>
           <input
             id="password"
             type="password"
-            placeholder="Password"
+            placeholder="비밀번호"
             value={password}
             onChange={(e) => setPassword(e.target.value)}
             className="w-full border border-gray-300 rounded-lg px-4 py-2.5 focus:outline-none focus:ring-2 focus:ring-blue-500"
@@ -89,7 +89,7 @@ export default function LoginPage() {
           disabled={loading || !username || !password}
           className="w-full bg-gray-900 text-white font-semibold py-2.5 rounded-lg hover:bg-gray-800 disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
         >
-          {loading ? "Logging in..." : "Login"}
+          {loading ? "로그인 중..." : "로그인"}
         </button>
       </form>
     </div>

@@ -3,10 +3,13 @@
 import { useRouter } from "next/navigation";
 import Link from "next/link";
 import { useAuth } from "@/hooks/useAuth";
+import { useTranslation } from "react-i18next";
+import LanguageMenuItem from "@/components/LanguageMenuItem";
 
 export default function MyPage() {
   const router = useRouter();
   const { user, isAuthenticated, isLoading, logout } = useAuth();
+  const { t } = useTranslation();
 
   if (isLoading) {
     return (
@@ -22,7 +25,7 @@ export default function MyPage() {
     <div className="flex-1 bg-white flex flex-col">
       <header className="sticky top-0 z-40 bg-white border-b border-gray-100">
         <div className="flex items-center h-12 px-4">
-          <h1 className="text-lg font-semibold text-gray-900">My Page</h1>
+          <h1 className="text-lg font-semibold text-gray-900">{t("My Page")}</h1>
         </div>
       </header>
 
@@ -40,7 +43,7 @@ export default function MyPage() {
                 {user?.companyName || user?.name || user?.email}
               </p>
               <p className="text-xs text-gray-400 mt-0.5">
-                {isSeller ? "Seller" : "User"}
+                {isSeller ? t("Seller") : t("User")}
                 {user?.email && ` · ${user.email}`}
               </p>
             </div>
@@ -57,8 +60,8 @@ export default function MyPage() {
               </svg>
             </div>
             <div className="flex-1 min-w-0">
-              <p className="text-base font-semibold text-gray-900">Login</p>
-              <p className="text-xs text-gray-400 mt-0.5">Log in to access all features</p>
+              <p className="text-base font-semibold text-gray-900">{t("Login")}</p>
+              <p className="text-xs text-gray-400 mt-0.5">{t("Log in to access all features")}</p>
             </div>
             <svg className="w-5 h-5 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
               <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 5l7 7-7 7" />
@@ -70,37 +73,42 @@ export default function MyPage() {
       <div className="px-4 pt-4 space-y-4">
         {/* Seller-only section */}
         {isSeller && (
-          <MenuSection title="My Deals">
-            <MenuItem href="/seller/cars" icon={<CarIcon />} label="My Cars" />
+          <MenuSection title={t("My Deals")}>
+            <MenuItem href="/seller/cars" icon={<CarIcon />} label={t("My Cars")} />
           </MenuSection>
         )}
 
         {/* Common section */}
-        <MenuSection title="History">
-          <MenuItem href="/wishlist" icon={<HeartIcon />} label="Wishlist" />
-          <MenuItem href="/recent" icon={<ClockIcon />} label="Recently Viewed" />
+        <MenuSection title={t("History")}>
+          <MenuItem href="/wishlist" icon={<HeartIcon />} label={t("Wishlist")} />
+          <MenuItem href="/recent" icon={<ClockIcon />} label={t("Recently Viewed")} />
         </MenuSection>
 
         {isAuthenticated && (
-          <MenuSection title="Chat">
+          <MenuSection title={t("Chat")}>
             <MenuItem
               href="/mypage/quick-phrases"
               icon={<ChatBubbleIcon />}
-              label="Quick Phrases"
+              label={t("Quick Phrases")}
             />
           </MenuSection>
         )}
 
-        <MenuSection title="Legal">
+        {/* Settings section */}
+        <MenuSection title={t("Settings")}>
+          <LanguageMenuItem persistToServer={isAuthenticated} />
+        </MenuSection>
+
+        <MenuSection title={t("Legal")}>
           <MenuItem
             href="/terms"
             icon={<DocumentIcon />}
-            label="Terms of Service"
+            label={t("Terms of Service")}
           />
           <MenuItem
             href="/privacy"
             icon={<ShieldIcon />}
-            label="Privacy Policy"
+            label={t("Privacy Policy")}
           />
         </MenuSection>
       </div>
@@ -115,18 +123,18 @@ export default function MyPage() {
             }}
             className="py-3 px-4 text-sm text-gray-400"
           >
-            Logout
+            {t("Log out")}
           </button>
           <span className="text-gray-200">|</span>
           <button
             onClick={() => {
-              if (confirm("Are you sure you want to delete your account? This action cannot be undone.")) {
+              if (confirm(t("Are you sure you want to delete your account? This action cannot be undone."))) {
                 // TODO: call delete account API
               }
             }}
             className="py-3 px-4 text-sm text-gray-400"
           >
-            Delete Account
+            {t("Delete Account")}
           </button>
         </div>
       )}
@@ -134,18 +142,18 @@ export default function MyPage() {
       {/* Business Info */}
       <div className="mt-auto -mb-[88px] bg-gray-100 px-4 pt-6 pb-28">
         <div className="text-[11px] leading-relaxed text-gray-400 space-y-1">
-          <p className="text-xs font-semibold text-gray-500">Dubai Trading Co., Ltd.</p>
-          <p>CEO: Hae-gi Choi</p>
-          <p>Business Registration No : 897-88-01852</p>
-          <p>Corporate Registration No : 230111-0326346</p>
-          <p>Established: February 21, 2020</p>
+          <p className="text-xs font-semibold text-gray-500">{t("Dubai Trading Co., Ltd.")}</p>
+          <p>{t("CEO: Hae-gi Choi")}</p>
+          <p>{t("Business Registration No : 897-88-01852")}</p>
+          <p>{t("Corporate Registration No : 230111-0326346")}</p>
+          <p>{t("Established: February 21, 2020")}</p>
           <p>
-            Address: #1127, Bldg. 1, 16 Jinjangyutong-ro, Buk-gu,
+            {t("Address: #1127, Bldg. 1, 16 Jinjangyutong-ro, Buk-gu,")}
             <br />
-            Ulsan, Republic of Korea (Jinjang-dong, Jinjang D-Plex)
+            {t("Ulsan, Republic of Korea (Jinjang-dong, Jinjang D-Plex)")}
           </p>
-          <p>Business Type: Wholesale &amp; Retail, Transportation &amp; Warehousing</p>
-          <p>Items: Used Car Export Sales, Trading, Packaging &amp; Filling</p>
+          <p>{t("Business Type: Wholesale & Retail, Transportation & Warehousing")}</p>
+          <p>{t("Items: Used Car Export Sales, Trading, Packaging & Filling")}</p>
         </div>
       </div>
     </div>

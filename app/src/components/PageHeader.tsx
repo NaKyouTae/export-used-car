@@ -1,6 +1,7 @@
 "use client";
 
 import { useRouter } from "next/navigation";
+import { useTranslation } from "react-i18next";
 
 interface PageHeaderProps {
   title: string;
@@ -11,6 +12,7 @@ interface PageHeaderProps {
 
 export default function PageHeader({ title, showBack = true, backHref, rightAction }: PageHeaderProps) {
   const router = useRouter();
+  const { t } = useTranslation();
 
   return (
     <header className="sticky top-0 z-40 bg-white border-b border-gray-100 pt-safe">
@@ -19,7 +21,7 @@ export default function PageHeader({ title, showBack = true, backHref, rightActi
           <button
             onClick={() => (backHref ? router.push(backHref) : router.back())}
             className="mr-2 -ml-1 p-1 text-gray-700"
-            aria-label="Go back"
+            aria-label={t("Go back")}
           >
             <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
               <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 19l-7-7 7-7" />

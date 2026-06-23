@@ -1,6 +1,7 @@
 "use client";
 
 import { useSyncExternalStore } from "react";
+import { useTranslation } from "react-i18next";
 import PageHeader from "@/components/PageHeader";
 import CarCard from "@/components/CarCard";
 import { useRecentlyViewedCars } from "@/hooks/useRecentlyViewed";
@@ -10,12 +11,13 @@ const getTrue = () => true;
 const getFalse = () => false;
 
 export default function RecentlyViewedPage() {
+  const { t } = useTranslation();
   const cars = useRecentlyViewedCars();
   const loaded = useSyncExternalStore(subscribeNoop, getTrue, getFalse);
 
   return (
     <div className="bg-white">
-      <PageHeader title="Recently Viewed" />
+      <PageHeader title={t("Recently Viewed")} />
 
       {!loaded ? (
         <div className="flex justify-center py-12">
@@ -44,7 +46,7 @@ export default function RecentlyViewedPage() {
             <circle cx="12" cy="12" r="10" strokeWidth="1.5" />
             <path d="M12 6v6l4 2" strokeWidth="1.5" strokeLinecap="round" />
           </svg>
-          <p className="text-sm text-gray-400">No recently viewed cars</p>
+          <p className="text-sm text-gray-400">{t("No recently viewed cars")}</p>
         </div>
       )}
     </div>

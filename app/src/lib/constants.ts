@@ -17,9 +17,11 @@ export const DRIVETRAIN_LABELS: Record<string, string> = {
   AWD: "AWD",
 };
 
+// 영어 키(source-of-truth). 화면에서는 t(CAR_STATUS_LABELS[status])로 번역한다.
 export const CAR_STATUS_LABELS: Record<string, string> = {
   DRAFT: "Draft",
-  ACTIVE: "Active",
+  ACTIVE: "On sale",
+  DEALING: "Dealing",
   RESERVED: "Reserved",
   SOLD: "Sold",
   HIDDEN: "Hidden",
@@ -28,6 +30,7 @@ export const CAR_STATUS_LABELS: Record<string, string> = {
 export const CAR_STATUS_COLORS: Record<string, string> = {
   DRAFT: "bg-gray-100 text-gray-600",
   ACTIVE: "bg-green-100 text-green-700",
+  DEALING: "bg-orange-100 text-orange-700",
   RESERVED: "bg-yellow-100 text-yellow-700",
   SOLD: "bg-blue-100 text-blue-700",
   HIDDEN: "bg-red-100 text-red-600",

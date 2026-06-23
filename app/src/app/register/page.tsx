@@ -5,11 +5,16 @@ import Link from "next/link";
 import { useRouter, useSearchParams } from "next/navigation";
 import PageHeader from "@/components/PageHeader";
 import CountrySelect from "@/components/CountrySelect";
+import BottomSheetSelect from "@/components/BottomSheetSelect";
 import { useAuth } from "@/hooks/useAuth";
+import { useLanguage } from "@/lib/i18n/useLanguage";
+import { useTranslation } from "react-i18next";
 
 function RegisterForm() {
   const router = useRouter();
   const { login } = useAuth();
+  const { t } = useTranslation();
+  const { language, changeLanguage, options: languageOptions } = useLanguage();
   const searchParams = useSearchParams();
   const tempToken = searchParams.get("tempToken") || "";
   const email = searchParams.get("email") || "";
@@ -44,6 +49,7 @@ function RegisterForm() {
           tempToken,
           name,
           country,
+          language,
           company: company || undefined,
           phone: phone || undefined,
           agreedToTerms,
@@ -53,7 +59,7 @@ function RegisterForm() {
 
       const data = await res.json();
       if (!res.ok) {
-        setError(data.message || "Registration failed");
+        setError(data.message || t("Registration failed"));
         return;
       }
 
@@ -61,7 +67,7 @@ function RegisterForm() {
       await login();
       router.push("/");
     } catch {
-      setError("Network error. Please try again.");
+      setError(t("Network error. Please try again."));
     } finally {
       setLoading(false);
     }
@@ -74,13 +80,13 @@ function RegisterForm() {
     <>
       <div className="flex-1 px-4 pt-8 pb-6">
         <div className="text-center mb-8">
-          <h2 className="text-2xl font-bold text-gray-900">Create Account</h2>
+          <h2 className="text-2xl font-bold text-gray-900">{t("Create Account")}</h2>
           <p className="text-gray-500 text-sm mt-1">
-            Complete your profile to get started
+            {t("Complete your profile to get started")}
           </p>
           {email && (
             <p className="text-sm text-gray-600 mt-2">
-              Registering as <span className="font-medium">{email}</span>
+              {t("Registering as")} <span className="font-medium">{email}</span>
             </p>
           )}
         </div>
@@ -95,14 +101,14 @@ function RegisterForm() {
               htmlFor="name"
               className="block text-sm font-medium text-gray-700 mb-1"
             >
-              Full Name *
+              {t("Full Name")} *
             </label>
             <input
               id="name"
               type="text"
               value={name}
               onChange={(e) => setName(e.target.value)}
-              placeholder="John Doe"
+              placeholder={t("John Doe")}
               required
               className="w-full px-4 py-3 border border-gray-200 rounded-xl text-sm focus:outline-none focus:ring-2 focus:ring-main-500 focus:border-transparent"
             />
@@ -113,7 +119,7 @@ function RegisterForm() {
               htmlFor="country"
               className="block text-sm font-medium text-gray-700 mb-1"
             >
-              Country *
+              {t("Country")} *
             </label>
             <CountrySelect
               id="country"
@@ -125,17 +131,40 @@ function RegisterForm() {
 
           <div>
             <label
+              htmlFor="language"
+              className="block text-sm font-medium text-gray-700 mb-1"
+            >
+              {t("Default Language")} *
+            </label>
+            <BottomSheetSelect
+              id="language"
+              value={language}
+              onChange={(v) => changeLanguage(v as "EN" | "KO")}
+              options={languageOptions.map((o) => ({
+                value: o.value,
+                label: o.label,
+              }))}
+              title={t("Select Language")}
+              required
+            />
+            <p className="text-xs text-gray-400 mt-1">
+              {t("You can change this later in My Page")}
+            </p>
+          </div>
+
+          <div>
+            <label
               htmlFor="company"
               className="block text-sm font-medium text-gray-700 mb-1"
             >
-              Company <span className="text-gray-400">(optional)</span>
+              {t("Company")} <span className="text-gray-400">({t("optional")})</span>
             </label>
             <input
               id="company"
               type="text"
               value={company}
               onChange={(e) => setCompany(e.target.value)}
-              placeholder="Your company name"
+              placeholder={t("Your company name")}
               className="w-full px-4 py-3 border border-gray-200 rounded-xl text-sm focus:outline-none focus:ring-2 focus:ring-main-500 focus:border-transparent"
             />
           </div>
@@ -145,7 +174,7 @@ function RegisterForm() {
               htmlFor="phone"
               className="block text-sm font-medium text-gray-700 mb-1"
             >
-              Phone <span className="text-gray-400">(optional)</span>
+              {t("Phone")} <span className="text-gray-400">({t("optional")})</span>
             </label>
             <input
               id="phone"
@@ -172,21 +201,21 @@ function RegisterForm() {
               className="w-5 h-5 rounded border-gray-300 text-main-500 focus:ring-main-500"
             />
             <span className="text-sm font-semibold text-gray-900">
-              Agree to all
+              {t("Agree to all")}
             </span>
           </label>
 
           <ConsentRow
             checked={agreedToTerms}
             onChange={setAgreedToTerms}
-            label="I agree to the Terms of Service"
+            label={t("I agree to the Terms of Service")}
             required
             href="/terms"
           />
           <ConsentRow
             checked={agreedToPrivacy}
             onChange={setAgreedToPrivacy}
-            label="I agree to the Privacy Policy"
+            label={t("I agree to the Privacy Policy")}
             required
             href="/privacy"
           />
@@ -200,7 +229,7 @@ function RegisterForm() {
           disabled={submitDisabled}
           className="w-full py-3.5 bg-main-500 text-white font-semibold rounded-xl hover:bg-main-600 disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
         >
-          {loading ? "Creating Account..." : "Create Account"}
+          {loading ? t("Creating Account...") : t("Create Account")}
         </button>
       </div>
     </>
@@ -220,6 +249,7 @@ function ConsentRow({
   required?: boolean;
   href: string;
 }) {
+  const { t } = useTranslation();
   return (
     <label className="flex items-center gap-3 cursor-pointer select-none">
       <input
@@ -239,16 +269,17 @@ function ConsentRow({
         className="text-xs text-main-600 underline"
         onClick={(e) => e.stopPropagation()}
       >
-        View
+        {t("View")}
       </Link>
     </label>
   );
 }
 
 export default function RegisterPage() {
+  const { t } = useTranslation();
   return (
     <div className="flex-1 flex flex-col bg-white">
-      <PageHeader title="Register" />
+      <PageHeader title={t("Register")} />
       <Suspense
         fallback={
           <div className="flex-1 flex justify-center pt-20">

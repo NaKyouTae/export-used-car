@@ -5,10 +5,12 @@ import Link from "next/link";
 import { useRouter } from "next/navigation";
 import PageHeader from "@/components/PageHeader";
 import { useAuth } from "@/hooks/useAuth";
+import { useTranslation } from "react-i18next";
 
 export default function LoginPage() {
   const router = useRouter();
   const { login } = useAuth();
+  const { t } = useTranslation();
   const [step, setStep] = useState<"email" | "code">("email");
   const [email, setEmail] = useState("");
   const [code, setCode] = useState("");
@@ -29,7 +31,7 @@ export default function LoginPage() {
     e.preventDefault();
 
     if (!isValidEmail(email)) {
-      setError("Please enter a valid email address.");
+      setError(t("Please enter a valid email address."));
       return;
     }
 
@@ -45,12 +47,12 @@ export default function LoginPage() {
 
       const data = await res.json();
       if (!res.ok) {
-        setError(data.message || "Failed to send code");
+        setError(data.message || t("Failed to send code"));
         return;
       }
       setStep("code");
     } catch {
-      setError("Network error. Please try again.");
+      setError(t("Network error. Please try again."));
     } finally {
       setLoading(false);
     }
@@ -71,7 +73,7 @@ export default function LoginPage() {
 
       const data = await res.json();
       if (!res.ok) {
-        setError(data.message || "Invalid code");
+        setError(data.message || t("Invalid code"));
         return;
       }
 
@@ -86,7 +88,7 @@ export default function LoginPage() {
         router.push(`/register?email=${encodeURIComponent(email)}`);
       }
     } catch {
-      setError("Network error. Please try again.");
+      setError(t("Network error. Please try again."));
     } finally {
       setLoading(false);
     }
@@ -94,13 +96,13 @@ export default function LoginPage() {
 
   return (
     <div className="bg-white">
-      <PageHeader title="Login" />
+      <PageHeader title={t("Login")} />
 
       <div className="max-w-md mx-auto px-4 pt-12">
         <div className="text-center mb-8">
-          <h2 className="text-2xl font-bold text-gray-900">Welcome</h2>
+          <h2 className="text-2xl font-bold text-gray-900">{t("Welcome")}</h2>
           <p className="text-gray-500 text-sm mt-1">
-            Sign in with your email to continue
+            {t("Sign in with your email to continue")}
           </p>
         </div>
 
@@ -111,7 +113,7 @@ export default function LoginPage() {
                 htmlFor="email"
                 className="block text-sm font-medium text-gray-700 mb-1"
               >
-                Email Address
+                {t("Email Address")}
               </label>
               <input
                 id="email"
@@ -129,13 +131,13 @@ export default function LoginPage() {
               disabled={loading || !email || !isValidEmail(email)}
               className="w-full py-3 bg-main-500 text-white font-semibold rounded-xl hover:bg-main-600 disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
             >
-              {loading ? "Sending..." : "Send Verification Code"}
+              {loading ? t("Sending...") : t("Send Verification Code")}
             </button>
           </form>
         ) : (
           <form onSubmit={handleVerifyCode} className="space-y-4">
             <p className="text-sm text-gray-500 text-center mb-4">
-              We sent a 6-digit code to{" "}
+              {t("We sent a 6-digit code to")}{" "}
               <span className="font-medium text-gray-700">{email}</span>
             </p>
             <div>
@@ -143,7 +145,7 @@ export default function LoginPage() {
                 htmlFor="code"
                 className="block text-sm font-medium text-gray-700 mb-1"
               >
-                Verification Code
+                {t("Verification Code")}
               </label>
               <input
                 id="code"
@@ -164,7 +166,7 @@ export default function LoginPage() {
               disabled={loading || code.length !== 6}
               className="w-full py-3 bg-main-500 text-white font-semibold rounded-xl hover:bg-main-600 disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
             >
-              {loading ? "Verifying..." : "Verify Code"}
+              {loading ? t("Verifying...") : t("Verify Code")}
             </button>
             <button
               type="button"
@@ -175,19 +177,19 @@ export default function LoginPage() {
               }}
               className="w-full py-2 text-sm text-gray-500 hover:text-gray-700"
             >
-              Use a different email
+              {t("Use a different email")}
             </button>
           </form>
         )}
 
         <p className="mt-10 text-center text-[11px] text-gray-400 leading-relaxed">
-          By continuing, you agree to our{" "}
+          {t("By continuing, you agree to our")}{" "}
           <Link href="/terms" className="underline text-gray-500">
-            Terms of Service
+            {t("Terms of Service")}
           </Link>{" "}
-          and{" "}
+          {t("and")}{" "}
           <Link href="/privacy" className="underline text-gray-500">
-            Privacy Policy
+            {t("Privacy Policy")}
           </Link>
           .
         </p>

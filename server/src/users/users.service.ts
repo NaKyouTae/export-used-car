@@ -22,6 +22,7 @@ export class UsersService {
     if (dto.phone !== undefined) data.phone = dto.phone;
     if (dto.country !== undefined) data.country = dto.country;
     if (dto.company !== undefined) data.company = dto.company;
+    if (dto.language !== undefined) data.language = dto.language;
 
     if (user.role === UserRole.SELLER) {
       if (dto.companyName !== undefined) data.companyName = dto.companyName;

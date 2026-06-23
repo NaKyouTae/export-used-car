@@ -1,6 +1,7 @@
 "use client";
 
 import { useRef, useState } from "react";
+import { useTranslation } from "react-i18next";
 import ImageViewer from "./ImageViewer";
 
 interface UploadedImage {
@@ -23,6 +24,7 @@ export default function CarImageUploader({
   onChange,
   maxImages = 20,
 }: CarImageUploaderProps) {
+  const { t } = useTranslation();
   const fileInputRef = useRef<HTMLInputElement>(null);
   const [uploading, setUploading] = useState(false);
   const [viewerIndex, setViewerIndex] = useState<number | null>(null);
@@ -109,7 +111,7 @@ export default function CarImageUploader({
                   d="M12 5v14M5 12h14"
                 />
               </svg>
-              <span className="text-[11px] font-medium">사진 추가</span>
+              <span className="text-[11px] font-medium">{t("Add photo")}</span>
             </>
           )}
         </button>
@@ -127,19 +129,19 @@ export default function CarImageUploader({
                   <button
                     type="button"
                     onClick={() => setViewerIndex(index)}
-                    aria-label={`View photo ${index + 1}`}
+                    aria-label={t("View photo {{number}}", { number: index + 1 })}
                     className="absolute inset-0 w-full h-full"
                   >
                     {/* eslint-disable-next-line @next/next/no-img-element */}
                     <img
                       src={img.url}
-                      alt={`Photo ${index + 1}`}
+                      alt={t("Photo {{number}}", { number: index + 1 })}
                       className="w-full h-full object-cover"
                     />
                   </button>
                   {index === 0 && (
                     <span className="pointer-events-none absolute bottom-1.5 left-1.5 bg-main-500 text-white text-[10px] px-1.5 py-0.5 rounded font-medium">
-                      Cover
+                      {t("Cover")}
                     </span>
                   )}
                   <button
@@ -148,7 +150,7 @@ export default function CarImageUploader({
                       e.stopPropagation();
                       handleRemove(index);
                     }}
-                    aria-label="Remove photo"
+                    aria-label={t("Remove photo")}
                     className="absolute top-1.5 right-1.5 w-6 h-6 bg-white shadow-md rounded-full flex items-center justify-center text-gray-600 hover:text-gray-900"
                   >
                     <svg

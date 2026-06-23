@@ -1,6 +1,7 @@
 "use client";
 
 import { useMemo } from "react";
+import { useTranslation } from "react-i18next";
 import BottomSheetSelect from "./BottomSheetSelect";
 import { COUNTRIES, getCountryFlag } from "@/lib/constants";
 
@@ -15,10 +16,11 @@ type Props = {
 export default function CountrySelect({
   value,
   onChange,
-  placeholder = "Select your country",
+  placeholder,
   id,
   required,
 }: Props) {
+  const { t } = useTranslation();
   const options = useMemo(
     () =>
       COUNTRIES.map((c) => ({
@@ -36,8 +38,8 @@ export default function CountrySelect({
       value={value}
       onChange={onChange}
       options={options}
-      placeholder={placeholder}
-      title="Select country"
+      placeholder={placeholder ?? t("Select your country")}
+      title={t("Select country")}
       required={required}
       searchable
     />

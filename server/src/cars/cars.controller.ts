@@ -58,6 +58,15 @@ export class CarsController {
     return this.carsService.update(id, dto, user.id);
   }
 
+  @Post(":id/bump")
+  @UseGuards(JwtAuthGuard)
+  bump(@Param("id") id: string, @CurrentUser() user: any) {
+    if (user.role !== "SELLER") {
+      throw new ForbiddenException("Only sellers can bump cars");
+    }
+    return this.carsService.bump(id, user.id);
+  }
+
   @Delete(":id")
   @UseGuards(JwtAuthGuard)
   remove(@Param("id") id: string, @CurrentUser() user: any) {

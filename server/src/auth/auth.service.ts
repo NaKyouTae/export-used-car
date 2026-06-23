@@ -93,6 +93,7 @@ export class AuthService {
         country: dto.country,
         company: dto.company,
         phone: dto.phone,
+        language: dto.language ?? "EN",
         termsAcceptedAt: now,
         privacyAcceptedAt: now,
       },

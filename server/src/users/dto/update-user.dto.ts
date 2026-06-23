@@ -1,10 +1,15 @@
-import { IsOptional, IsString } from "class-validator";
+import { IsIn, IsOptional, IsString } from "class-validator";
 
 export class UpdateUserDto {
   // 공통
   @IsString()
   @IsOptional()
   name?: string;
+
+  @IsString()
+  @IsIn(["EN", "KO"])
+  @IsOptional()
+  language?: string;
 
   @IsString()
   @IsOptional()

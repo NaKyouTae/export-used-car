@@ -2,10 +2,13 @@
 
 import { useState, useEffect } from "react";
 import { useRouter } from "next/navigation";
+import { useTranslation } from "react-i18next";
 import { useAuth } from "@/hooks/useAuth";
 import PageHeader from "@/components/PageHeader";
 import CarImageUploader from "@/components/CarImageUploader";
 import BottomSheetSelect from "@/components/BottomSheetSelect";
+import BottomSheetMultiSelect from "@/components/BottomSheetMultiSelect";
+import MakeModelPicker from "@/components/MakeModelPicker";
 import { FUEL_TYPE_LABELS, TRANSMISSION_LABELS } from "@/lib/constants";
 
 interface UploadedImage {
@@ -16,16 +19,6 @@ interface UploadedImage {
 }
 
 interface Make {
-  id: string;
-  name: string;
-}
-
-interface CarModel {
-  id: string;
-  name: string;
-}
-
-interface Category {
   id: string;
   name: string;
 }
@@ -51,11 +44,11 @@ interface OptionItem {
 
 export default function NewCarPage() {
   const router = useRouter();
+  const { t } = useTranslation();
   const { isAuthenticated, isLoading: authLoading, user } = useAuth();
 
   const [makes, setMakes] = useState<Make[]>([]);
-  const [models, setModels] = useState<CarModel[]>([]);
-  const [categories, setCategories] = useState<Category[]>([]);
+  const [selectedModelName, setSelectedModelName] = useState("");
   const [images, setImages] = useState<UploadedImage[]>([]);
   const [tags, setTags] = useState<Tag[]>([]);
   const [optionCategories, setOptionCategories] = useState<OptionCategory[]>([]);
@@ -70,8 +63,6 @@ export default function NewCarPage() {
     categoryId: "",
     makeId: "",
     modelId: "",
-    trim: "",
-    subTrim: "",
     year: new Date().getFullYear(),
     registrationDate: "",
     mileage: 0,
@@ -79,6 +70,7 @@ export default function NewCarPage() {
     transmission: "AUTOMATIC",
     drivetrain: "FWD",
     displacement: "",
+    seats: "",
     color: "",
     priceMin: "",
     priceMax: "",
@@ -96,23 +88,18 @@ export default function NewCarPage() {
     }
   }, [isAuthenticated, authLoading, user, router]);
 
-  // Fetch makes, categories, tags, and option categories
+  // Fetch makes, tags, and option categories
   useEffect(() => {
     async function fetchData() {
       try {
-        const [makesRes, categoriesRes, tagsRes, optionsRes] = await Promise.all([
+        const [makesRes, tagsRes, optionsRes] = await Promise.all([
           fetch("/api/makes"),
-          fetch("/api/categories"),
           fetch("/api/tags"),
           fetch("/api/option-categories"),
         ]);
         if (makesRes.ok) {
           const data = await makesRes.json();
           if (Array.isArray(data)) setMakes(data);
-        }
-        if (categoriesRes.ok) {
-          const data = await categoriesRes.json();
-          if (Array.isArray(data)) setCategories(data);
         }
         if (tagsRes.ok) {
           const data = await tagsRes.json();
@@ -128,26 +115,6 @@ export default function NewCarPage() {
     }
     fetchData();
   }, []);
-
-  // Fetch models when make changes
-  useEffect(() => {
-    const fetchModels = async () => {
-      if (!form.makeId) {
-        setModels([]);
-        return;
-      }
-      try {
-        const res = await fetch(`/api/makes/${form.makeId}/models`);
-        if (res.ok) {
-          const data = await res.json();
-          if (Array.isArray(data)) setModels(data);
-        }
-      } catch {
-        // ignore
-      }
-    };
-    fetchModels();
-  }, [form.makeId]);
 
   const updateForm = (key: string, value: string | number) => {
     setForm((prev) => ({ ...prev, [key]: value }));
@@ -166,9 +133,11 @@ export default function NewCarPage() {
         credentials: "include",
         body: JSON.stringify({
           ...form,
+          categoryId: form.categoryId || undefined,
           year: Number(form.year),
           mileage: Number(form.mileage),
           displacement: form.displacement ? Number(form.displacement) : undefined,
+          seats: form.seats ? Number(form.seats) : undefined,
           priceMin: Number(form.priceMin.replace(/,/g, "")),
           priceMax: Number(form.priceMax.replace(/,/g, "")),
         }),
@@ -176,7 +145,7 @@ export default function NewCarPage() {
 
       const data = await res.json();
       if (!res.ok) {
-        setError(data.message || "Failed to register car");
+        setError(data.message || t("Failed to register vehicle"));
         return;
       }
 
@@ -224,7 +193,7 @@ export default function NewCarPage() {
 
       router.push("/seller/cars");
     } catch {
-      setError("Network error. Please try again.");
+      setError(t("A network error occurred. Please try again."));
     } finally {
       setLoading(false);
     }
@@ -245,28 +214,80 @@ export default function NewCarPage() {
 
   return (
     <div className="bg-white">
-      <PageHeader title="Register Car" />
+      <PageHeader title={t("Register Vehicle")} />
 
       <form onSubmit={handleSubmit} className="px-4 pt-6 space-y-6">
         {/* Photos */}
         <section className="space-y-2">
           <h2 className="font-semibold text-gray-900">
-            Photos {images.length > 0 && `(${images.length})`}
+            {t("Photos")} {images.length > 0 && `(${images.length})`}
           </h2>
           <CarImageUploader images={images} onChange={setImages} />
         </section>
 
         {/* Basic Info */}
         <section className="space-y-4">
-          <h2 className="font-semibold text-gray-900">Basic Information</h2>
+          <h2 className="font-semibold text-gray-900">{t("Basic Info")}</h2>
 
           <div>
-            <label className={labelClass}>Title <span className="text-red-500">*</span></label>
+            <label className={labelClass}>{t("Title")} <span className="text-red-500">*</span></label>
             <input
               type="text"
               value={form.title}
               onChange={(e) => updateForm("title", e.target.value)}
-              placeholder="e.g. 2020 Hyundai Sonata 2.0T"
+              placeholder={t("e.g. 2020 Hyundai Sonata 2.0T")}
+              required
+              className={inputClass}
+            />
+          </div>
+
+          <div>
+            <label className={labelClass}>{t("Make · Model")} <span className="text-red-500">*</span></label>
+            <MakeModelPicker
+              makes={makes}
+              makeId={form.makeId}
+              modelId={form.modelId}
+              valueLabel={selectedModelName}
+              placeholder={t("Select a make, then a model")}
+              title={t("Select Make · Model")}
+              onSelect={(make, model) => {
+                updateForm("makeId", make.id);
+                updateForm("modelId", model.id);
+                updateForm("categoryId", model.categoryId || "");
+                setSelectedModelName(`${make.name} ${model.name}`);
+              }}
+            />
+          </div>
+
+          <div>
+            <label className={labelClass}>{t("Year")} <span className="text-red-500">*</span></label>
+            <input
+              type="month"
+              value={form.registrationDate}
+              onChange={(e) => {
+                const v = e.target.value; // "YYYY-MM"
+                updateForm("registrationDate", v);
+                if (v) updateForm("year", Number(v.slice(0, 4)));
+              }}
+              min="1990-01"
+              max="2030-12"
+              required
+              className={inputClass}
+            />
+          </div>
+        </section>
+
+        {/* Specs */}
+        <section className="space-y-4">
+          <h2 className="font-semibold text-gray-900">{t("Specs")}</h2>
+
+          <div>
+            <label className={labelClass}>{t("Mileage (km)")} <span className="text-red-500">*</span></label>
+            <input
+              type="number"
+              value={form.mileage || ""}
+              onChange={(e) => updateForm("mileage", e.target.value)}
+              placeholder="185000"
               required
               className={inputClass}
             />
@@ -274,103 +295,7 @@ export default function NewCarPage() {
 
           <div className="grid grid-cols-2 gap-3">
             <div>
-              <label className={labelClass}>Category <span className="text-red-500">*</span></label>
-              <BottomSheetSelect
-                value={form.categoryId}
-                onChange={(v) => updateForm("categoryId", v)}
-                options={categories.map((c) => ({ value: c.id, label: c.name }))}
-                placeholder="Select"
-                title="Select category"
-                required
-              />
-            </div>
-            <div>
-              <label className={labelClass}>Make <span className="text-red-500">*</span></label>
-              <BottomSheetSelect
-                value={form.makeId}
-                onChange={(v) => {
-                  updateForm("makeId", v);
-                  updateForm("modelId", "");
-                }}
-                options={makes.map((m) => ({ value: m.id, label: m.name }))}
-                placeholder="Select"
-                title="Select make"
-                searchable
-                required
-              />
-            </div>
-          </div>
-
-          <div className="grid grid-cols-2 gap-3">
-            <div>
-              <label className={labelClass}>Model <span className="text-red-500">*</span></label>
-              <BottomSheetSelect
-                value={form.modelId}
-                onChange={(v) => updateForm("modelId", v)}
-                options={models.map((m) => ({ value: m.id, label: m.name }))}
-                placeholder="Select"
-                title="Select model"
-                searchable
-                disabled={!form.makeId}
-                required
-              />
-            </div>
-            <div>
-              <label className={labelClass}>Year <span className="text-red-500">*</span></label>
-              <input
-                type="number"
-                value={form.year}
-                onChange={(e) => updateForm("year", e.target.value)}
-                min={1990}
-                max={2030}
-                required
-                className={inputClass}
-              />
-            </div>
-          </div>
-
-          <div className="grid grid-cols-2 gap-3">
-            <div>
-              <label className={labelClass}>Trim</label>
-              <input
-                type="text"
-                value={form.trim}
-                onChange={(e) => updateForm("trim", e.target.value)}
-                placeholder="e.g. 2.0T"
-                className={inputClass}
-              />
-            </div>
-            <div>
-              <label className={labelClass}>Sub Trim</label>
-              <input
-                type="text"
-                value={form.subTrim}
-                onChange={(e) => updateForm("subTrim", e.target.value)}
-                placeholder="e.g. Prestige"
-                className={inputClass}
-              />
-            </div>
-          </div>
-        </section>
-
-        {/* Specs */}
-        <section className="space-y-4">
-          <h2 className="font-semibold text-gray-900">Specifications</h2>
-
-          <div className="grid grid-cols-2 gap-3">
-            <div>
-              <label className={labelClass}>Mileage (km) <span className="text-red-500">*</span></label>
-              <input
-                type="number"
-                value={form.mileage || ""}
-                onChange={(e) => updateForm("mileage", e.target.value)}
-                placeholder="185000"
-                required
-                className={inputClass}
-              />
-            </div>
-            <div>
-              <label className={labelClass}>Displacement (cc)</label>
+              <label className={labelClass}>{t("Displacement (cc)")}</label>
               <input
                 type="number"
                 value={form.displacement}
@@ -379,11 +304,22 @@ export default function NewCarPage() {
                 className={inputClass}
               />
             </div>
+            <div>
+              <label className={labelClass}>{t("Seats")}</label>
+              <input
+                type="number"
+                value={form.seats}
+                onChange={(e) => updateForm("seats", e.target.value)}
+                placeholder="5"
+                min={1}
+                className={inputClass}
+              />
+            </div>
           </div>
 
           <div className="grid grid-cols-2 gap-3">
             <div>
-              <label className={labelClass}>Fuel Type <span className="text-red-500">*</span></label>
+              <label className={labelClass}>{t("Fuel")} <span className="text-red-500">*</span></label>
               <BottomSheetSelect
                 value={form.fuelType}
                 onChange={(v) => updateForm("fuelType", v)}
@@ -391,11 +327,11 @@ export default function NewCarPage() {
                   value: k,
                   label: v,
                 }))}
-                title="Select fuel type"
+                title={t("Select Fuel")}
               />
             </div>
             <div>
-              <label className={labelClass}>Transmission <span className="text-red-500">*</span></label>
+              <label className={labelClass}>{t("Transmission")} <span className="text-red-500">*</span></label>
               <BottomSheetSelect
                 value={form.transmission}
                 onChange={(v) => updateForm("transmission", v)}
@@ -403,53 +339,42 @@ export default function NewCarPage() {
                   value: k,
                   label: v,
                 }))}
-                title="Select transmission"
+                title={t("Select Transmission")}
               />
             </div>
           </div>
 
           <div className="grid grid-cols-2 gap-3">
             <div>
-              <label className={labelClass}>Drivetrain</label>
+              <label className={labelClass}>{t("Drivetrain")}</label>
               <BottomSheetSelect
                 value={form.drivetrain}
                 onChange={(v) => updateForm("drivetrain", v)}
                 options={[
-                  { value: "FWD", label: "FWD" },
-                  { value: "RWD", label: "RWD" },
-                  { value: "AWD", label: "AWD" },
+                  { value: "FWD", label: t("Front-wheel drive (FWD)") },
+                  { value: "RWD", label: t("Rear-wheel drive (RWD)") },
+                  { value: "AWD", label: t("All-wheel drive (AWD)") },
                 ]}
-                title="Select drivetrain"
+                title={t("Select Drivetrain")}
               />
             </div>
             <div>
-              <label className={labelClass}>Color</label>
+              <label className={labelClass}>{t("Color")}</label>
               <input
                 type="text"
                 value={form.color}
                 onChange={(e) => updateForm("color", e.target.value)}
-                placeholder="White"
+                placeholder={t("White")}
                 className={inputClass}
               />
             </div>
-          </div>
-
-          <div>
-            <label className={labelClass}>Registration Date</label>
-            <input
-              type="text"
-              value={form.registrationDate}
-              onChange={(e) => updateForm("registrationDate", e.target.value)}
-              placeholder="2020-03"
-              className={inputClass}
-            />
           </div>
         </section>
 
         {/* Tags */}
         {tags.length > 0 && (
           <section className="space-y-3">
-            <h2 className="font-semibold text-gray-900">Tags</h2>
+            <h2 className="font-semibold text-gray-900">{t("Tags")}</h2>
             <div className="flex flex-wrap gap-2">
               {tags.map((tag) => {
                 const selected = selectedTagIds.includes(tag.id);
@@ -479,51 +404,30 @@ export default function NewCarPage() {
         )}
 
         {/* Options */}
-        {optionCategories.length > 0 && (
-          <section className="space-y-4">
-            <h2 className="font-semibold text-gray-900">Options</h2>
-            {optionCategories.map((category) => (
-              <div key={category.id} className="space-y-2">
-                <h3 className="text-sm font-medium text-gray-500">
-                  {category.name}
-                </h3>
-                <div className="flex flex-wrap gap-2">
-                  {category.items.map((item) => {
-                    const selected = selectedOptionItemIds.includes(item.id);
-                    return (
-                      <button
-                        key={item.id}
-                        type="button"
-                        onClick={() =>
-                          setSelectedOptionItemIds((prev) =>
-                            selected
-                              ? prev.filter((id) => id !== item.id)
-                              : [...prev, item.id]
-                          )
-                        }
-                        className={`px-3 py-1.5 rounded-full text-sm font-medium border transition-colors ${
-                          selected
-                            ? "bg-main-500 text-white border-main-500"
-                            : "bg-white text-gray-600 border-gray-200 hover:border-main-300"
-                        }`}
-                      >
-                        {item.nameKo || item.name}
-                      </button>
-                    );
-                  })}
-                </div>
-              </div>
-            ))}
-          </section>
-        )}
+        <section className="space-y-3">
+          <h2 className="font-semibold text-gray-900">{t("Options")}</h2>
+          <BottomSheetMultiSelect
+            title={t("Select Options")}
+            placeholder={t("Select Options")}
+            values={selectedOptionItemIds}
+            onChange={setSelectedOptionItemIds}
+            groups={optionCategories.map((category) => ({
+              title: category.name,
+              options: category.items.map((item) => ({
+                value: item.id,
+                label: item.nameKo || item.name,
+              })),
+            }))}
+          />
+        </section>
 
         {/* Price & Description */}
         <section className="space-y-4">
-          <h2 className="font-semibold text-gray-900">Price & Description</h2>
+          <h2 className="font-semibold text-gray-900">{t("Price & Description")}</h2>
 
           <div className="grid grid-cols-2 gap-3">
             <div>
-              <label className={labelClass}>Min Price (KRW) <span className="text-red-500">*</span></label>
+              <label className={labelClass}>{t("Min price (KRW)")} <span className="text-red-500">*</span></label>
               <input
                 type="text"
                 inputMode="numeric"
@@ -538,7 +442,7 @@ export default function NewCarPage() {
               />
             </div>
             <div>
-              <label className={labelClass}>Max Price (KRW) <span className="text-red-500">*</span></label>
+              <label className={labelClass}>{t("Max price (KRW)")} <span className="text-red-500">*</span></label>
               <input
                 type="text"
                 inputMode="numeric"
@@ -555,11 +459,11 @@ export default function NewCarPage() {
           </div>
 
           <div>
-            <label className={labelClass}>Description</label>
+            <label className={labelClass}>{t("Description")}</label>
             <textarea
               value={form.description}
               onChange={(e) => updateForm("description", e.target.value)}
-              placeholder="Describe the vehicle condition, features, history..."
+              placeholder={t("Describe the vehicle condition, options, history, etc...")}
               rows={5}
               className={`${inputClass} resize-none`}
             />
@@ -575,10 +479,10 @@ export default function NewCarPage() {
         <div className="fixed bottom-0 left-1/2 -translate-x-1/2 w-full max-w-[390px] z-40 bg-white border-t border-gray-100 px-4 pt-3 pb-[max(12px,env(safe-area-inset-bottom))]">
           <button
             type="submit"
-            disabled={loading || !form.title || !form.categoryId || !form.makeId || !form.modelId || !form.priceMin || !form.priceMax}
+            disabled={loading || !form.title || !form.makeId || !form.modelId || !form.priceMin || !form.priceMax}
             className="w-full h-12 bg-main-500 text-white text-base font-semibold rounded-xl hover:bg-main-600 disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
           >
-            {loading ? "Registering..." : "Register Car"}
+            {loading ? t("Registering...") : t("Register Vehicle")}
           </button>
         </div>
       </form>

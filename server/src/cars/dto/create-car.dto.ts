@@ -11,8 +11,8 @@ import { FuelType, Transmission, Drivetrain, CarStatus } from "@prisma/client";
 
 export class CreateCarDto {
   @IsString()
-  @IsNotEmpty()
-  categoryId: string;
+  @IsOptional()
+  categoryId?: string;
 
   @IsString()
   @IsNotEmpty()
@@ -61,6 +61,12 @@ export class CreateCarDto {
   @IsInt()
   @IsOptional()
   displacement?: number;
+
+  @Type(() => Number)
+  @IsInt()
+  @Min(1)
+  @IsOptional()
+  seats?: number;
 
   @IsString()
   @IsOptional()

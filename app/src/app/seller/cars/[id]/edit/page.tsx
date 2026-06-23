@@ -2,10 +2,13 @@
 
 import { useState, useEffect, use } from "react";
 import { useRouter } from "next/navigation";
+import { useTranslation } from "react-i18next";
 import { useAuth } from "@/hooks/useAuth";
 import PageHeader from "@/components/PageHeader";
 import CarImageUploader from "@/components/CarImageUploader";
 import BottomSheetSelect from "@/components/BottomSheetSelect";
+import BottomSheetMultiSelect from "@/components/BottomSheetMultiSelect";
+import MakeModelPicker from "@/components/MakeModelPicker";
 import { FUEL_TYPE_LABELS, TRANSMISSION_LABELS } from "@/lib/constants";
 
 interface UploadedImage {
@@ -13,6 +16,11 @@ interface UploadedImage {
   url: string;
   file?: File;
   isNew?: boolean;
+}
+
+interface Make {
+  id: string;
+  name: string;
 }
 
 interface Tag {
@@ -41,6 +49,7 @@ export default function EditCarPage({
 }) {
   const { id } = use(params);
   const router = useRouter();
+  const { t } = useTranslation();
   const { isAuthenticated, isLoading: authLoading, user } = useAuth();
 
   const [loading, setLoading] = useState(true);
@@ -52,14 +61,14 @@ export default function EditCarPage({
   const [optionCategories, setOptionCategories] = useState<OptionCategory[]>([]);
   const [selectedTagIds, setSelectedTagIds] = useState<string[]>([]);
   const [selectedOptionItemIds, setSelectedOptionItemIds] = useState<string[]>([]);
+  const [makes, setMakes] = useState<Make[]>([]);
+  const [selectedModelName, setSelectedModelName] = useState("");
 
   const [form, setForm] = useState({
     title: "",
     categoryId: "",
     makeId: "",
     modelId: "",
-    trim: "",
-    subTrim: "",
     year: new Date().getFullYear(),
     registrationDate: "",
     mileage: 0,
@@ -67,6 +76,7 @@ export default function EditCarPage({
     transmission: "AUTOMATIC",
     drivetrain: "FWD",
     displacement: "",
+    seats: "",
     color: "",
     priceMin: "",
     priceMax: "",
@@ -90,10 +100,11 @@ export default function EditCarPage({
     if (!isAuthenticated) return;
     async function fetchCar() {
       try {
-        const [carRes, tagsRes, optionsRes] = await Promise.all([
+        const [carRes, tagsRes, optionsRes, makesRes] = await Promise.all([
           fetch(`/api/cars/${id}`),
           fetch("/api/tags"),
           fetch("/api/option-categories"),
+          fetch("/api/makes"),
         ]);
 
         if (tagsRes.ok) {
@@ -103,6 +114,10 @@ export default function EditCarPage({
         if (optionsRes.ok) {
           const data = await optionsRes.json();
           if (Array.isArray(data)) setOptionCategories(data);
+        }
+        if (makesRes.ok) {
+          const data = await makesRes.json();
+          if (Array.isArray(data)) setMakes(data);
         }
 
         if (!carRes.ok) {
@@ -115,21 +130,28 @@ export default function EditCarPage({
           categoryId: car.categoryId || "",
           makeId: car.makeId || "",
           modelId: car.modelId || "",
-          trim: car.trim || "",
-          subTrim: car.subTrim || "",
           year: car.year || new Date().getFullYear(),
-          registrationDate: car.registrationDate || "",
+          registrationDate:
+            car.registrationDate || (car.year ? `${car.year}-01` : ""),
           mileage: car.mileage || 0,
           fuelType: car.fuelType || "GASOLINE",
           transmission: car.transmission || "AUTOMATIC",
           drivetrain: car.drivetrain || "FWD",
           displacement: car.displacement?.toString() || "",
+          seats: car.seats?.toString() || "",
           color: car.color || "",
           priceMin: car.priceMin ? Number(car.priceMin).toLocaleString("ko-KR") : "",
           priceMax: car.priceMax ? Number(car.priceMax).toLocaleString("ko-KR") : "",
           description: car.description || "",
           status: car.status || "ACTIVE",
         });
+
+        // 현재 제조사·모델 라벨
+        const makeName = car.make?.name || "";
+        const modelName = car.carModel?.name || "";
+        setSelectedModelName(
+          [makeName, modelName].filter(Boolean).join(" ")
+        );
 
         // Pre-select existing tags & options
         if (car.tags) {
@@ -177,11 +199,13 @@ export default function EditCarPage({
         credentials: "include",
         body: JSON.stringify({
           ...form,
+          categoryId: form.categoryId || undefined,
           year: Number(form.year),
           mileage: Number(form.mileage),
           displacement: form.displacement
             ? Number(form.displacement)
             : undefined,
+          seats: form.seats ? Number(form.seats) : undefined,
           priceMin: Number(form.priceMin.replace(/,/g, "")),
           priceMax: Number(form.priceMax.replace(/,/g, "")),
         }),
@@ -189,7 +213,7 @@ export default function EditCarPage({
 
       if (!res.ok) {
         const data = await res.json();
-        setError(data.message || "Failed to update car");
+        setError(data.message || t("Failed to update vehicle"));
         return;
       }
 
@@ -240,7 +264,7 @@ export default function EditCarPage({
 
       router.push("/seller/cars");
     } catch {
-      setError("Network error. Please try again.");
+      setError(t("A network error occurred. Please try again."));
     } finally {
       setSaving(false);
     }
@@ -262,7 +286,7 @@ export default function EditCarPage({
 
   return (
     <div className="bg-white">
-      <PageHeader title="Edit Car" />
+      <PageHeader title={t("Edit Vehicle")} />
 
       <form
         onSubmit={handleSubmit}
@@ -271,17 +295,17 @@ export default function EditCarPage({
         {/* Photos */}
         <section className="space-y-2">
           <h2 className="font-semibold text-gray-900">
-            Photos {images.length > 0 && `(${images.length})`}
+            {t("Photos")} {images.length > 0 && `(${images.length})`}
           </h2>
           <CarImageUploader images={images} onChange={setImages} />
         </section>
 
         {/* Basic Info */}
         <section className="space-y-4">
-          <h2 className="font-semibold text-gray-900">Basic Information</h2>
+          <h2 className="font-semibold text-gray-900">{t("Basic Info")}</h2>
 
           <div>
-            <label className={labelClass}>Title <span className="text-red-500">*</span></label>
+            <label className={labelClass}>{t("Title")} <span className="text-red-500">*</span></label>
             <input
               type="text"
               value={form.title}
@@ -291,72 +315,60 @@ export default function EditCarPage({
             />
           </div>
 
-          <div className="grid grid-cols-2 gap-3">
-            <div>
-              <label className={labelClass}>Year <span className="text-red-500">*</span></label>
-              <input
-                type="number"
-                value={form.year}
-                onChange={(e) => updateForm("year", e.target.value)}
-                min={1990}
-                max={2030}
-                required
-                className={inputClass}
-              />
-            </div>
-            <div>
-              <label className={labelClass}>Registration Date</label>
-              <input
-                type="text"
-                value={form.registrationDate}
-                onChange={(e) =>
-                  updateForm("registrationDate", e.target.value)
-                }
-                placeholder="2020-03"
-                className={inputClass}
-              />
-            </div>
+          <div>
+            <label className={labelClass}>{t("Make · Model")} <span className="text-red-500">*</span></label>
+            <MakeModelPicker
+              makes={makes}
+              makeId={form.makeId}
+              modelId={form.modelId}
+              valueLabel={selectedModelName}
+              placeholder={t("Select a make, then a model")}
+              title={t("Select Make · Model")}
+              onSelect={(make, model) => {
+                updateForm("makeId", make.id);
+                updateForm("modelId", model.id);
+                updateForm("categoryId", model.categoryId || "");
+                setSelectedModelName(`${make.name} ${model.name}`);
+              }}
+            />
           </div>
 
-          <div className="grid grid-cols-2 gap-3">
-            <div>
-              <label className={labelClass}>Trim</label>
-              <input
-                type="text"
-                value={form.trim}
-                onChange={(e) => updateForm("trim", e.target.value)}
-                className={inputClass}
-              />
-            </div>
-            <div>
-              <label className={labelClass}>Sub Trim</label>
-              <input
-                type="text"
-                value={form.subTrim}
-                onChange={(e) => updateForm("subTrim", e.target.value)}
-                className={inputClass}
-              />
-            </div>
+          <div>
+            <label className={labelClass}>{t("Year")} <span className="text-red-500">*</span></label>
+            <input
+              type="month"
+              value={form.registrationDate}
+              onChange={(e) => {
+                const v = e.target.value; // "YYYY-MM"
+                updateForm("registrationDate", v);
+                if (v) updateForm("year", Number(v.slice(0, 4)));
+              }}
+              min="1990-01"
+              max="2030-12"
+              required
+              className={inputClass}
+            />
           </div>
         </section>
 
         {/* Specs */}
         <section className="space-y-4">
-          <h2 className="font-semibold text-gray-900">Specifications</h2>
+          <h2 className="font-semibold text-gray-900">{t("Specs")}</h2>
+
+          <div>
+            <label className={labelClass}>{t("Mileage (km)")} <span className="text-red-500">*</span></label>
+            <input
+              type="number"
+              value={form.mileage || ""}
+              onChange={(e) => updateForm("mileage", e.target.value)}
+              required
+              className={inputClass}
+            />
+          </div>
 
           <div className="grid grid-cols-2 gap-3">
             <div>
-              <label className={labelClass}>Mileage (km) <span className="text-red-500">*</span></label>
-              <input
-                type="number"
-                value={form.mileage || ""}
-                onChange={(e) => updateForm("mileage", e.target.value)}
-                required
-                className={inputClass}
-              />
-            </div>
-            <div>
-              <label className={labelClass}>Displacement (cc)</label>
+              <label className={labelClass}>{t("Displacement (cc)")}</label>
               <input
                 type="number"
                 value={form.displacement}
@@ -364,11 +376,22 @@ export default function EditCarPage({
                 className={inputClass}
               />
             </div>
+            <div>
+              <label className={labelClass}>{t("Seats")}</label>
+              <input
+                type="number"
+                value={form.seats}
+                onChange={(e) => updateForm("seats", e.target.value)}
+                placeholder="5"
+                min={1}
+                className={inputClass}
+              />
+            </div>
           </div>
 
           <div className="grid grid-cols-2 gap-3">
             <div>
-              <label className={labelClass}>Fuel Type <span className="text-red-500">*</span></label>
+              <label className={labelClass}>{t("Fuel")} <span className="text-red-500">*</span></label>
               <BottomSheetSelect
                 value={form.fuelType}
                 onChange={(v) => updateForm("fuelType", v)}
@@ -376,11 +399,11 @@ export default function EditCarPage({
                   value: k,
                   label: v,
                 }))}
-                title="Select fuel type"
+                title={t("Select Fuel")}
               />
             </div>
             <div>
-              <label className={labelClass}>Transmission <span className="text-red-500">*</span></label>
+              <label className={labelClass}>{t("Transmission")} <span className="text-red-500">*</span></label>
               <BottomSheetSelect
                 value={form.transmission}
                 onChange={(v) => updateForm("transmission", v)}
@@ -388,27 +411,27 @@ export default function EditCarPage({
                   value: k,
                   label: v,
                 }))}
-                title="Select transmission"
+                title={t("Select Transmission")}
               />
             </div>
           </div>
 
           <div className="grid grid-cols-2 gap-3">
             <div>
-              <label className={labelClass}>Drivetrain</label>
+              <label className={labelClass}>{t("Drivetrain")}</label>
               <BottomSheetSelect
                 value={form.drivetrain}
                 onChange={(v) => updateForm("drivetrain", v)}
                 options={[
-                  { value: "FWD", label: "FWD" },
-                  { value: "RWD", label: "RWD" },
-                  { value: "AWD", label: "AWD" },
+                  { value: "FWD", label: t("Front-wheel drive (FWD)") },
+                  { value: "RWD", label: t("Rear-wheel drive (RWD)") },
+                  { value: "AWD", label: t("All-wheel drive (AWD)") },
                 ]}
-                title="Select drivetrain"
+                title={t("Select Drivetrain")}
               />
             </div>
             <div>
-              <label className={labelClass}>Color</label>
+              <label className={labelClass}>{t("Color")}</label>
               <input
                 type="text"
                 value={form.color}
@@ -422,7 +445,7 @@ export default function EditCarPage({
         {/* Tags */}
         {tags.length > 0 && (
           <section className="space-y-3">
-            <h2 className="font-semibold text-gray-900">Tags</h2>
+            <h2 className="font-semibold text-gray-900">{t("Tags")}</h2>
             <div className="flex flex-wrap gap-2">
               {tags.map((tag) => {
                 const selected = selectedTagIds.includes(tag.id);
@@ -452,51 +475,30 @@ export default function EditCarPage({
         )}
 
         {/* Options */}
-        {optionCategories.length > 0 && (
-          <section className="space-y-4">
-            <h2 className="font-semibold text-gray-900">Options</h2>
-            {optionCategories.map((category) => (
-              <div key={category.id} className="space-y-2">
-                <h3 className="text-sm font-medium text-gray-500">
-                  {category.name}
-                </h3>
-                <div className="flex flex-wrap gap-2">
-                  {category.items.map((item) => {
-                    const selected = selectedOptionItemIds.includes(item.id);
-                    return (
-                      <button
-                        key={item.id}
-                        type="button"
-                        onClick={() =>
-                          setSelectedOptionItemIds((prev) =>
-                            selected
-                              ? prev.filter((oid) => oid !== item.id)
-                              : [...prev, item.id]
-                          )
-                        }
-                        className={`px-3 py-1.5 rounded-full text-sm font-medium border transition-colors ${
-                          selected
-                            ? "bg-main-500 text-white border-main-500"
-                            : "bg-white text-gray-600 border-gray-200 hover:border-main-300"
-                        }`}
-                      >
-                        {item.nameKo || item.name}
-                      </button>
-                    );
-                  })}
-                </div>
-              </div>
-            ))}
-          </section>
-        )}
+        <section className="space-y-3">
+          <h2 className="font-semibold text-gray-900">{t("Options")}</h2>
+          <BottomSheetMultiSelect
+            title={t("Select Options")}
+            placeholder={t("Select Options")}
+            values={selectedOptionItemIds}
+            onChange={setSelectedOptionItemIds}
+            groups={optionCategories.map((category) => ({
+              title: category.name,
+              options: category.items.map((item) => ({
+                value: item.id,
+                label: item.nameKo || item.name,
+              })),
+            }))}
+          />
+        </section>
 
         {/* Price & Description */}
         <section className="space-y-4">
-          <h2 className="font-semibold text-gray-900">Price & Description</h2>
+          <h2 className="font-semibold text-gray-900">{t("Price & Description")}</h2>
 
           <div className="grid grid-cols-2 gap-3">
             <div>
-              <label className={labelClass}>Min Price (KRW) <span className="text-red-500">*</span></label>
+              <label className={labelClass}>{t("Min price (KRW)")} <span className="text-red-500">*</span></label>
               <input
                 type="text"
                 inputMode="numeric"
@@ -510,7 +512,7 @@ export default function EditCarPage({
               />
             </div>
             <div>
-              <label className={labelClass}>Max Price (KRW) <span className="text-red-500">*</span></label>
+              <label className={labelClass}>{t("Max price (KRW)")} <span className="text-red-500">*</span></label>
               <input
                 type="text"
                 inputMode="numeric"
@@ -526,7 +528,7 @@ export default function EditCarPage({
           </div>
 
           <div>
-            <label className={labelClass}>Description</label>
+            <label className={labelClass}>{t("Description")}</label>
             <textarea
               value={form.description}
               onChange={(e) => updateForm("description", e.target.value)}
@@ -548,7 +550,7 @@ export default function EditCarPage({
             disabled={saving || !form.title || !form.priceMin || !form.priceMax}
             className="w-full h-12 bg-main-500 text-white text-base font-semibold rounded-xl hover:bg-main-600 disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
           >
-            {saving ? "Saving..." : "Save Changes"}
+            {saving ? t("Saving...") : t("Save Changes")}
           </button>
         </div>
       </form>

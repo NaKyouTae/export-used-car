@@ -81,6 +81,7 @@ export class AdminService {
     const carStatusCounts: Record<string, number> = {
       DRAFT: 0,
       ACTIVE: 0,
+      DEALING: 0,
       RESERVED: 0,
       SOLD: 0,
     };

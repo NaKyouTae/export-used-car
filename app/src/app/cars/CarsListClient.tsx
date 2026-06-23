@@ -2,9 +2,9 @@
 
 import { useState, useEffect, useCallback, useRef } from "react";
 import { useRouter, useSearchParams } from "next/navigation";
+import { useTranslation } from "react-i18next";
 import CarCard from "@/components/CarCard";
 import PageHeader from "@/components/PageHeader";
-import BottomSheetSelect from "@/components/BottomSheetSelect";
 
 interface Car {
   id: string;
@@ -24,63 +24,49 @@ interface Car {
 interface FilterState {
   categoryId: string;
   makeId: string;
+  modelId: string;
   fuelType: string;
-  transmission: string;
+  yearMin: string;
+  yearMax: string;
+  mileageMax: string;
   sort: string;
   search: string;
-}
-
-interface Category {
-  id: string;
-  name: string;
-}
-
-interface Make {
-  id: string;
-  name: string;
 }
 
 export default function CarsListClient() {
   const router = useRouter();
   const searchParams = useSearchParams();
+  const { t } = useTranslation();
 
   const [cars, setCars] = useState<Car[]>([]);
   const [loading, setLoading] = useState(true);
   const [hasMore, setHasMore] = useState(true);
   const [cursor, setCursor] = useState<string | null>(null);
-  const [showFilters, setShowFilters] = useState(false);
   const [fetchError, setFetchError] = useState(false);
   const observerRef = useRef<HTMLDivElement>(null);
-  const [categories, setCategories] = useState<Category[]>([]);
-  const [makes, setMakes] = useState<Make[]>([]);
 
   const [filters, setFilters] = useState<FilterState>({
     categoryId: searchParams.get("categoryId") || "",
     makeId: searchParams.get("makeId") || "",
+    modelId: searchParams.get("modelId") || "",
     fuelType: searchParams.get("fuelType") || "",
-    transmission: searchParams.get("transmission") || "",
+    yearMin: searchParams.get("yearMin") || "",
+    yearMax: searchParams.get("yearMax") || "",
+    mileageMax: searchParams.get("mileageMax") || "",
     sort: searchParams.get("sort") || "newest",
     search: searchParams.get("search") || "",
   });
-
-  useEffect(() => {
-    window.dispatchEvent(
-      new CustomEvent("app:bottom-sheet", { detail: { open: showFilters } })
-    );
-    return () => {
-      window.dispatchEvent(
-        new CustomEvent("app:bottom-sheet", { detail: { open: false } })
-      );
-    };
-  }, [showFilters]);
 
   const buildQueryString = useCallback(
     (cursorVal?: string | null) => {
       const params = new URLSearchParams();
       if (filters.categoryId) params.set("categoryId", filters.categoryId);
       if (filters.makeId) params.set("makeId", filters.makeId);
+      if (filters.modelId) params.set("modelId", filters.modelId);
       if (filters.fuelType) params.set("fuelType", filters.fuelType);
-      if (filters.transmission) params.set("transmission", filters.transmission);
+      if (filters.yearMin) params.set("yearMin", filters.yearMin);
+      if (filters.yearMax) params.set("yearMax", filters.yearMax);
+      if (filters.mileageMax) params.set("mileageMax", filters.mileageMax);
       if (filters.sort) params.set("sort", filters.sort);
       if (filters.search) params.set("search", filters.search);
       if (cursorVal) params.set("cursor", cursorVal);
@@ -121,23 +107,12 @@ export default function CarsListClient() {
     [buildQueryString, cursor]
   );
 
-  // Fetch categories and makes
-  useEffect(() => {
-    fetch("/api/categories")
-      .then((res) => res.json())
-      .then((data) => setCategories(Array.isArray(data) ? data : []))
-      .catch(() => setCategories([]));
-    fetch("/api/makes")
-      .then((res) => res.json())
-      .then((data) => setMakes(Array.isArray(data) ? data : []))
-      .catch(() => setMakes([]));
-  }, []);
-
   const activeFilterCount = [
     filters.categoryId,
     filters.makeId,
     filters.fuelType,
-    filters.transmission,
+    filters.yearMin || filters.yearMax,
+    filters.mileageMax,
   ].filter(Boolean).length;
 
   // Initial fetch and filter changes
@@ -196,21 +171,24 @@ export default function CarsListClient() {
   };
 
   const sortOptions = [
-    { value: "newest", label: "Newest" },
-    { value: "price_asc", label: "Price: Low to High" },
-    { value: "price_desc", label: "Price: High to Low" },
-    { value: "mileage_asc", label: "Mileage: Low to High" },
-    { value: "year_desc", label: "Year: Newest" },
+    { value: "newest", label: t("Newest") },
+    { value: "price_asc", label: t("Price: Low to High") },
+    { value: "price_desc", label: t("Price: High to Low") },
+    { value: "mileage_asc", label: t("Mileage: Low to High") },
+    { value: "year_desc", label: t("Year: Newest") },
   ];
 
   return (
     <div className="bg-white">
       <PageHeader
-        title="Cars"
+        title={t("Cars")}
         showBack={false}
         rightAction={
           <button
-            onClick={() => setShowFilters(!showFilters)}
+            onClick={() => {
+              const qs = searchParams.toString();
+              router.push(qs ? `/cars/filter?${qs}` : "/cars/filter");
+            }}
             className="relative p-1 text-gray-600"
           >
             <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -225,145 +203,6 @@ export default function CarsListClient() {
         }
       />
 
-      {/* Bottom Sheet Overlay */}
-      <div
-        className={`fixed inset-0 max-w-[390px] mx-auto bg-black/40 z-50 transition-opacity duration-300 ${
-          showFilters ? "opacity-100" : "opacity-0 pointer-events-none"
-        }`}
-        onClick={() => setShowFilters(false)}
-      />
-
-      {/* Bottom Sheet */}
-      <div
-        className={`fixed bottom-0 left-0 right-0 max-w-[390px] mx-auto z-50 bg-white rounded-t-2xl transform transition-transform duration-300 ease-out ${
-          showFilters ? "translate-y-0" : "translate-y-full"
-        }`}
-        style={{ maxHeight: "85vh" }}
-      >
-        {/* Handle bar */}
-        <div className="flex justify-center pt-3 pb-1">
-          <div className="w-10 h-1 bg-gray-300 rounded-full" />
-        </div>
-
-        <div
-          className="px-4 overflow-y-auto"
-          style={{
-            maxHeight: "calc(85vh - 20px)",
-            paddingBottom: "calc(1.5rem + env(safe-area-inset-bottom))",
-          }}
-        >
-          <div className="flex items-center justify-between mb-4">
-            <h2 className="text-base font-semibold text-gray-900">Filters</h2>
-            <button
-              onClick={() => setShowFilters(false)}
-              className="p-1 text-gray-400 hover:text-gray-600"
-            >
-              <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
-              </svg>
-            </button>
-          </div>
-
-          <div className="space-y-3">
-            {/* Category */}
-            <div>
-              <label className="block text-xs font-medium text-gray-500 mb-1">Category</label>
-              <BottomSheetSelect
-                value={filters.categoryId}
-                onChange={(v) => updateFilter("categoryId", v)}
-                options={[
-                  { value: "", label: "All Categories" },
-                  ...categories.map((cat) => ({ value: cat.id, label: cat.name })),
-                ]}
-                placeholder="All Categories"
-                title="Select category"
-              />
-            </div>
-
-            {/* Make */}
-            <div>
-              <label className="block text-xs font-medium text-gray-500 mb-1">Make</label>
-              <BottomSheetSelect
-                value={filters.makeId}
-                onChange={(v) => updateFilter("makeId", v)}
-                options={[
-                  { value: "", label: "All Makes" },
-                  ...makes.map((m) => ({ value: m.id, label: m.name })),
-                ]}
-                placeholder="All Makes"
-                title="Select make"
-                searchable
-              />
-            </div>
-
-            {/* Fuel & Transmission */}
-            <div className="grid grid-cols-2 gap-3">
-              <div>
-                <label className="block text-xs font-medium text-gray-500 mb-1">Fuel Type</label>
-                <BottomSheetSelect
-                  value={filters.fuelType}
-                  onChange={(v) => updateFilter("fuelType", v)}
-                  options={[
-                    { value: "", label: "All" },
-                    { value: "GASOLINE", label: "Gasoline" },
-                    { value: "DIESEL", label: "Diesel" },
-                    { value: "HYBRID", label: "Hybrid" },
-                    { value: "ELECTRIC", label: "Electric" },
-                    { value: "LPG", label: "LPG" },
-                  ]}
-                  placeholder="All"
-                  title="Select fuel type"
-                />
-              </div>
-              <div>
-                <label className="block text-xs font-medium text-gray-500 mb-1">Transmission</label>
-                <BottomSheetSelect
-                  value={filters.transmission}
-                  onChange={(v) => updateFilter("transmission", v)}
-                  options={[
-                    { value: "", label: "All" },
-                    { value: "AUTOMATIC", label: "Automatic" },
-                    { value: "MANUAL", label: "Manual" },
-                  ]}
-                  placeholder="All"
-                  title="Select transmission"
-                />
-              </div>
-            </div>
-          </div>
-
-          {/* Actions */}
-          <div className="flex items-center gap-3 mt-5">
-            <button
-              onClick={() => {
-                setFilters({
-                  categoryId: "",
-                  makeId: "",
-                  fuelType: "",
-                  transmission: "",
-                  sort: filters.sort,
-                  search: filters.search,
-                });
-                const params = new URLSearchParams();
-                if (filters.sort && filters.sort !== "newest") params.set("sort", filters.sort);
-                if (filters.search) params.set("search", filters.search);
-                const qs = params.toString();
-                router.replace(qs ? `/cars?${qs}` : "/cars", { scroll: false });
-              }}
-              className="flex-1 py-2.5 text-sm font-medium text-gray-600 border border-gray-200 rounded-lg"
-            >
-              Reset
-            </button>
-            <button
-              onClick={() => setShowFilters(false)}
-              className="flex-1 py-2.5 text-sm font-medium text-white bg-gray-900 rounded-lg"
-            >
-              Apply
-            </button>
-          </div>
-        </div>
-      </div>
-
       <div className="">
         {/* Search Bar */}
         <div className="px-4 pt-3">
@@ -375,7 +214,7 @@ export default function CarsListClient() {
               type="text"
               value={filters.search}
               onChange={(e) => updateFilter("search", e.target.value)}
-              placeholder="Search cars..."
+              placeholder={t("Search cars...")}
               className="w-full pl-9 pr-4 py-2.5 bg-gray-50 border border-gray-200 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-main-500 focus:border-transparent"
             />
           </div>
@@ -402,13 +241,13 @@ export default function CarsListClient() {
         <div className="px-4">
           {fetchError && !loading ? (
             <div className="text-center py-20 text-gray-400">
-              <p className="text-sm">Failed to load cars</p>
-              <p className="text-xs mt-1 mb-4">Please check your connection and try again</p>
+              <p className="text-sm">{t("Failed to load cars")}</p>
+              <p className="text-xs mt-1 mb-4">{t("Please check your connection and try again")}</p>
               <button
                 onClick={() => window.location.reload()}
                 className="px-6 py-2 bg-main-500 text-white text-sm font-semibold rounded-xl hover:bg-main-600 transition-colors"
               >
-                Refresh
+                {t("Refresh")}
               </button>
             </div>
           ) : cars.length > 0 ? (
@@ -419,8 +258,8 @@ export default function CarsListClient() {
             </div>
           ) : !loading ? (
             <div className="text-center py-20 text-gray-400">
-              <p className="text-sm">No cars found</p>
-              <p className="text-xs mt-1">Try adjusting your filters</p>
+              <p className="text-sm">{t("No cars found")}</p>
+              <p className="text-xs mt-1">{t("Try adjusting your filters")}</p>
             </div>
           ) : null}
 

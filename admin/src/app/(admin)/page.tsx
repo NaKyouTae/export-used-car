@@ -26,6 +26,17 @@ interface DashboardData {
   }>;
 }
 
+const STATUS_LABELS: Record<string, string> = {
+  PENDING: '승인대기',
+  ACTIVE: '활성',
+  SUSPENDED: '정지',
+  DRAFT: '임시저장',
+  DEALING: '거래중',
+  SOLD: '거래완료',
+  HIDDEN: '숨김',
+  RESERVED: '예약중',
+};
+
 function StatusBadge({ status }: { status: string }) {
   const cls =
     status === 'PENDING' ? 'badge-pending'
@@ -33,9 +44,11 @@ function StatusBadge({ status }: { status: string }) {
     : status === 'SUSPENDED' ? 'badge-suspended'
     : status === 'DRAFT' ? 'badge-draft'
     : status === 'SOLD' ? 'badge-sold'
+    : status === 'DEALING' ? 'badge-sold'
+    : status === 'RESERVED' ? 'badge-sold'
     : status === 'HIDDEN' ? 'badge-hidden'
     : 'badge-draft';
-  return <span className={cls}>{status}</span>;
+  return <span className={cls}>{STATUS_LABELS[status] ?? status}</span>;
 }
 
 function formatPrice(n?: number | string) {
@@ -52,35 +65,35 @@ export default function DashboardPage() {
     fetch('/api/dashboard')
       .then((r) => r.json())
       .then(setData)
-      .catch(() => alert('Failed to load dashboard'))
+      .catch(() => alert('대시보드를 불러오지 못했습니다'))
       .finally(() => setLoading(false));
   }, []);
 
-  if (loading) return <div className="text-gray-500">Loading...</div>;
+  if (loading) return <div className="text-gray-500">불러오는 중...</div>;
 
   return (
     <div className="space-y-6">
       {/* Stat cards */}
       <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
-        <StatCard label="Total Cars" value={data.cars?.total ?? 0} sub={data.cars?.byStatus} />
-        <StatCard label="Total Users" value={data.users?.total ?? 0} />
-        <StatCard label="Total Sellers" value={data.sellers?.total ?? 0} sub={data.sellers?.byStatus} />
-        <StatCard label="Total Buyers" value={data.buyers?.total ?? 0} />
+        <StatCard label="전체 차량" value={data.cars?.total ?? 0} sub={data.cars?.byStatus} />
+        <StatCard label="전체 사용자" value={data.users?.total ?? 0} />
+        <StatCard label="전체 판매자" value={data.sellers?.total ?? 0} sub={data.sellers?.byStatus} />
+        <StatCard label="전체 구매자" value={data.buyers?.total ?? 0} />
       </div>
 
       {/* Recent sellers */}
       <div className="bg-white rounded-xl shadow-sm overflow-hidden">
         <div className="px-6 py-4 border-b border-gray-100">
-          <h3 className="font-semibold text-gray-800">Recent Sellers</h3>
+          <h3 className="font-semibold text-gray-800">최근 판매자</h3>
         </div>
         <table className="admin-table">
           <thead>
             <tr>
-              <th>Company</th>
-              <th>Contact</th>
-              <th>Email</th>
-              <th>Status</th>
-              <th>Created</th>
+              <th>회사명</th>
+              <th>담당자</th>
+              <th>이메일</th>
+              <th>상태</th>
+              <th>등록일</th>
             </tr>
           </thead>
           <tbody>
@@ -94,7 +107,7 @@ export default function DashboardPage() {
               </tr>
             ))}
             {(!data.recentSellers || data.recentSellers.length === 0) && (
-              <tr><td colSpan={5} className="text-center text-gray-400 py-8">No sellers yet</td></tr>
+              <tr><td colSpan={5} className="text-center text-gray-400 py-8">판매자가 없습니다</td></tr>
             )}
           </tbody>
         </table>
@@ -103,16 +116,16 @@ export default function DashboardPage() {
       {/* Recent cars */}
       <div className="bg-white rounded-xl shadow-sm overflow-hidden">
         <div className="px-6 py-4 border-b border-gray-100">
-          <h3 className="font-semibold text-gray-800">Recent Cars</h3>
+          <h3 className="font-semibold text-gray-800">최근 차량</h3>
         </div>
         <table className="admin-table">
           <thead>
             <tr>
-              <th>Title</th>
-              <th>Seller</th>
-              <th>Price</th>
-              <th>Status</th>
-              <th>Created</th>
+              <th>제목</th>
+              <th>판매자</th>
+              <th>가격</th>
+              <th>상태</th>
+              <th>등록일</th>
             </tr>
           </thead>
           <tbody>
@@ -126,7 +139,7 @@ export default function DashboardPage() {
               </tr>
             ))}
             {(!data.recentCars || data.recentCars.length === 0) && (
-              <tr><td colSpan={5} className="text-center text-gray-400 py-8">No cars yet</td></tr>
+              <tr><td colSpan={5} className="text-center text-gray-400 py-8">차량이 없습니다</td></tr>
             )}
           </tbody>
         </table>
@@ -152,7 +165,7 @@ function StatCard({
         <div className="flex flex-wrap gap-2 mt-3">
           {Object.entries(sub).map(([k, v]) => (
             <span key={k} className="text-xs text-gray-500">
-              {k}: {v}
+              {STATUS_LABELS[k] ?? k}: {v}
             </span>
           ))}
         </div>
