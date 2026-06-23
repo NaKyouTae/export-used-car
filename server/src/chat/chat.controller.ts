@@ -90,4 +90,13 @@ export class ChatController {
       body.content,
     );
   }
+
+  @Post("rooms/:roomId/messages/:messageId/translate")
+  translateMessage(
+    @Param("roomId") roomId: string,
+    @Param("messageId") messageId: string,
+    @CurrentUser() user: any,
+  ) {
+    return this.chatService.translateMessage(roomId, messageId, user.id);
+  }
 }

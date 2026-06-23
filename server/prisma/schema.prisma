@@ -158,6 +158,7 @@ model Car {
   bumpedAt         DateTime     @default(now()) // 최신순 정렬 기준 (등록 시 createdAt과 동일, 끌어올리기 시 갱신)
   createdAt        DateTime     @default(now())
   updatedAt        DateTime     @updatedAt
+  deletedAt        DateTime? // soft delete 시각 (null이면 삭제되지 않음)
 
   seller     User            @relation(fields: [sellerId], references: [id])
   category   Category?       @relation(fields: [categoryId], references: [id])
@@ -205,6 +206,7 @@ enum CarStatus {
   RESERVED
   SOLD
   HIDDEN
+  DELETED
 }
 
 // ── 차량 옵션 ──
@@ -364,6 +366,11 @@ model ChatMessage {
   content    String
   isRead     Boolean    @default(false)
   createdAt  DateTime   @default(now())
+
+  // ── 번역 캐시 (사용자가 "번역" 버튼을 누른 시점에 1회 채워짐) ──
+  sourceLang        String? // 자동 감지된 원문 언어 (ISO 코드, 예: ru/en/ko)
+  translatedContent String? // 번역된 문장 (translatedLang 기준)
+  translatedLang    String? // 번역 대상 언어 = 번역을 요청한 사용자의 언어
 
   room ChatRoom @relation(fields: [roomId], references: [id], onDelete: Cascade)
 

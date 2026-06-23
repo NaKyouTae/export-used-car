@@ -141,8 +141,8 @@ export class CarsService {
   }
 
   async findOne(id: string, viewerId?: string) {
-    const car = await this.prisma.car.findUnique({
-      where: { id },
+    const car = await this.prisma.car.findFirst({
+      where: { id, deletedAt: null },
       include: {
         seller: { select: { id: true, companyName: true, contactName: true } },
         category: { select: { id: true, name: true } },
@@ -228,18 +228,12 @@ export class CarsService {
   async remove(id: string, sellerId: string) {
     await this.ensureOwnership(id, sellerId);
 
-    // Delete all associated images from storage
-    const images = await this.prisma.image.findMany({
-      where: { targetId: id },
+    // Soft delete: 실제 레코드/이미지를 지우지 않고 상태만 DELETED로 전환한다.
+    // 복구 가능성을 위해 연관 데이터(이미지·옵션·태그)는 그대로 보존한다.
+    return this.prisma.car.update({
+      where: { id },
+      data: { status: "DELETED", deletedAt: new Date() },
     });
-
-    for (const image of images) {
-      await this.storage.delete(image.url);
-    }
-
-    // Cascade handles DB deletions for options, tags, inspection, images
-    await this.prisma.image.deleteMany({ where: { targetId: id } });
-    return this.prisma.car.delete({ where: { id } });
   }
 
   async setOptions(id: string, optionItemIds: string[], sellerId: string) {
@@ -283,7 +277,7 @@ export class CarsService {
   }
 
   async findBySeller(sellerId: string, cursor?: string, limit = 20) {
-    const where: Prisma.CarWhereInput = { sellerId };
+    const where: Prisma.CarWhereInput = { sellerId, deletedAt: null };
 
     if (cursor) {
       const decoded = JSON.parse(
@@ -371,7 +365,9 @@ export class CarsService {
   }
 
   private async ensureOwnership(carId: string, sellerId: string) {
-    const car = await this.prisma.car.findUnique({ where: { id: carId } });
+    const car = await this.prisma.car.findFirst({
+      where: { id: carId, deletedAt: null },
+    });
     if (!car) {
       throw new NotFoundException("Car not found");
     }

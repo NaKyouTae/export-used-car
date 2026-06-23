@@ -6,16 +6,28 @@ import {
 } from "@nestjs/common";
 import { PrismaService } from "../prisma/prisma.service";
 import { StorageService } from "../storage/storage.service";
+import { TranslationService } from "../translation/translation.service";
 
 // 채팅 이미지 메시지는 content 앞에 이 prefix를 붙여 저장한다.
 const IMAGE_MESSAGE_PREFIX = "[img]";
 const MAX_IMAGE_SIZE = 10 * 1024 * 1024; // 10MB
+
+// 사용자 언어(EN/KO 등) → Google Translate ISO 코드. 매핑에 없으면 소문자로 폴백.
+const GOOGLE_LANG_CODE: Record<string, string> = {
+  EN: "en",
+  KO: "ko",
+};
+const toGoogleLangCode = (lang?: string | null): string => {
+  if (!lang) return "en";
+  return GOOGLE_LANG_CODE[lang.toUpperCase()] ?? lang.toLowerCase();
+};
 
 @Injectable()
 export class ChatService {
   constructor(
     private readonly prisma: PrismaService,
     private readonly storage: StorageService,
+    private readonly translation: TranslationService,
   ) {}
 
   async createOrGetRoom(carId: string, buyerId: string) {
@@ -277,6 +289,73 @@ export class ChatService {
     ]);
 
     return message;
+  }
+
+  /**
+   * 특정 메시지를 "번역을 요청한 사용자의 언어"로 번역한다.
+   * - 자동번역 아님: 클라이언트에서 번역 버튼을 누를 때만 호출된다.
+   * - 원문 언어 == 사용자 언어면 번역하지 않고 sameLanguage=true로 응답.
+   * - 한 번 번역하면 DB에 캐시되어 재요청 시 API를 다시 호출하지 않는다.
+   */
+  async translateMessage(roomId: string, messageId: string, userId: string) {
+    const message = await this.prisma.chatMessage.findUnique({
+      where: { id: messageId },
+    });
+    if (!message || message.roomId !== roomId) {
+      throw new NotFoundException("Message not found");
+    }
+
+    // 방 참여자만 번역 가능
+    const room = await this.prisma.chatRoom.findUnique({
+      where: { id: roomId },
+    });
+    if (!room) throw new NotFoundException("Chat room not found");
+    if (room.buyerId !== userId && room.sellerId !== userId) {
+      throw new ForbiddenException("Access denied");
+    }
+
+    // 이미지 메시지는 번역 대상이 아니다.
+    if (message.content.startsWith(IMAGE_MESSAGE_PREFIX)) {
+      throw new BadRequestException("Image messages cannot be translated");
+    }
+
+    const user = await this.prisma.user.findUnique({
+      where: { id: userId },
+      select: { language: true },
+    });
+    const target = toGoogleLangCode(user?.language);
+
+    // 이미 같은 언어로 번역해둔 캐시가 있으면 그대로 반환
+    if (message.translatedContent && message.translatedLang === target) {
+      return {
+        sourceLang: message.sourceLang,
+        translatedContent: message.translatedContent,
+        translatedLang: message.translatedLang,
+        sameLanguage: message.sourceLang === target,
+      };
+    }
+
+    const { translatedText, detectedSourceLanguage } =
+      await this.translation.translate(message.content, target);
+
+    // 원문 언어가 내 언어와 같으면 번역 불필요
+    const sameLanguage = detectedSourceLanguage === target;
+
+    const updated = await this.prisma.chatMessage.update({
+      where: { id: messageId },
+      data: {
+        sourceLang: detectedSourceLanguage,
+        translatedContent: translatedText,
+        translatedLang: target,
+      },
+      select: {
+        sourceLang: true,
+        translatedContent: true,
+        translatedLang: true,
+      },
+    });
+
+    return { ...updated, sameLanguage };
   }
 
   async uploadImage(roomId: string, userId: string, file: Express.Multer.File) {

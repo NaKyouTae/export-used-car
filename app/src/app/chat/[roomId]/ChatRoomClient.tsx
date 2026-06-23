@@ -65,6 +65,13 @@ export default function ChatRoomClient({ roomId }: { roomId: string }) {
   const [savingPrice, setSavingPrice] = useState(false);
   const [uploading, setUploading] = useState(false);
   const [viewerUrl, setViewerUrl] = useState<string | null>(null);
+  // 메시지별 번역 결과 캐시 (번역 버튼을 눌렀을 때만 채워짐)
+  const [translations, setTranslations] = useState<
+    Record<string, { text: string; sourceLang: string; sameLanguage: boolean }>
+  >({});
+  const [translatingId, setTranslatingId] = useState<string | null>(null);
+  // 번역된 메시지에서 원문을 보고 있는 중인 메시지 id 집합
+  const [showOriginal, setShowOriginal] = useState<Set<string>>(new Set());
   const messagesEndRef = useRef<HTMLDivElement>(null);
   const scrollContainerRef = useRef<HTMLDivElement>(null);
   const inputRef = useRef<HTMLTextAreaElement>(null);
@@ -279,6 +286,41 @@ export default function ChatRoomClient({ roomId }: { roomId: string }) {
     }
   };
 
+  const handleTranslate = async (messageId: string) => {
+    if (translatingId) return;
+    setTranslatingId(messageId);
+    try {
+      const res = await fetch(
+        `/api/chat/rooms/${roomId}/messages/${messageId}/translate`,
+        { method: "POST", credentials: "include" }
+      );
+      if (res.ok) {
+        const data = await res.json();
+        setTranslations((prev) => ({
+          ...prev,
+          [messageId]: {
+            text: data.translatedContent ?? "",
+            sourceLang: data.sourceLang ?? "",
+            sameLanguage: Boolean(data.sameLanguage),
+          },
+        }));
+      }
+    } catch {
+      // ignore
+    } finally {
+      setTranslatingId(null);
+    }
+  };
+
+  const toggleOriginal = (messageId: string) => {
+    setShowOriginal((prev) => {
+      const next = new Set(prev);
+      if (next.has(messageId)) next.delete(messageId);
+      else next.add(messageId);
+      return next;
+    });
+  };
+
   const handleKeyDown = (e: React.KeyboardEvent) => {
     if (e.key === "Enter" && !e.shiftKey && !e.nativeEvent.isComposing) {
       e.preventDefault();
@@ -364,6 +406,15 @@ export default function ChatRoomClient({ roomId }: { roomId: string }) {
           const isMe = msg.senderId === user?.id;
           const isImg = isImageMessage(msg.content);
 
+          // 번역: 받은(내가 보낸 게 아닌) 텍스트 메시지에만 노출
+          const translation = translations[msg.id];
+          const isTranslating = translatingId === msg.id;
+          const viewingOriginal = showOriginal.has(msg.id);
+          const showTranslated =
+            !!translation && !translation.sameLanguage && !viewingOriginal;
+          const displayText = showTranslated ? translation.text : msg.content;
+          const canTranslate = !isMe && !isImg;
+
           return (
             <div key={msg.id}>
               {showDate && (
@@ -399,23 +450,72 @@ export default function ChatRoomClient({ roomId }: { roomId: string }) {
                     </p>
                   </div>
                 ) : (
-                  <div
-                    className={`max-w-[75%] px-3.5 py-2.5 rounded-2xl ${
-                      isMe
-                        ? "bg-main-500 text-white rounded-br-md"
-                        : "bg-gray-100 text-gray-900 rounded-bl-md border border-gray-200"
-                    }`}
-                  >
-                    <p className="text-sm whitespace-pre-wrap break-words leading-relaxed">
-                      {msg.content}
-                    </p>
-                    <p
-                      className={`text-[10px] mt-1 ${
-                        isMe ? "text-white/60" : "text-gray-500"
+                  <div className="max-w-[75%]">
+                    <div
+                      className={`px-3.5 py-2.5 rounded-2xl ${
+                        isMe
+                          ? "bg-main-500 text-white rounded-br-md"
+                          : "bg-gray-100 text-gray-900 rounded-bl-md border border-gray-200"
                       }`}
                     >
-                      {formatTime(msg.createdAt)}
-                    </p>
+                      <p className="text-sm whitespace-pre-wrap break-words leading-relaxed">
+                        {displayText}
+                      </p>
+                      <p
+                        className={`text-[10px] mt-1 ${
+                          isMe ? "text-white/60" : "text-gray-500"
+                        }`}
+                      >
+                        {formatTime(msg.createdAt)}
+                      </p>
+                    </div>
+
+                    {/* 번역 컨트롤 (받은 텍스트 메시지에만) */}
+                    {canTranslate && (
+                      <div className="mt-1">
+                        {translation?.sameLanguage ? (
+                          <span className="text-[11px] text-gray-400">
+                            {t("Same as your language")}
+                          </span>
+                        ) : translation ? (
+                          <button
+                            type="button"
+                            onClick={() => toggleOriginal(msg.id)}
+                            className="text-[11px] font-medium text-main-600 active:text-main-700"
+                          >
+                            {viewingOriginal
+                              ? t("Show translation")
+                              : t("Show original")}
+                          </button>
+                        ) : (
+                          <button
+                            type="button"
+                            onClick={() => handleTranslate(msg.id)}
+                            disabled={isTranslating}
+                            className="inline-flex items-center gap-1 text-[11px] font-medium text-main-600 active:text-main-700 disabled:opacity-50"
+                          >
+                            {isTranslating ? (
+                              <span className="w-3 h-3 border-2 border-main-500 border-t-transparent rounded-full animate-spin" />
+                            ) : (
+                              <svg
+                                className="w-3.5 h-3.5"
+                                fill="none"
+                                stroke="currentColor"
+                                viewBox="0 0 24 24"
+                              >
+                                <path
+                                  strokeLinecap="round"
+                                  strokeLinejoin="round"
+                                  strokeWidth={2}
+                                  d="M3 5h12M9 3v2m1.048 9.5A18.022 18.022 0 016.412 9m6.088 9h7M11 21l5-10 5 10M12.751 5C11.783 10.77 8.07 15.61 3 18.129"
+                                />
+                              </svg>
+                            )}
+                            {t("Translate")}
+                          </button>
+                        )}
+                      </div>
+                    )}
                   </div>
                 )}
               </div>

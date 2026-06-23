@@ -372,5 +372,9 @@ export const en = {
     "Default Language": "Default Language",
     "You can change this later in My Page": "You can change this later in My Page",
     "Select Language": "Select Language",
+    "Translate": "Translate",
+    "Show original": "Show original",
+    "Show translation": "Show translation",
+    "Same as your language": "Same as your language",
   } as Record<string, string>,
 };

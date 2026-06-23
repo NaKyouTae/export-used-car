@@ -372,5 +372,9 @@ export const ko = {
     "Default Language": "기본 언어",
     "You can change this later in My Page": "마이페이지에서 언제든지 변경할 수 있어요",
     "Select Language": "언어 선택",
+    "Translate": "번역",
+    "Show original": "원문 보기",
+    "Show translation": "번역 보기",
+    "Same as your language": "내 언어와 같은 메시지예요",
   } as Record<string, string>,
 };
