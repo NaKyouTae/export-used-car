@@ -18,6 +18,8 @@ import { AdminModule } from "./admin/admin.module";
 import { WishlistModule } from "./wishlist/wishlist.module";
 import { ChatModule } from "./chat/chat.module";
 import { QuickPhrasesModule } from "./quick-phrases/quick-phrases.module";
+import { NotificationsModule } from "./notifications/notifications.module";
+import { KeywordAlertsModule } from "./keyword-alerts/keyword-alerts.module";
 
 @Module({
   imports: [
@@ -38,6 +40,8 @@ import { QuickPhrasesModule } from "./quick-phrases/quick-phrases.module";
     WishlistModule,
     ChatModule,
     QuickPhrasesModule,
+    NotificationsModule,
+    KeywordAlertsModule,
   ],
   controllers: [AppController],
   providers: [AppService],

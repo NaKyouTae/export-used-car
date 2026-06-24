@@ -7,6 +7,7 @@ import {
 import { PrismaService } from "../prisma/prisma.service";
 import { StorageService } from "../storage/storage.service";
 import { TranslationService } from "../translation/translation.service";
+import { NotificationsService } from "../notifications/notifications.service";
 
 // 채팅 이미지 메시지는 content 앞에 이 prefix를 붙여 저장한다.
 const IMAGE_MESSAGE_PREFIX = "[img]";
@@ -28,6 +29,7 @@ export class ChatService {
     private readonly prisma: PrismaService,
     private readonly storage: StorageService,
     private readonly translation: TranslationService,
+    private readonly notifications: NotificationsService,
   ) {}
 
   async createOrGetRoom(carId: string, buyerId: string) {
@@ -288,6 +290,8 @@ export class ChatService {
       }),
     ]);
 
+    this.notifyRecipient(room, isSellerSide, content);
+
     return message;
   }
 
@@ -400,6 +404,42 @@ export class ChatService {
       }),
     ]);
 
+    this.notifyRecipient(room, isSellerSide, `${IMAGE_MESSAGE_PREFIX}image`);
+
     return message;
+  }
+
+  /**
+   * 채팅 상대방에게 인앱 알림 기록 + 푸시 발송.
+   * 실패해도 메시지 전송 흐름을 막지 않도록 await하지 않는다(fire-and-forget).
+   * 민감 내용 노출 방지를 위해 본문은 미리보기만 전송한다.
+   */
+  private notifyRecipient(
+    room: {
+      id: string;
+      buyerId: string;
+      sellerId: string;
+      carId: string | null;
+    },
+    isSellerSide: boolean,
+    content: string,
+  ) {
+    const recipientId = isSellerSide ? room.buyerId : room.sellerId;
+    const isImage = content.startsWith(IMAGE_MESSAGE_PREFIX);
+    const preview = isImage
+      ? "사진을 보냈습니다"
+      : content.length > 50
+        ? `${content.slice(0, 50)}…`
+        : content;
+    void this.notifications.createAndPush({
+      userId: recipientId,
+      type: "CHAT_MESSAGE",
+      title: "새 메시지",
+      body: preview,
+      data: {
+        chatRoomId: room.id,
+        ...(room.carId ? { carId: room.carId } : {}),
+      },
+    });
   }
 }

@@ -36,7 +36,6 @@ interface CarDetail {
     optionItem: {
       id: string;
       name: string;
-      category: { id: string; name: string };
     };
   }[];
 }

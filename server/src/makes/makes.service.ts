@@ -18,6 +18,10 @@ export class MakesService {
       orderBy: { displayOrder: "asc" },
       include: {
         _count: { select: { models: true } },
+        models: {
+          orderBy: { displayOrder: "asc" },
+          include: { category: { select: { id: true, name: true } } },
+        },
       },
     });
   }

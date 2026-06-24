@@ -63,6 +63,9 @@ model User {
   cars            Car[]
   sellerChatRooms ChatRoom[] @relation("ChatSeller")
   buyerChatRooms  ChatRoom[] @relation("ChatBuyer")
+  deviceTokens    DeviceToken[]
+  notifications   Notification[]
+  keywordAlerts   KeywordAlert[]
 
   @@index([role])
   @@map("users")
@@ -209,25 +212,13 @@ enum CarStatus {
   DELETED
 }
 
-// ── 차량 옵션 ──
-model OptionCategory {
-  id           String       @id @default(uuid())
-  name         String       @unique
-  slug         String       @unique
-  displayOrder Int          @default(0)
-  items        OptionItem[]
-
-  @@map("option_categories")
-}
-
+// ── 차량 옵션 (카테고리 없이 평면 리스트) ──
 model OptionItem {
-  id           String      @id @default(uuid())
-  categoryId   String
+  id           String  @id @default(uuid())
   name         String
   nameKo       String?
-  displayOrder Int         @default(0)
+  displayOrder Int     @default(0)
 
-  category   OptionCategory @relation(fields: [categoryId], references: [id])
   carOptions CarOption[]
 
   @@map("option_items")
@@ -395,4 +386,60 @@ model QuickPhrase {
 
   @@index([userId])
   @@map("quick_phrases")
+}
+
+// ── 푸시 디바이스 토큰 (유저:기기 = 1:N) ──
+model DeviceToken {
+  id         String   @id @default(uuid())
+  userId     String
+  user       User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  token      String   @unique // FCM registration token
+  platform   Platform
+  isActive   Boolean  @default(true) // 만료/무효 토큰은 삭제 대신 비활성화
+  lastUsedAt DateTime @default(now())
+  createdAt  DateTime @default(now())
+
+  @@index([userId])
+  @@map("device_tokens")
+}
+
+enum Platform {
+  IOS
+  ANDROID
+}
+
+// ── 알림함 (인앱 목록 + 읽음 처리) ──
+model Notification {
+  id        String           @id @default(uuid())
+  userId    String
+  user      User             @relation(fields: [userId], references: [id], onDelete: Cascade)
+  type      NotificationType
+  title     String
+  body      String
+  data      Json? // 딥링크용 payload { chatRoomId, carId ... }
+  readAt    DateTime? // null = 안읽음
+  createdAt DateTime         @default(now())
+
+  @@index([userId, readAt])
+  @@map("notifications")
+}
+
+enum NotificationType {
+  CHAT_MESSAGE
+  PRICE_DROP
+  SYSTEM
+  KEYWORD_MATCH
+}
+
+// ── 키워드 알림 (유저가 등록한 관심 키워드. 새 매물 제목에 포함되면 알림) ──
+model KeywordAlert {
+  id        String   @id @default(uuid())
+  userId    String
+  user      User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  keyword   String // 매칭은 차량 제목 대소문자 무시 부분일치로 수행
+  createdAt DateTime @default(now())
+
+  @@unique([userId, keyword]) // 같은 키워드 중복 등록 방지
+  @@index([userId])
+  @@map("keyword_alerts")
 }

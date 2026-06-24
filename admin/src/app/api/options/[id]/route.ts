@@ -8,7 +8,7 @@ export async function PATCH(
   try {
     const { id } = await params;
     const body = await request.json();
-    const res = await adminProxy(`/option-categories/${id}`, {
+    const res = await adminProxy(`/options/${id}`, {
       method: 'PATCH',
       body: JSON.stringify(body),
     });
@@ -25,7 +25,7 @@ export async function DELETE(
 ) {
   try {
     const { id } = await params;
-    const res = await adminProxy(`/option-categories/${id}`, { method: 'DELETE' });
+    const res = await adminProxy(`/options/${id}`, { method: 'DELETE' });
     if (res.status === 204) return new NextResponse(null, { status: 204 });
     const data = await res.json();
     return NextResponse.json(data, { status: res.status });

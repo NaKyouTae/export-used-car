@@ -301,42 +301,28 @@ WHERE cm."makeId" = mk.id
 
 DROP TABLE _model_seed;
 
--- ───────────────────────────── 4) 옵션 (option_categories / option_items) ─────────────────────────────
--- 4-1) 옵션 카테고리
-INSERT INTO option_categories (id, name, slug, "displayOrder") VALUES
-  (gen_random_uuid(), '안전', 'safety', 1),
-  (gen_random_uuid(), '편의', 'convenience', 2),
-  (gen_random_uuid(), '멀티미디어', 'multimedia', 3),
-  (gen_random_uuid(), '내·외장', 'interior-exterior', 4)
-ON CONFLICT (slug) DO NOTHING;
-
--- 4-2) 옵션 항목 (요청 16개 — name/nameKo 모두 한글)
-INSERT INTO option_items (id, "categoryId", name, "nameKo", "displayOrder")
-SELECT gen_random_uuid(), c.id, v.name, v.name, v.ord
+-- ───────────────────────────── 4) 옵션 (option_items, 카테고리 없는 평면 리스트) ─────────────────────────────
+-- 옵션 항목 (요청 16개 — name/nameKo 모두 한글)
+INSERT INTO option_items (id, name, "nameKo", "displayOrder")
+SELECT gen_random_uuid(), v.name, v.name, v.ord
 FROM (VALUES
-  -- 안전
-  ('safety',            '차선이탈경보시스템',          1),
-  ('safety',            '어라운드뷰',                2),
-  ('safety',            '오토파킹',                  3),
-  -- 편의
-  ('convenience',       '스마트키',                  1),
-  ('convenience',       '크루즈컨트롤',               2),
-  ('convenience',       '전자식주차브레이크(EPB)',      3),
-  ('convenience',       '오토홀드',                  4),
-  ('convenience',       '전동시트',                  5),
-  ('convenience',       '메모리시트',                6),
-  ('convenience',       '파워트렁크',                7),
-  ('convenience',       '4WD',                     8),
-  -- 멀티미디어
-  ('multimedia',        '내비게이션',                1),
-  ('multimedia',        '헤드업디스플레이(HUD)',        2),
-  -- 내·외장
-  ('interior-exterior', '알루미늄휠',                1),
-  ('interior-exterior', '가죽시트',                  2),
-  ('interior-exterior', '썬루프',                    3)
-) AS v(cat_slug, name, ord)
-JOIN option_categories c ON c.slug = v.cat_slug
+  ('차선이탈경보시스템',          1),
+  ('어라운드뷰',                2),
+  ('오토파킹',                  3),
+  ('스마트키',                  4),
+  ('크루즈컨트롤',               5),
+  ('전자식주차브레이크(EPB)',      6),
+  ('오토홀드',                  7),
+  ('전동시트',                  8),
+  ('메모리시트',                9),
+  ('파워트렁크',                10),
+  ('4WD',                     11),
+  ('내비게이션',                12),
+  ('헤드업디스플레이(HUD)',        13),
+  ('알루미늄휠',                14),
+  ('가죽시트',                  15),
+  ('썬루프',                    16)
+) AS v(name, ord)
 WHERE NOT EXISTS (
-  SELECT 1 FROM option_items oi
-  WHERE oi."categoryId" = c.id AND oi.name = v.name
+  SELECT 1 FROM option_items oi WHERE oi.name = v.name
 );

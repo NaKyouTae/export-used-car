@@ -47,7 +47,6 @@ interface CarDetail {
     optionItem: {
       id: string;
       name: string;
-      category: { id: string; name: string };
     };
   }[];
 }
@@ -171,13 +170,8 @@ export default function CarDetailClient({ car }: { car: CarDetail }) {
     setCurrentImageIdx((prev) => (prev === idx ? prev : idx));
   }, []);
 
-  // Group options by category
-  const optionsByCategory: Record<string, string[]> = {};
-  car.options?.forEach((opt) => {
-    const catName = opt.optionItem.category.name;
-    if (!optionsByCategory[catName]) optionsByCategory[catName] = [];
-    optionsByCategory[catName].push(opt.optionItem.name);
-  });
+  // 옵션 평면 리스트
+  const optionNames = car.options?.map((opt) => opt.optionItem.name) ?? [];
 
   const specRows = [
     { label: t("Category"), value: car.category?.name },
@@ -335,17 +329,17 @@ export default function CarDetailClient({ car }: { car: CarDetail }) {
         </div>
 
         {/* Options */}
-        {Object.keys(optionsByCategory).length > 0 && (
+        {optionNames.length > 0 && (
           <div className="py-4 border-t border-gray-100">
             <h2 className="font-semibold text-gray-900 mb-3">{t("Options")}</h2>
-            <div className="space-y-3">
-              {Object.entries(optionsByCategory).map(([category, items]) => (
-                <div key={category}>
-                  <h3 className="text-xs font-semibold text-gray-500 uppercase tracking-wide mb-1.5">
-                    {category}
-                  </h3>
-                  <p className="text-sm text-gray-700">{items.join(", ")}</p>
-                </div>
+            <div className="flex flex-wrap gap-2">
+              {optionNames.map((name) => (
+                <span
+                  key={name}
+                  className="px-3 py-1.5 bg-gray-100 text-gray-700 text-sm rounded-full"
+                >
+                  {name}
+                </span>
               ))}
             </div>
           </div>

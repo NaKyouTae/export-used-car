@@ -6,11 +6,15 @@ import { useTranslation } from "react-i18next";
 
 const canUseDOM = typeof window !== "undefined";
 
-export type PickerMake = { id: string; name: string };
 export type PickerModel = {
   id: string;
   name: string;
   categoryId?: string | null;
+};
+export type PickerMake = {
+  id: string;
+  name: string;
+  models?: PickerModel[];
 };
 
 type Props = {
@@ -23,6 +27,7 @@ type Props = {
   title?: string;
   disabled?: boolean;
   id?: string;
+  className?: string;
 };
 
 export default function MakeModelPicker({
@@ -35,6 +40,7 @@ export default function MakeModelPicker({
   title,
   disabled,
   id,
+  className,
 }: Props) {
   const { t } = useTranslation();
   const placeholderText = placeholder ?? t("Select");
@@ -42,10 +48,6 @@ export default function MakeModelPicker({
   const [closing, setClosing] = useState(false);
   const [query, setQuery] = useState("");
   const [expanded, setExpanded] = useState<string | null>(null);
-  const [modelsByMake, setModelsByMake] = useState<
-    Record<string, PickerModel[]>
-  >({});
-  const [loadingMake, setLoadingMake] = useState<string | null>(null);
   const searchRef = useRef<HTMLInputElement>(null);
 
   const close = () => {
@@ -61,28 +63,8 @@ export default function MakeModelPicker({
   const openSheet = () => {
     if (disabled) return;
     setOpen(true);
-    // 현재 선택된 제조사를 자동으로 펼치고 모델을 불러옴
-    if (makeId) {
-      setExpanded(makeId);
-      loadModels(makeId);
-    }
-  };
-
-  const loadModels = async (mid: string) => {
-    if (modelsByMake[mid]) return;
-    setLoadingMake(mid);
-    try {
-      const res = await fetch(`/api/makes/${mid}/models`);
-      const data = await res.json();
-      setModelsByMake((p) => ({
-        ...p,
-        [mid]: Array.isArray(data) ? data : data.data || [],
-      }));
-    } catch {
-      setModelsByMake((p) => ({ ...p, [mid]: [] }));
-    } finally {
-      setLoadingMake(null);
-    }
+    // 현재 선택된 제조사를 자동으로 펼침 (모델은 makes에 포함되어 있음)
+    if (makeId) setExpanded(makeId);
   };
 
   useEffect(() => {
@@ -101,12 +83,7 @@ export default function MakeModelPicker({
   }, [open]);
 
   const toggleMake = (mid: string) => {
-    if (expanded === mid) {
-      setExpanded(null);
-      return;
-    }
-    setExpanded(mid);
-    loadModels(mid);
+    setExpanded((prev) => (prev === mid ? null : mid));
   };
 
   const filteredMakes = useMemo(() => {
@@ -127,7 +104,7 @@ export default function MakeModelPicker({
         onClick={openSheet}
         aria-haspopup="dialog"
         aria-expanded={open}
-        className={triggerClass}
+        className={className ? className : triggerClass}
       >
         {valueLabel ? (
           <span className="truncate text-gray-900">{valueLabel}</span>
@@ -221,7 +198,7 @@ export default function MakeModelPicker({
                   ) : (
                     filteredMakes.map((make) => {
                       const isExpanded = expanded === make.id;
-                      const models = modelsByMake[make.id];
+                      const models = make.models ?? [];
                       return (
                         <li
                           key={make.id}
@@ -259,11 +236,7 @@ export default function MakeModelPicker({
                           {/* 모델 (2레벨) */}
                           {isExpanded && (
                             <ul className="bg-gray-50">
-                              {loadingMake === make.id && !models ? (
-                                <li className="pl-12 pr-5 py-3 text-sm text-gray-400">
-                                  {t("Loading models...")}
-                                </li>
-                              ) : models && models.length > 0 ? (
+                              {models.length > 0 ? (
                                 models.map((model) => {
                                   const selected = model.id === modelId;
                                   return (

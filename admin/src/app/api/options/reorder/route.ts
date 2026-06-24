@@ -4,7 +4,7 @@ import { adminProxy } from '@/lib/api-proxy';
 export async function PATCH(request: NextRequest) {
   try {
     const body = await request.json();
-    const res = await adminProxy('/option-categories/reorder', {
+    const res = await adminProxy('/options/reorder', {
       method: 'PATCH',
       body: JSON.stringify(body),
     });

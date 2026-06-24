@@ -21,6 +21,13 @@ const isImageMessage = (content: string) =>
 const getImageUrl = (content: string) =>
   content.slice(IMAGE_MESSAGE_PREFIX.length);
 
+// 사용자 언어(EN/KO 등) → Google Translate ISO 코드. 서버와 동일 규약.
+const GOOGLE_LANG_CODE: Record<string, string> = { EN: "en", KO: "ko" };
+const toGoogleLangCode = (lang?: string | null): string => {
+  if (!lang) return "en";
+  return GOOGLE_LANG_CODE[lang.toUpperCase()] ?? lang.toLowerCase();
+};
+
 interface ChatRoomInfo {
   id: string;
   car: {
@@ -41,6 +48,10 @@ interface Message {
   content: string;
   isRead: boolean;
   createdAt: string;
+  // 번역 캐시 (이미 번역된 메시지면 서버 조회 시 함께 내려온다)
+  sourceLang?: string | null;
+  translatedContent?: string | null;
+  translatedLang?: string | null;
 }
 
 interface QuickPhrase {
@@ -286,8 +297,25 @@ export default function ChatRoomClient({ roomId }: { roomId: string }) {
     }
   };
 
-  const handleTranslate = async (messageId: string) => {
+  const handleTranslate = async (msg: Message) => {
     if (translatingId) return;
+
+    // 이미 DB에 "내 언어로" 번역된 캐시가 메시지에 실려 있으면
+    // 서버/구글을 전혀 호출하지 않고 그 값을 그대로 사용한다. (비용 0)
+    const myLang = toGoogleLangCode(user?.language);
+    if (msg.translatedContent && msg.translatedLang === myLang) {
+      setTranslations((prev) => ({
+        ...prev,
+        [msg.id]: {
+          text: msg.translatedContent ?? "",
+          sourceLang: msg.sourceLang ?? "",
+          sameLanguage: (msg.sourceLang ?? "") === myLang,
+        },
+      }));
+      return;
+    }
+
+    const messageId = msg.id;
     setTranslatingId(messageId);
     try {
       const res = await fetch(
@@ -406,7 +434,9 @@ export default function ChatRoomClient({ roomId }: { roomId: string }) {
           const isMe = msg.senderId === user?.id;
           const isImg = isImageMessage(msg.content);
 
-          // 번역: 받은(내가 보낸 게 아닌) 텍스트 메시지에만 노출
+          // 번역: 받은(내가 보낸 게 아닌) 텍스트 메시지에만 노출.
+          // 기본은 원문 표시, "번역" 버튼을 누르면 translations에 채워진다.
+          // (재입장 시엔 msg에 실려온 DB 캐시를 handleTranslate가 그대로 사용 → 구글/서버 미호출)
           const translation = translations[msg.id];
           const isTranslating = translatingId === msg.id;
           const viewingOriginal = showOriginal.has(msg.id);
@@ -490,7 +520,7 @@ export default function ChatRoomClient({ roomId }: { roomId: string }) {
                         ) : (
                           <button
                             type="button"
-                            onClick={() => handleTranslate(msg.id)}
+                            onClick={() => handleTranslate(msg)}
                             disabled={isTranslating}
                             className="inline-flex items-center gap-1 text-[11px] font-medium text-main-600 active:text-main-700 disabled:opacity-50"
                           >

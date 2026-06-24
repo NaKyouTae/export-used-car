@@ -3,7 +3,7 @@ import { adminProxy } from '@/lib/api-proxy';
 
 export async function GET() {
   try {
-    const res = await adminProxy('/option-categories');
+    const res = await adminProxy('/options');
     const data = await res.json();
     return NextResponse.json(data, { status: res.status });
   } catch {
@@ -14,7 +14,7 @@ export async function GET() {
 export async function POST(request: NextRequest) {
   try {
     const body = await request.json();
-    const res = await adminProxy('/option-categories', {
+    const res = await adminProxy('/options', {
       method: 'POST',
       body: JSON.stringify(body),
     });

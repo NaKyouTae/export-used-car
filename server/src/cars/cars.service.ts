@@ -6,6 +6,7 @@ import {
 import { Prisma } from "@prisma/client";
 import { PrismaService } from "../prisma/prisma.service";
 import { StorageService } from "../storage/storage.service";
+import { KeywordAlertsService } from "../keyword-alerts/keyword-alerts.service";
 import { CreateCarDto } from "./dto/create-car.dto";
 import { UpdateCarDto } from "./dto/update-car.dto";
 import { CarQueryDto, CarSort } from "./dto/car-query.dto";
@@ -15,6 +16,7 @@ export class CarsService {
   constructor(
     private readonly prisma: PrismaService,
     private readonly storage: StorageService,
+    private readonly keywordAlerts: KeywordAlertsService,
   ) {}
 
   async findAll(query: CarQueryDto) {
@@ -150,9 +152,7 @@ export class CarsService {
         carModel: { select: { id: true, name: true, nameKo: true } },
         options: {
           include: {
-            optionItem: {
-              include: { category: true },
-            },
+            optionItem: true,
           },
         },
         tags: {
@@ -197,7 +197,7 @@ export class CarsService {
   async create(dto: CreateCarDto, sellerId: string) {
     // 최초 등록 시 bumpedAt을 createdAt과 동일한 값으로 기입한다(끌어올리기 전까지 등록일 기준 정렬).
     const now = new Date();
-    return this.prisma.car.create({
+    const car = await this.prisma.car.create({
       data: {
         ...dto,
         sellerId,
@@ -205,6 +205,15 @@ export class CarsService {
         bumpedAt: now,
       },
     });
+
+    // 키워드 알림: 등록된 관심 키워드가 제목에 포함되는 유저들에게 비동기로 알림.
+    void this.keywordAlerts.notifyNewCar({
+      id: car.id,
+      title: car.title,
+      sellerId,
+    });
+
+    return car;
   }
 
   async update(id: string, dto: UpdateCarDto, sellerId: string) {
@@ -251,7 +260,7 @@ export class CarsService {
       }
       return tx.carOption.findMany({
         where: { carId: id },
-        include: { optionItem: { include: { category: true } } },
+        include: { optionItem: true },
       });
     });
   }
