@@ -258,6 +258,7 @@ export const ko = {
     "Attach image": "이미지 첨부",
     "Select": "선택",
     "Search make": "제조사 검색",
+    "Search make or model": "제조사 또는 모델 검색",
     "No makes found": "제조사가 없습니다",
     "Loading models...": "모델 불러오는 중...",
     "No models": "모델이 없습니다",

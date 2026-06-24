@@ -258,6 +258,7 @@ export const en = {
     "Attach image": "Attach image",
     "Select": "Select",
     "Search make": "Search make",
+    "Search make or model": "Search make or model",
     "No makes found": "No makes found",
     "Loading models...": "Loading models...",
     "No models": "No models",

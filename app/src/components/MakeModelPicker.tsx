@@ -86,10 +86,22 @@ export default function MakeModelPicker({
     setExpanded((prev) => (prev === mid ? null : mid));
   };
 
+  const isSearching = query.trim().length > 0;
   const filteredMakes = useMemo(() => {
     const q = query.trim().toLowerCase();
     if (!q) return makes;
-    return makes.filter((m) => m.name.toLowerCase().includes(q));
+    return makes.reduce<PickerMake[]>((acc, m) => {
+      const makeMatches = m.name.toLowerCase().includes(q);
+      const models = m.models ?? [];
+      // 제조사명이 매칭되면 모든 모델 노출, 아니면 모델명이 매칭되는 것만 노출
+      const matchedModels = makeMatches
+        ? models
+        : models.filter((model) => model.name.toLowerCase().includes(q));
+      if (makeMatches || matchedModels.length > 0) {
+        acc.push({ ...m, models: matchedModels });
+      }
+      return acc;
+    }, []);
   }, [makes, query]);
 
   const triggerClass =
@@ -185,7 +197,7 @@ export default function MakeModelPicker({
                     type="text"
                     value={query}
                     onChange={(e) => setQuery(e.target.value)}
-                    placeholder={t("Search make")}
+                    placeholder={t("Search make or model")}
                     className="w-full px-3 py-2.5 text-sm border border-gray-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-main-500 focus:border-transparent"
                   />
                 </div>
@@ -197,7 +209,7 @@ export default function MakeModelPicker({
                     </li>
                   ) : (
                     filteredMakes.map((make) => {
-                      const isExpanded = expanded === make.id;
+                      const isExpanded = isSearching || expanded === make.id;
                       const models = make.models ?? [];
                       return (
                         <li
