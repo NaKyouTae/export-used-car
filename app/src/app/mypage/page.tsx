@@ -137,9 +137,23 @@ export default function MyPage() {
           </button>
           <span className="text-gray-200">|</span>
           <button
-            onClick={() => {
-              if (confirm(t("Are you sure you want to delete your account? This action cannot be undone."))) {
-                // TODO: call delete account API
+            onClick={async () => {
+              if (
+                !confirm(
+                  t(
+                    "Are you sure you want to delete your account? This action cannot be undone."
+                  )
+                )
+              ) {
+                return;
+              }
+              try {
+                const res = await fetch("/api/profile", { method: "DELETE" });
+                if (!res.ok) throw new Error("failed");
+                await logout();
+                router.push("/");
+              } catch {
+                alert(t("Failed to delete account. Please try again later."));
               }
             }}
             className="py-3 px-4 text-sm text-gray-400"

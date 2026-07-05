@@ -28,3 +28,23 @@ export async function PATCH(request: NextRequest) {
     headers: { "content-type": "application/json" },
   });
 }
+
+export async function DELETE() {
+  const cookieStore = await cookies();
+  const token = cookieStore.get("euc_at")?.value;
+
+  if (!token) {
+    return Response.json({ error: "Unauthorized" }, { status: 401 });
+  }
+
+  const res = await fetch(`${API_URL}/users/me`, {
+    method: "DELETE",
+    headers: { authorization: `Bearer ${token}` },
+  });
+
+  const data = await res.text();
+  return new Response(data, {
+    status: res.status,
+    headers: { "content-type": "application/json" },
+  });
+}

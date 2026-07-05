@@ -13,6 +13,7 @@ import {
 } from "@/lib/datetime";
 import PageHeader from "@/components/PageHeader";
 import ImageViewer from "@/components/ImageViewer";
+import ReportSheet from "@/components/ReportSheet";
 
 // 이미지 메시지는 content가 이 prefix로 시작한다 (백엔드와 동일 규약).
 const IMAGE_MESSAGE_PREFIX = "[img]";
@@ -76,6 +77,7 @@ export default function ChatRoomClient({ roomId }: { roomId: string }) {
   const [savingPrice, setSavingPrice] = useState(false);
   const [uploading, setUploading] = useState(false);
   const [viewerUrl, setViewerUrl] = useState<string | null>(null);
+  const [reportOpen, setReportOpen] = useState(false);
   // 메시지별 번역 결과 캐시 (번역 버튼을 눌렀을 때만 채워짐)
   const [translations, setTranslations] = useState<
     Record<string, { text: string; sourceLang: string; sameLanguage: boolean }>
@@ -374,6 +376,7 @@ export default function ChatRoomClient({ roomId }: { roomId: string }) {
   const otherName = amSeller
     ? room.buyer.name || room.buyer.email
     : room.seller.companyName;
+  const otherUserId = amSeller ? room.buyer.id : room.seller.id;
 
   const desiredPriceNum =
     room.desiredPrice === null || room.desiredPrice === undefined
@@ -389,15 +392,43 @@ export default function ChatRoomClient({ roomId }: { roomId: string }) {
         title={otherName}
         backHref="/chat"
         rightAction={
-          room.car ? (
+          <div className="flex items-center gap-2">
+            {room.car && (
+              <button
+                onClick={() => router.push(`/cars/${room.car!.id}`)}
+                className="text-xs text-main-500 font-medium"
+              >
+                {t("View Car")}
+              </button>
+            )}
             <button
-              onClick={() => router.push(`/cars/${room.car!.id}`)}
-              className="text-xs text-main-500 font-medium"
+              onClick={() => setReportOpen(true)}
+              className="p-1 text-gray-400"
+              aria-label={t("Report this user")}
             >
-              {t("View Car")}
+              <svg
+                className="w-5 h-5"
+                fill="none"
+                stroke="currentColor"
+                viewBox="0 0 24 24"
+              >
+                <path
+                  strokeLinecap="round"
+                  strokeLinejoin="round"
+                  strokeWidth={2}
+                  d="M3 21v-4m0 0V5a2 2 0 012-2h6.5l1 2H21l-3 6 3 6h-8.5l-1-2H5a2 2 0 00-2 2z"
+                />
+              </svg>
             </button>
-          ) : undefined
+          </div>
         }
+      />
+
+      <ReportSheet
+        open={reportOpen}
+        onClose={() => setReportOpen(false)}
+        targetType="USER"
+        targetId={otherUserId}
       />
 
       {/* Car info bar */}

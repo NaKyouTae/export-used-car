@@ -23,6 +23,12 @@ services:
       - key: NODE_ENV
         value: production
 
+      # Google Play 검토용 테스트 계정 (검토 통과 후 이 두 줄 제거 권장)
+      - key: REVIEW_TEST_EMAIL
+        value: "google-review@ajucar.com"
+      - key: REVIEW_TEST_CODE
+        value: "000000"
+
       # Supabase PostgreSQL 연결 (Dashboard에서 직접 입력)
       - key: DATABASE_URL
         sync: false

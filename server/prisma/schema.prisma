@@ -66,6 +66,7 @@ model User {
   deviceTokens    DeviceToken[]
   notifications   Notification[]
   keywordAlerts   KeywordAlert[]
+  reports         Report[]       @relation("ReportsMade")
 
   @@index([role])
   @@map("users")
@@ -442,4 +443,40 @@ model KeywordAlert {
   @@unique([userId, keyword]) // 같은 키워드 중복 등록 방지
   @@index([userId])
   @@map("keyword_alerts")
+}
+
+// ── 신고 (UGC 정책 대응: 매물/사용자 신고 접수) ──
+model Report {
+  id         String           @id @default(uuid())
+  reporterId String
+  reporter   User             @relation("ReportsMade", fields: [reporterId], references: [id], onDelete: Cascade)
+  targetType ReportTargetType // 신고 대상 종류
+  targetId   String // Car.id 또는 User.id
+  reason     ReportReason
+  detail     String? // 자유 서술 (선택)
+  status     ReportStatus     @default(PENDING)
+  createdAt  DateTime         @default(now())
+
+  @@index([targetType, targetId])
+  @@index([status])
+  @@map("reports")
+}
+
+enum ReportTargetType {
+  CAR
+  USER
+}
+
+enum ReportReason {
+  SPAM
+  FRAUD
+  INAPPROPRIATE
+  PROHIBITED
+  OTHER
+}
+
+enum ReportStatus {
+  PENDING
+  REVIEWED
+  RESOLVED
 }

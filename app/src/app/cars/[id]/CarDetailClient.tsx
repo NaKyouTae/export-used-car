@@ -12,6 +12,7 @@ import {
 } from "@/lib/constants";
 import PageHeader from "@/components/PageHeader";
 import ImageViewer from "@/components/ImageViewer";
+import ReportSheet from "@/components/ReportSheet";
 import { useAuth } from "@/hooks/useAuth";
 import { addRecentlyViewed } from "@/hooks/useRecentlyViewed";
 
@@ -61,6 +62,7 @@ export default function CarDetailClient({ car }: { car: CarDetail }) {
   const [startingChat, setStartingChat] = useState(false);
   const [currentImageIdx, setCurrentImageIdx] = useState(0);
   const [viewerIndex, setViewerIndex] = useState<number | null>(null);
+  const [reportOpen, setReportOpen] = useState(false);
   const galleryRef = useRef<HTMLDivElement>(null);
 
   useEffect(() => {
@@ -195,7 +197,39 @@ export default function CarDetailClient({ car }: { car: CarDetail }) {
 
   return (
     <div className="bg-white pb-[72px]">
-      <PageHeader title={t("Car Details")} />
+      <PageHeader
+        title={t("Car Details")}
+        rightAction={
+          isAuthenticated && !isOwner ? (
+            <button
+              onClick={() => setReportOpen(true)}
+              className="p-1 text-gray-400"
+              aria-label={t("Report this listing")}
+            >
+              <svg
+                className="w-5 h-5"
+                fill="none"
+                stroke="currentColor"
+                viewBox="0 0 24 24"
+              >
+                <path
+                  strokeLinecap="round"
+                  strokeLinejoin="round"
+                  strokeWidth={2}
+                  d="M3 21v-4m0 0V5a2 2 0 012-2h6.5l1 2H21l-3 6 3 6h-8.5l-1-2H5a2 2 0 00-2 2z"
+                />
+              </svg>
+            </button>
+          ) : undefined
+        }
+      />
+
+      <ReportSheet
+        open={reportOpen}
+        onClose={() => setReportOpen(false)}
+        targetType="CAR"
+        targetId={car.id}
+      />
 
       {/* Image Gallery */}
       <div className="relative bg-gray-100 aspect-[4/3] max-h-[400px] w-full">

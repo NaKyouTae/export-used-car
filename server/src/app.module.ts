@@ -20,6 +20,7 @@ import { ChatModule } from "./chat/chat.module";
 import { QuickPhrasesModule } from "./quick-phrases/quick-phrases.module";
 import { NotificationsModule } from "./notifications/notifications.module";
 import { KeywordAlertsModule } from "./keyword-alerts/keyword-alerts.module";
+import { ReportsModule } from "./reports/reports.module";
 
 @Module({
   imports: [
@@ -42,6 +43,7 @@ import { KeywordAlertsModule } from "./keyword-alerts/keyword-alerts.module";
     QuickPhrasesModule,
     NotificationsModule,
     KeywordAlertsModule,
+    ReportsModule,
   ],
   controllers: [AppController],
   providers: [AppService],
