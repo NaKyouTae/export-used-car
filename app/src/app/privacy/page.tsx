@@ -12,7 +12,7 @@ export default function PrivacyPage() {
 
       <article className="px-5 pt-6 pb-10 text-[13px] leading-relaxed text-gray-600 space-y-6">
         <p className="text-[12px] text-gray-400 text-right">
-          {t("Effective Date: May 17, 2026")}
+          {t("Effective Date: July 5, 2026")}
         </p>
 
         <section>
@@ -114,7 +114,7 @@ export default function PrivacyPage() {
             <li>
               <strong>{t("Service providers:")}</strong>{" "}
               {t(
-                "Cloud hosting (Supabase), email delivery (Nodemailer / SMTP provider), and analytics tools that process data on our behalf under written agreements."
+                "Cloud hosting and storage (Supabase, Singapore region), email delivery (SMTP provider), and analytics tools that process data on our behalf under written agreements."
               )}
             </li>
             <li>
@@ -135,7 +135,45 @@ export default function PrivacyPage() {
         <Section title={t("5. International Data Transfer")}>
           <p>
             {t(
-              "The Service is operated from the Republic of Korea. If you access the Service from outside Korea, your information will be transferred to, stored, and processed in Korea. Korea has data protection laws that may differ from those of your country. By using the Service, you consent to this transfer."
+              "Ajucar is operated from the Republic of Korea, and your personal information is stored and processed on cloud servers located in Singapore, provided by our processor Supabase. It may also be accessed by our team in Korea to operate the Service. These countries may have data protection laws that differ from those of your country."
+            )}
+          </p>
+          <p className="mt-3 font-medium text-gray-800">
+            {t("Details of the overseas transfer:")}
+          </p>
+          <ul className="list-disc pl-5 space-y-1.5 mt-1">
+            <li>
+              <strong>{t("Recipient:")}</strong>{" "}
+              {t("Supabase, Inc. (cloud infrastructure and storage provider)")}
+            </li>
+            <li>
+              <strong>{t("Country of transfer:")}</strong>{" "}
+              {t("Singapore (data center); Republic of Korea (operational access)")}
+            </li>
+            <li>
+              <strong>{t("Items transferred:")}</strong>{" "}
+              {t(
+                "The account, profile, listing, chat, and usage data described in Section 1."
+              )}
+            </li>
+            <li>
+              <strong>{t("Purpose:")}</strong>{" "}
+              {t("Cloud hosting, storage, and operation of the Service.")}
+            </li>
+            <li>
+              <strong>{t("Retention:")}</strong>{" "}
+              {t("For the periods described in Section 6 (Data Retention).")}
+            </li>
+            <li>
+              <strong>{t("Right to refuse:")}</strong>{" "}
+              {t(
+                "You may refuse this transfer by not creating an account or by deleting your account; however, the Service cannot be provided without it."
+              )}
+            </li>
+          </ul>
+          <p className="mt-3">
+            {t(
+              "By creating an account and using the Service, you acknowledge and consent to this overseas transfer of your personal information."
             )}
           </p>
         </Section>
@@ -179,6 +217,11 @@ export default function PrivacyPage() {
           <p className="mt-2">
             {t(
               "To exercise these rights, contact us at the address below. We will respond within 30 days."
+            )}
+          </p>
+          <p className="mt-2">
+            {t(
+              "Depending on where you live, local law may grant you additional rights (for example, the EU/UK GDPR, Brazil's LGPD, Saudi Arabia's PDPL, and similar laws in Southeast Asia and Africa), such as data portability and the right to lodge a complaint with your local data protection authority. We apply these protections to all users regardless of location."
             )}
           </p>
         </Section>
