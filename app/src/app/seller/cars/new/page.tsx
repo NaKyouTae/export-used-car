@@ -9,6 +9,8 @@ import CarImageUploader from "@/components/CarImageUploader";
 import BottomSheetSelect from "@/components/BottomSheetSelect";
 import BottomSheetMultiSelect from "@/components/BottomSheetMultiSelect";
 import MakeModelPicker from "@/components/MakeModelPicker";
+import DamageMarksField from "@/components/DamageMarksField";
+import { type DamageMark } from "@/components/DamageDiagram";
 import { FUEL_TYPE_LABELS, TRANSMISSION_LABELS } from "@/lib/constants";
 
 interface UploadedImage {
@@ -47,6 +49,7 @@ export default function NewCarPage() {
   const [options, setOptions] = useState<OptionItem[]>([]);
   const [selectedTagIds, setSelectedTagIds] = useState<string[]>([]);
   const [selectedOptionItemIds, setSelectedOptionItemIds] = useState<string[]>([]);
+  const [damageMarks, setDamageMarks] = useState<DamageMark[]>([]);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState("");
 
@@ -129,6 +132,7 @@ export default function NewCarPage() {
           mileage: Number(form.mileage),
           displacement: form.displacement ? Number(form.displacement) : undefined,
           seats: form.seats ? Number(form.seats) : undefined,
+          damageMarks,
           // 가격 기능 미사용 — 당분간 0원으로 등록
           priceMin: 0,
           priceMax: 0,
@@ -221,6 +225,16 @@ export default function NewCarPage() {
             {t("Photos")} {images.length > 0 && `(${images.length})`}
           </h2>
           <CarImageUploader images={images} onChange={setImages} />
+        </section>
+
+        {/* 사고/수리 부위 — 항목 탭 시 전용 편집 화면으로 전환 */}
+        <section className="space-y-2">
+          <h2 className={sectionTitleClass}>사고·수리 부위</h2>
+          <DamageMarksField
+            marks={damageMarks}
+            onChange={setDamageMarks}
+            className={triggerClass}
+          />
         </section>
 
         {/* Basic Info */}

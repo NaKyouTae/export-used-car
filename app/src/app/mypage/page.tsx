@@ -121,6 +121,8 @@ export default function MyPage() {
             label={t("Privacy Policy")}
           />
         </MenuSection>
+
+        {!isAuthenticated && <div className="pb-6" />}
       </div>
 
       {/* Logout / Delete Account */}

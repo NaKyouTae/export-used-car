@@ -1,6 +1,15 @@
-import { IsEnum, IsInt, IsOptional, IsString, Min } from "class-validator";
+import {
+  IsArray,
+  IsEnum,
+  IsInt,
+  IsOptional,
+  IsString,
+  Min,
+  ValidateNested,
+} from "class-validator";
 import { Type } from "class-transformer";
 import { FuelType, Transmission, Drivetrain, CarStatus } from "@prisma/client";
+import { DamageMarkDto } from "./damage-mark.dto";
 
 export class UpdateCarDto {
   @IsString()
@@ -92,4 +101,10 @@ export class UpdateCarDto {
   @IsEnum(CarStatus)
   @IsOptional()
   status?: CarStatus;
+
+  @IsArray()
+  @ValidateNested({ each: true })
+  @Type(() => DamageMarkDto)
+  @IsOptional()
+  damageMarks?: DamageMarkDto[];
 }

@@ -200,6 +200,8 @@ export class CarsService {
     const car = await this.prisma.car.create({
       data: {
         ...dto,
+        // Json 필드는 Prisma InputJsonValue 로 캐스팅 (undefined면 미저장)
+        damageMarks: dto.damageMarks as Prisma.InputJsonValue | undefined,
         sellerId,
         createdAt: now,
         bumpedAt: now,
@@ -221,7 +223,11 @@ export class CarsService {
     // 정렬 기준은 전용 bumpedAt이므로, 일반 수정·상태 변경은 목록 위치에 영향을 주지 않는다.
     return this.prisma.car.update({
       where: { id },
-      data: dto,
+      data: {
+        ...dto,
+        // undefined면 미변경, []면 전체 삭제로 반영
+        damageMarks: dto.damageMarks as Prisma.InputJsonValue | undefined,
+      },
     });
   }
 

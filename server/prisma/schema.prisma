@@ -152,6 +152,7 @@ model Car {
   seats            Int?
   color            String?
   plateNumber      String?
+  damageMarks      Json? // 차량 부위 도면 마커 [{ id, type: REPLACE|REPAIR, x, y }] (좌표는 0~100%)
   priceMin         Decimal      @db.Decimal(12, 0)
   priceMax         Decimal      @db.Decimal(12, 0)
   description      String?
