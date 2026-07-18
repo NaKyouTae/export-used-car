@@ -1,39 +1,67 @@
 import { Injectable, Logger } from "@nestjs/common";
 import { ConfigService } from "@nestjs/config";
+import { isIP } from "node:net";
+import { resolve4 } from "node:dns/promises";
 import * as nodemailer from "nodemailer";
 
 @Injectable()
 export class EmailService {
   private readonly logger = new Logger(EmailService.name);
-  private transporter: nodemailer.Transporter | null = null;
+  private transporterPromise: Promise<nodemailer.Transporter> | null = null;
+  private readonly host?: string;
 
   constructor(private readonly config: ConfigService) {
-    const host = this.config.get<string>("SMTP_HOST");
-    if (host) {
-      this.transporter = nodemailer.createTransport({
-        host,
-        port: this.config.get<number>("SMTP_PORT", 587),
-        secure: this.config.get<boolean>("SMTP_SECURE", false),
-        // 실행 환경에 IPv6 라우팅이 없으면 SMTP 접속 시 ENETUNREACH가 발생하므로 IPv4로 강제한다.
-        family: 4,
-        auth: {
-          user: this.config.get<string>("SMTP_USER"),
-          pass: this.config.get<string>("SMTP_PASS"),
-        },
-      });
+    this.host = this.config.get<string>("SMTP_HOST");
+  }
+
+  /**
+   * nodemailer 8은 호스트를 IPv4/IPv6 둘 다 resolve한 뒤 랜덤으로 하나를 골라 접속한다.
+   * 실행 환경에 IPv6 외부 라우팅이 없으면 IPv6가 선택될 때마다 ENETUNREACH가 발생하므로,
+   * 우리가 직접 IPv4로 resolve해 IP 리터럴을 host로 넘겨 nodemailer의 내부 DNS를 건너뛴다.
+   * TLS(STARTTLS) SNI 검증을 위해 원래 호스트명은 servername으로 유지한다.
+   */
+  private async createTransporter(
+    host: string,
+  ): Promise<nodemailer.Transporter> {
+    let connectHost = host;
+    if (!isIP(host)) {
+      const [ipv4] = await resolve4(host);
+      if (ipv4) {
+        connectHost = ipv4;
+      }
     }
+
+    return nodemailer.createTransport({
+      host: connectHost,
+      port: this.config.get<number>("SMTP_PORT", 587),
+      secure: this.config.get<boolean>("SMTP_SECURE", false),
+      auth: {
+        user: this.config.get<string>("SMTP_USER"),
+        pass: this.config.get<string>("SMTP_PASS"),
+      },
+      tls: { servername: host },
+    });
+  }
+
+  private getTransporter(host: string): Promise<nodemailer.Transporter> {
+    if (!this.transporterPromise) {
+      this.transporterPromise = this.createTransporter(host);
+    }
+    return this.transporterPromise;
   }
 
   async sendVerificationCode(email: string, code: string): Promise<void> {
-    if (!this.transporter) {
+    if (!this.host) {
       this.logger.log(`[DEV] Verification code for ${email}: ${code}`);
       return;
     }
 
+    const transporter = await this.getTransporter(this.host);
+
     const fromAddress =
       this.config.get<string>("EMAIL_FROM") || "ajucar0510@naver.com";
 
-    await this.transporter.sendMail({
+    await transporter.sendMail({
       from: `"Ajucar" <${fromAddress}>`,
       to: email,
       subject: `[Ajucar] Your verification code: ${code}`,
