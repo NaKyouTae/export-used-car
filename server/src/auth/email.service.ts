@@ -14,6 +14,8 @@ export class EmailService {
         host,
         port: this.config.get<number>("SMTP_PORT", 587),
         secure: this.config.get<boolean>("SMTP_SECURE", false),
+        // 실행 환경에 IPv6 라우팅이 없으면 SMTP 접속 시 ENETUNREACH가 발생하므로 IPv4로 강제한다.
+        family: 4,
         auth: {
           user: this.config.get<string>("SMTP_USER"),
           pass: this.config.get<string>("SMTP_PASS"),
