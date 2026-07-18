@@ -31,10 +31,20 @@ export class EmailService {
       }
     }
 
+    // 포트가 TLS 방식을 결정한다: 465=암시적 TLS(secure), 587/25=STARTTLS(평문 시작).
+    // SMTP_SECURE를 별도로 두면 포트와 어긋나 "wrong version number"가 나기 쉬우므로
+    // 포트에서 secure를 유도한다. (잘못된 SMTP_SECURE 값이 있어도 자동 교정)
+    const port = Number(this.config.get<string>("SMTP_PORT", "587"));
+    const secure = port === 465;
+
+    this.logger.log(
+      `SMTP transport: ${host} (${connectHost}):${port} secure=${secure}`,
+    );
+
     return nodemailer.createTransport({
       host: connectHost,
-      port: this.config.get<number>("SMTP_PORT", 587),
-      secure: this.config.get<boolean>("SMTP_SECURE", false),
+      port,
+      secure,
       auth: {
         user: this.config.get<string>("SMTP_USER"),
         pass: this.config.get<string>("SMTP_PASS"),

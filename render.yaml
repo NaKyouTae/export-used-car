@@ -53,11 +53,11 @@ services:
       - key: SUPABASE_PUBLIC_URL
         sync: false
 
-      # Email (Nodemailer SMTP)
+      # Email (Nodemailer SMTP) — Naver: 465=암시적 TLS. secure는 코드에서 포트로 유도.
       - key: SMTP_HOST
-        value: smtp.gmail.com
+        value: smtp.naver.com
       - key: SMTP_PORT
-        value: "587"
+        value: "465"
       - key: SMTP_USER
         sync: false
       - key: SMTP_PASS
