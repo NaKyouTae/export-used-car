@@ -150,6 +150,9 @@ export default function LoginPage() {
               <input
                 id="code"
                 type="text"
+                inputMode="numeric"
+                pattern="[0-9]*"
+                autoComplete="one-time-code"
                 value={code}
                 onChange={(e) =>
                   setCode(e.target.value.replace(/\D/g, "").slice(0, 6))
