@@ -13,6 +13,7 @@ import {
 import { FileInterceptor } from "@nestjs/platform-express";
 import { JwtAuthGuard } from "../common/guards/jwt-auth.guard";
 import { CurrentUser } from "../common/decorators/current-user.decorator";
+import { imageUploadOptions } from "../common/upload/image-upload.options";
 import { ChatService } from "./chat.service";
 
 @Controller("chat")
@@ -68,7 +69,7 @@ export class ChatController {
   }
 
   @Post("rooms/:roomId/images")
-  @UseInterceptors(FileInterceptor("file"))
+  @UseInterceptors(FileInterceptor("file", imageUploadOptions))
   uploadImage(
     @Param("roomId") roomId: string,
     @UploadedFile() file: Express.Multer.File,

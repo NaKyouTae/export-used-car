@@ -8,10 +8,10 @@ import { PrismaService } from "../prisma/prisma.service";
 import { StorageService } from "../storage/storage.service";
 import { TranslationService } from "../translation/translation.service";
 import { NotificationsService } from "../notifications/notifications.service";
+import { MAX_IMAGE_UPLOAD_BYTES } from "../common/upload/image-upload.options";
 
 // 채팅 이미지 메시지는 content 앞에 이 prefix를 붙여 저장한다.
 const IMAGE_MESSAGE_PREFIX = "[img]";
-const MAX_IMAGE_SIZE = 10 * 1024 * 1024; // 10MB
 
 // 사용자 언어(EN/KO 등) → Google Translate ISO 코드. 매핑에 없으면 소문자로 폴백.
 const GOOGLE_LANG_CODE: Record<string, string> = {
@@ -367,7 +367,7 @@ export class ChatService {
     if (!file.mimetype?.startsWith("image/")) {
       throw new BadRequestException("Only image files are allowed");
     }
-    if (file.size > MAX_IMAGE_SIZE) {
+    if (file.size > MAX_IMAGE_UPLOAD_BYTES) {
       throw new BadRequestException("Image is too large (max 10MB)");
     }
 

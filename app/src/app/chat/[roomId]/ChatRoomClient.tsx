@@ -6,6 +6,7 @@ import { useTranslation } from "react-i18next";
 import { useAuth } from "@/hooks/useAuth";
 import { formatPrice } from "@/lib/constants";
 import { notifyChatUpdate } from "@/lib/chat-events";
+import { compressImage } from "@/lib/image-compress";
 import {
   formatTime,
   formatDateSeparator,
@@ -253,7 +254,7 @@ export default function ChatRoomClient({ roomId }: { roomId: string }) {
     setUploading(true);
     try {
       const formData = new FormData();
-      formData.append("file", file);
+      formData.append("file", await compressImage(file));
       const res = await fetch(`/api/chat/rooms/${roomId}/images`, {
         method: "POST",
         credentials: "include",
@@ -495,10 +496,14 @@ export default function ChatRoomClient({ roomId }: { roomId: string }) {
                       onClick={() => setViewerUrl(getImageUrl(msg.content))}
                       className="block overflow-hidden rounded-2xl border border-gray-200"
                     >
+                      {/* 원본 비율을 유지해야 해서 next/image 대신 img 를 쓴다.
+                          업로드 시 압축되므로 크기는 수백 KB 수준. */}
                       {/* eslint-disable-next-line @next/next/no-img-element */}
                       <img
                         src={getImageUrl(msg.content)}
                         alt={t("Photo")}
+                        loading="lazy"
+                        decoding="async"
                         className="max-h-60 w-auto object-cover"
                       />
                     </button>

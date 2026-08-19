@@ -1,7 +1,9 @@
 "use client";
 
 import { useRef, useState } from "react";
+import Image from "next/image";
 import { useTranslation } from "react-i18next";
+import { compressImage } from "@/lib/image-compress";
 import ImageViewer from "./ImageViewer";
 
 interface UploadedImage {
@@ -34,7 +36,8 @@ export default function CarImageUploader({
   };
 
   const handleFileChange = async (e: React.ChangeEvent<HTMLInputElement>) => {
-    const files = e.target.files;
+    const input = e.target;
+    const files = input.files;
     if (!files || files.length === 0) return;
 
     const remaining = maxImages - images.length;
@@ -42,20 +45,22 @@ export default function CarImageUploader({
 
     setUploading(true);
 
-    const newImages: UploadedImage[] = Array.from(files)
-      .slice(0, remaining)
-      .map((file) => ({
-        url: URL.createObjectURL(file),
-        file,
+    // 큰 사진 여러 장을 동시에 디코딩하면 모바일에서 메모리가 터질 수 있어
+    // 한 장씩 순차로 압축한다.
+    const newImages: UploadedImage[] = [];
+    for (const file of Array.from(files).slice(0, remaining)) {
+      const compressed = await compressImage(file);
+      newImages.push({
+        url: URL.createObjectURL(compressed),
+        file: compressed,
         isNew: true,
-      }));
+      });
+    }
 
     onChange([...images, ...newImages]);
     setUploading(false);
 
-    if (e.target) {
-      e.target.value = "";
-    }
+    input.value = "";
   };
 
   const handleRemove = (index: number) => {
@@ -132,12 +137,24 @@ export default function CarImageUploader({
                     aria-label={t("View photo {{number}}", { number: index + 1 })}
                     className="absolute inset-0 w-full h-full"
                   >
-                    {/* eslint-disable-next-line @next/next/no-img-element */}
-                    <img
-                      src={img.url}
-                      alt={t("Photo {{number}}", { number: index + 1 })}
-                      className="w-full h-full object-cover"
-                    />
+                    {img.url.startsWith("blob:") ? (
+                      // 방금 고른 사진의 로컬 미리보기 — 최적화 대상이 아니다
+                      // eslint-disable-next-line @next/next/no-img-element
+                      <img
+                        src={img.url}
+                        alt={t("Photo {{number}}", { number: index + 1 })}
+                        className="w-full h-full object-cover"
+                      />
+                    ) : (
+                      // 저장된 원본을 96px 타일에 그대로 쓰지 않도록 최적화 경유
+                      <Image
+                        src={img.url}
+                        alt={t("Photo {{number}}", { number: index + 1 })}
+                        fill
+                        sizes={`${TILE_SIZE}px`}
+                        className="object-cover"
+                      />
+                    )}
                   </button>
                   {index === 0 && (
                     <span className="pointer-events-none absolute bottom-1.5 left-1.5 bg-main-500 text-white text-[10px] px-1.5 py-0.5 rounded font-medium">

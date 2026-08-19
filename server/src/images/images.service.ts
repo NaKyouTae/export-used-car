@@ -1,4 +1,5 @@
 import {
+  BadRequestException,
   ForbiddenException,
   Injectable,
   NotFoundException,
@@ -6,6 +7,7 @@ import {
 import { ImageCategory } from "@prisma/client";
 import { PrismaService } from "../prisma/prisma.service";
 import { StorageService } from "../storage/storage.service";
+import { MAX_IMAGE_UPLOAD_BYTES } from "../common/upload/image-upload.options";
 import { UploadImageDto } from "./dto/upload-image.dto";
 
 @Injectable()
@@ -16,6 +18,14 @@ export class ImagesService {
   ) {}
 
   async upload(file: Express.Multer.File, dto: UploadImageDto, userId: string) {
+    if (!file) throw new BadRequestException("No file uploaded");
+    if (!file.mimetype?.startsWith("image/")) {
+      throw new BadRequestException("Only image files are allowed");
+    }
+    if (file.size > MAX_IMAGE_UPLOAD_BYTES) {
+      throw new BadRequestException("Image is too large (max 10MB)");
+    }
+
     await this.verifyOwnership(dto.imageCategory, dto.targetId, userId);
 
     const folder = `${dto.imageCategory}/${dto.targetId}`;

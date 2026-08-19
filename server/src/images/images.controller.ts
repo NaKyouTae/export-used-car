@@ -12,6 +12,7 @@ import {
 import { FileInterceptor } from "@nestjs/platform-express";
 import { JwtAuthGuard } from "../common/guards/jwt-auth.guard";
 import { CurrentUser } from "../common/decorators/current-user.decorator";
+import { imageUploadOptions } from "../common/upload/image-upload.options";
 import { ImagesService } from "./images.service";
 import { UploadImageDto } from "./dto/upload-image.dto";
 import { ReorderImagesDto } from "./dto/reorder-images.dto";
@@ -22,7 +23,7 @@ export class ImagesController {
 
   @Post()
   @UseGuards(JwtAuthGuard)
-  @UseInterceptors(FileInterceptor("file"))
+  @UseInterceptors(FileInterceptor("file", imageUploadOptions))
   upload(
     @UploadedFile() file: Express.Multer.File,
     @Body() dto: UploadImageDto,

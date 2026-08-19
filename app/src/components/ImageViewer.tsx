@@ -126,6 +126,10 @@ export default function ImageViewer({
             <img
               src={url}
               alt={`${altText} ${idx + 1}`}
+              // 뷰어는 원본 화질이 목적이라 최적화하지 않지만,
+              // 넘기지 않은 슬라이드까지 미리 받을 필요는 없다
+              loading={idx === safeInitial ? "eager" : "lazy"}
+              decoding="async"
               className="max-w-full max-h-full object-contain"
               draggable={false}
               onClick={(e) => e.stopPropagation()}
