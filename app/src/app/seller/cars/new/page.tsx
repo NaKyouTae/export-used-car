@@ -103,17 +103,21 @@ export default function NewCarPage() {
       const carId = data.id;
 
       // 2. Upload images
+      // 차량은 이미 생성됐으므로 업로드 실패 시에도 중단하지 않고
+      // 실패 건수만 모아 마지막에 알린다.
+      let imageFailures = 0;
       const newImages = images.filter((img) => img.isNew && img.file);
       for (const img of newImages) {
         const formData = new FormData();
         formData.append("file", img.file!);
         formData.append("imageCategory", "CAR_PHOTO");
         formData.append("targetId", carId);
-        await fetch("/api/images", {
+        const uploadRes = await fetch("/api/images", {
           method: "POST",
           credentials: "include",
           body: formData,
         });
+        if (!uploadRes.ok) imageFailures += 1;
       }
 
       // 3. Set tags & options
@@ -139,6 +143,12 @@ export default function NewCarPage() {
         );
       }
       await Promise.all(promises);
+
+      if (imageFailures > 0) {
+        alert(
+          t("Some photos failed to upload. Please add them again in edit."),
+        );
+      }
 
       router.push("/seller/cars");
     } catch {

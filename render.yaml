@@ -44,8 +44,10 @@ services:
       # Supabase S3 Storage (Dashboard에서 직접 입력)
       - key: SUPABASE_S3_ENDPOINT
         sync: false
+      # Supabase Storage 에 실제로 존재하는 버킷명과 반드시 일치해야 한다.
+      # (blueprint 의 value 가 대시보드 값을 덮어쓰므로 여기도 같이 관리)
       - key: SUPABASE_S3_BUCKET
-        value: exports
+        value: ajucar
       - key: SUPABASE_ACCESS_KEY
         sync: false
       - key: SUPABASE_SECRET_KEY

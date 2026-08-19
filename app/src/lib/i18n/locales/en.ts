@@ -16,6 +16,7 @@ export const en = {
     "Verifying...": "Verifying...",
     "Verify Code": "Verify Code",
     "Use a different email": "Use a different email",
+    "Remember my email": "Remember my email",
     "By continuing, you agree to our": "By continuing, you agree to our",
     "Terms of Service": "Terms of Service",
     "and": "and",
@@ -195,6 +196,10 @@ export const en = {
     "Edit Vehicle": "Edit Vehicle",
     "Failed to register vehicle": "Failed to register vehicle",
     "Failed to update vehicle": "Failed to update vehicle",
+    "Some photos failed to upload. Please add them again in edit.":
+      "Some photos failed to upload. Please add them again in edit.",
+    "Some photo changes were not saved. Please check the photos.":
+      "Some photo changes were not saved. Please check the photos.",
     "A network error occurred. Please try again.": "A network error occurred. Please try again.",
     "Photos": "Photos",
     "Basic Info": "Basic Info",

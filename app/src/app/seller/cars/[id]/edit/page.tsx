@@ -182,11 +182,15 @@ export default function EditCarPage({
       const deletedIds = originalImageIds.filter(
         (oid) => !currentExistingIds.includes(oid),
       );
+      // 이미지 변경은 실패해도 차량 정보 저장은 이미 끝났으므로
+      // 중단하지 않고 실패 건수만 모아 마지막에 알린다.
+      let imageFailures = 0;
       for (const imgId of deletedIds) {
-        await fetch(`/api/images?id=${imgId}`, {
+        const delRes = await fetch(`/api/images/${imgId}`, {
           method: "DELETE",
           credentials: "include",
         });
+        if (!delRes.ok) imageFailures += 1;
       }
 
       // 3. Upload new images
@@ -196,11 +200,12 @@ export default function EditCarPage({
         formData.append("file", img.file!);
         formData.append("imageCategory", "CAR_PHOTO");
         formData.append("targetId", id);
-        await fetch("/api/images", {
+        const uploadRes = await fetch("/api/images", {
           method: "POST",
           credentials: "include",
           body: formData,
         });
+        if (!uploadRes.ok) imageFailures += 1;
       }
 
       // 4. Set tags & options
@@ -218,6 +223,10 @@ export default function EditCarPage({
           body: JSON.stringify({ optionItemIds: selectedOptionItemIds }),
         }),
       ]);
+
+      if (imageFailures > 0) {
+        alert(t("Some photo changes were not saved. Please check the photos."));
+      }
 
       router.push("/seller/cars");
     } catch {

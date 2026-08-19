@@ -16,7 +16,13 @@ export class StorageService {
   private readonly publicBaseUrl: string;
 
   constructor(private readonly config: ConfigService) {
-    this.bucket = config.get<string>("SUPABASE_S3_BUCKET", "exports");
+    // 기본값을 두면 버킷명이 틀려도 부팅은 되고 업로드 시점에만
+    // NoSuchBucket 이 나므로, 미설정이면 부팅 자체를 실패시킨다.
+    const bucket = config.get<string>("SUPABASE_S3_BUCKET");
+    if (!bucket) {
+      throw new Error("SUPABASE_S3_BUCKET is not configured");
+    }
+    this.bucket = bucket;
     const rawPublicUrl = config.get<string>("SUPABASE_PUBLIC_URL", "");
     this.publicBaseUrl = StorageService.buildPublicBase(rawPublicUrl);
 

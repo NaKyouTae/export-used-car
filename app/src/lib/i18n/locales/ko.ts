@@ -16,6 +16,7 @@ export const ko = {
     "Verifying...": "확인 중...",
     "Verify Code": "코드 확인",
     "Use a different email": "다른 이메일 사용하기",
+    "Remember my email": "이메일 기억하기",
     "By continuing, you agree to our": "계속 진행하면 다음에 동의하는 것입니다",
     "Terms of Service": "이용약관",
     "and": "및",
@@ -195,6 +196,10 @@ export const ko = {
     "Edit Vehicle": "차량 수정",
     "Failed to register vehicle": "차량 등록에 실패했습니다",
     "Failed to update vehicle": "차량 수정에 실패했습니다",
+    "Some photos failed to upload. Please add them again in edit.":
+      "일부 사진 업로드에 실패했습니다. 차량 수정에서 다시 추가해주세요.",
+    "Some photo changes were not saved. Please check the photos.":
+      "일부 사진 변경이 저장되지 않았습니다. 사진을 다시 확인해주세요.",
     "A network error occurred. Please try again.": "네트워크 오류가 발생했습니다. 다시 시도해주세요.",
     "Photos": "사진",
     "Basic Info": "기본 정보",

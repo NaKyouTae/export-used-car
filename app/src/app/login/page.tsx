@@ -1,11 +1,13 @@
 "use client";
 
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
 import PageHeader from "@/components/PageHeader";
 import { useAuth } from "@/hooks/useAuth";
 import { useTranslation } from "react-i18next";
+
+const REMEMBERED_EMAIL_KEY = "euc_remembered_email";
 
 export default function LoginPage() {
   const router = useRouter();
@@ -14,8 +16,25 @@ export default function LoginPage() {
   const [step, setStep] = useState<"email" | "code">("email");
   const [email, setEmail] = useState("");
   const [code, setCode] = useState("");
+  const [rememberEmail, setRememberEmail] = useState(false);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState("");
+
+  // 저장된 이메일 불러오기
+  // localStorage 는 서버에 없으므로 useState 지연 초기화로 옮기면
+  // hydration mismatch 가 난다. mount 후 1회만 반영하므로 규칙을 끈다.
+  useEffect(() => {
+    try {
+      const saved = localStorage.getItem(REMEMBERED_EMAIL_KEY);
+      if (saved) {
+        // eslint-disable-next-line react-hooks/set-state-in-effect
+        setEmail(saved);
+        setRememberEmail(true);
+      }
+    } catch {
+      // localStorage 사용 불가 (시크릿 모드 등)
+    }
+  }, []);
 
   const isValidEmail = (value: string) => {
     return /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(value);
@@ -50,6 +69,17 @@ export default function LoginPage() {
         setError(data.message || t("Failed to send code"));
         return;
       }
+
+      try {
+        if (rememberEmail) {
+          localStorage.setItem(REMEMBERED_EMAIL_KEY, email);
+        } else {
+          localStorage.removeItem(REMEMBERED_EMAIL_KEY);
+        }
+      } catch {
+        // localStorage 사용 불가
+      }
+
       setStep("code");
     } catch {
       setError(t("Network error. Please try again."));
@@ -121,10 +151,22 @@ export default function LoginPage() {
                 value={email}
                 onChange={handleEmailChange}
                 placeholder="your@email.com"
+                autoComplete="email"
                 required
                 className="w-full px-4 py-3 border border-gray-200 rounded-xl text-sm focus:outline-none focus:ring-2 focus:ring-main-500 focus:border-transparent"
               />
             </div>
+            <label className="flex items-center gap-2.5 cursor-pointer select-none">
+              <input
+                type="checkbox"
+                checked={rememberEmail}
+                onChange={(e) => setRememberEmail(e.target.checked)}
+                className="w-5 h-5 rounded border-gray-300 text-main-500 focus:ring-main-500"
+              />
+              <span className="text-sm text-gray-700">
+                {t("Remember my email")}
+              </span>
+            </label>
             {error && <p className="text-red-500 text-sm">{error}</p>}
             <button
               type="submit"
